@@ -1,9 +1,151 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Placely</title>
-  </head>
-  <body>
-    <h1>Placely Amir Test</h1>
-  </body>
-</html>
+ <!DOCTYPE html>
+-<html>
++<html lang="en">
+   <head>
+-    <title>Placely</title>
++    <meta charset="UTF-8" />
++    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
++    <title>Placely Talent</title>
++    <style>
++      :root {
++        color-scheme: light;
++        font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
++      }
++
++      * {
++        box-sizing: border-box;
++      }
++
++      body {
++        margin: 0;
++        min-height: 100vh;
++        display: grid;
++        place-items: center;
++        background: linear-gradient(145deg, #eef2ff, #f8fafc);
++        color: #0f172a;
++      }
++
++      main {
++        width: min(92vw, 760px);
++        background: #ffffff;
++        border-radius: 20px;
++        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
++        padding: 3rem 2rem;
++        text-align: center;
++      }
++
++      h1 {
++        margin: 0;
++        font-size: clamp(2rem, 5vw, 3.4rem);
++        letter-spacing: 0.03em;
++      }
++
++      .auth-actions {
++        margin-top: 1.5rem;
++        display: flex;
++        gap: 1rem;
++        justify-content: center;
++        flex-wrap: wrap;
++      }
++
++      button {
++        border: none;
++        border-radius: 999px;
++        padding: 0.8rem 1.6rem;
++        font-size: 1rem;
++        font-weight: 600;
++        cursor: pointer;
++        transition: transform 150ms ease, box-shadow 150ms ease;
++      }
++
++      .signup {
++        background: #2563eb;
++        color: #ffffff;
++      }
++
++      .login {
++        background: #e2e8f0;
++        color: #0f172a;
++      }
++
++      button:hover {
++        transform: translateY(-1px);
++        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.2);
++      }
++
++      .role-options {
++        margin-top: 2.5rem;
++        display: grid;
++        gap: 1rem;
++        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
++      }
++
++      .role-card {
++        border: 1px solid #dbe3f5;
++        border-radius: 16px;
++        padding: 1.2rem;
++        display: grid;
++        justify-items: center;
++        gap: 0.65rem;
++        background: #f8fafc;
++      }
++
++      .role-icon {
++        width: 56px;
++        height: 56px;
++      }
++
++      .role-title {
++        margin: 0;
++        font-size: 1.1rem;
++        font-weight: 700;
++      }
++
++      .role-subtitle {
++        margin: 0;
++        color: #334155;
++        font-size: 0.95rem;
++      }
++    </style>
+   </head>
+   <body>
+-    <h1>Placely Amir Test</h1>
++    <main>
++      <h1>Placely Talent</h1>
++
++      <div class="auth-actions">
++        <button class="signup" type="button">Sign Up</button>
++        <button class="login" type="button">Login</button>
++      </div>
++
++      <section class="role-options" aria-label="Role options">
++        <article class="role-card">
++          <svg class="role-icon" viewBox="0 0 64 64" aria-hidden="true">
++            <rect x="8" y="18" width="48" height="34" rx="6" fill="#bfdbfe" />
++            <rect x="24" y="10" width="16" height="10" rx="3" fill="#2563eb" />
++            <circle cx="24" cy="35" r="5" fill="#1e293b" />
++            <circle cx="40" cy="35" r="5" fill="#1e293b" />
++          </svg>
++          <p class="role-title">Employers</p>
++          <p class="role-subtitle">Post jobs and discover top candidates.</p>
++        </article>
++
++        <article class="role-card">
++          <svg class="role-icon" viewBox="0 0 64 64" aria-hidden="true">
++            <circle cx="32" cy="20" r="10" fill="#60a5fa" />
++            <rect x="18" y="34" width="28" height="20" rx="8" fill="#1d4ed8" />
++            <rect x="26" y="38" width="12" height="3" rx="1.5" fill="#dbeafe" />
++            <rect x="26" y="44" width="12" height="3" rx="1.5" fill="#dbeafe" />
++          </svg>
++          <p class="role-title">Employees</p>
++          <p class="role-subtitle">Find opportunities that match your skills.</p>
++        </article>
++      </section>
++    </main>
+   </body>
+-</html>
+\ No newline at end of file
++</html>
+ 
+EOF
+)
