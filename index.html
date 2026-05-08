@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Placely Talent</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
     * {
       margin: 0;
@@ -14,111 +16,373 @@
     }
 
     body {
-      background: #0f172a;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.25), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(30, 64, 175, 0.28), transparent 35%),
+        #0f172a;
       color: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
+      overflow-x: hidden;
     }
 
-    .container {
-      text-align: center;
-      max-width: 900px;
-      padding: 20px;
+    .page-wrapper {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      width: 100%;
+      padding: 28px 8%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
     .logo {
-      font-size: 28px;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      color: #ffffff;
+      text-decoration: none;
+    }
+
+    .header-login {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 11px 20px;
+      border-radius: 999px;
+      color: #e2e8f0;
+      text-decoration: none;
+      font-size: 14px;
       font-weight: 700;
-      margin-bottom: 20px;
-      letter-spacing: 1px;
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      transition: all 0.25s ease;
+    }
+
+    .header-login:hover {
+      color: #ffffff;
+      background: rgba(51, 65, 85, 0.9);
+      transform: translateY(-2px);
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 56px;
+      align-items: center;
+      padding: 40px 8% 80px;
+    }
+
+    .hero-content {
+      max-width: 760px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      margin-bottom: 26px;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.55);
+      color: #93c5fd;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .eyebrow span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #2563eb;
+      box-shadow: 0 0 18px rgba(37, 99, 235, 0.9);
     }
 
     h1 {
-      font-size: 48px;
-      font-weight: 700;
-      margin-bottom: 20px;
-      line-height: 1.2;
+      font-size: clamp(44px, 6vw, 82px);
+      line-height: 0.98;
+      letter-spacing: -2.8px;
+      font-weight: 800;
+      margin-bottom: 26px;
     }
 
-    p {
+    h1 strong {
+      background: linear-gradient(135deg, #60a5fa, #2563eb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .description {
+      max-width: 640px;
+      color: #cbd5e1;
       font-size: 18px;
-      color: #cbd5f5;
-      margin-bottom: 40px;
+      line-height: 1.75;
+      margin-bottom: 34px;
+    }
+
+    .trust-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      max-width: 720px;
+    }
+
+    .trust-card {
+      padding: 20px;
+      border-radius: 18px;
+      background: rgba(15, 23, 42, 0.62);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+    }
+
+    .trust-card h3 {
+      font-size: 15px;
+      margin-bottom: 8px;
+      color: #ffffff;
+    }
+
+    .trust-card p {
+      color: #94a3b8;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .choice-panel {
+      position: relative;
+      padding: 42px;
+      border-radius: 28px;
+      background: rgba(15, 23, 42, 0.82);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.38);
+      backdrop-filter: blur(18px);
+      overflow: hidden;
+    }
+
+    .choice-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.22), transparent 42%);
+      pointer-events: none;
+    }
+
+    .panel-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    .panel-label {
+      color: #93c5fd;
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 14px;
+    }
+
+    .choice-panel h2 {
+      font-size: 34px;
+      line-height: 1.1;
+      margin-bottom: 16px;
+      letter-spacing: -1px;
+    }
+
+    .panel-copy {
+      color: #cbd5e1;
+      font-size: 15px;
+      line-height: 1.7;
+      margin-bottom: 30px;
     }
 
     .buttons {
       display: flex;
-      gap: 20px;
-      justify-content: center;
-      flex-wrap: wrap;
+      flex-direction: column;
+      gap: 14px;
     }
 
     .btn {
-      padding: 18px 36px;
-      font-size: 18px;
-      font-weight: 600;
-      border-radius: 10px;
+      width: 100%;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      padding: 17px 24px;
+      border-radius: 12px;
       text-decoration: none;
-      transition: all 0.3s ease;
+      font-weight: 700;
+      font-size: 16px;
+      transition: all 0.28s ease;
     }
 
     .btn-primary {
+      color: #ffffff;
       background: linear-gradient(135deg, #2563eb, #1e40af);
-      color: white;
+      box-shadow: 0 18px 36px rgba(37, 99, 235, 0.3);
     }
 
     .btn-primary:hover {
       transform: translateY(-3px);
-      box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
+      box-shadow: 0 24px 46px rgba(37, 99, 235, 0.45);
     }
 
     .btn-secondary {
-      background: transparent;
-      border: 2px solid #334155;
       color: #e2e8f0;
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.24);
     }
 
     .btn-secondary:hover {
-      background: #1e293b;
       transform: translateY(-3px);
+      background: rgba(51, 65, 85, 0.85);
     }
 
-    .footer {
-      margin-top: 60px;
-      font-size: 14px;
+    .fine-print {
+      margin-top: 20px;
       color: #64748b;
+      font-size: 13px;
+      line-height: 1.6;
+      text-align: center;
     }
 
-    @media (max-width: 600px) {
-      h1 {
-        font-size: 36px;
+    .stats-row {
+      display: flex;
+      gap: 18px;
+      margin-top: 34px;
+      padding-top: 26px;
+      border-top: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .stat {
+      flex: 1;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 22px;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .stat span {
+      color: #94a3b8;
+      font-size: 12px;
+    }
+
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+        gap: 38px;
       }
 
-      .btn {
-        width: 100%;
+      .trust-row {
+        grid-template-columns: 1fr;
+      }
+
+      .choice-panel {
+        padding: 32px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      header {
+        padding: 24px 6%;
+      }
+
+      main {
+        padding: 24px 6% 60px;
+      }
+
+      h1 {
+        letter-spacing: -1.5px;
+      }
+
+      .description {
+        font-size: 16px;
+      }
+
+      .stats-row {
+        flex-direction: column;
       }
     }
   </style>
 </head>
+
 <body>
+  <div class="page-wrapper">
+    <header>
+      <a href="index.html" class="logo">PLACELY TALENT</a>
+      <a href="login.html" class="header-login">Login</a>
+    </header>
 
-  <div class="container">
-    <div class="logo">PLACELY TALENT</div>
+    <main>
+      <section class="hero-content">
+        <div class="eyebrow"><span></span> Recruitment Built for Growth</div>
 
-    <h1>Elite Talent. Real Results.</h1>
-    <p>Connecting high-performing tradespeople with companies that demand the best.</p>
+        <h1>Elite Talent. <strong>Real Results.</strong></h1>
 
-    <div class="buttons">
-      <a href="/employers.html" class="btn btn-primary">Hire Talent</a>
-      <a href="/candidates.html" class="btn btn-secondary">Find Work</a>
-    </div>
+        <p class="description">
+          Placely Talent connects growth-focused companies with skilled, reliable people ready to move. Whether you're hiring or looking for your next opportunity, we make the process faster, cleaner, and more professional.
+        </p>
 
-    <div class="footer">
-      Trusted by growing companies across Canada
-    </div>
+        <div class="trust-row">
+          <div class="trust-card">
+            <h3>For Employers</h3>
+            <p>Access qualified candidates without wasting time sorting through the wrong applicants.</p>
+          </div>
+
+          <div class="trust-card">
+            <h3>For Candidates</h3>
+            <p>Find better opportunities with companies that value skill, reliability, and ambition.</p>
+          </div>
+
+          <div class="trust-card">
+            <h3>Built to Move Fast</h3>
+            <p>A sharper recruitment experience designed for companies and people ready to grow.</p>
+          </div>
+        </div>
+      </section>
+
+      <aside class="choice-panel">
+        <div class="panel-inner">
+          <div class="panel-label">Choose Your Path</div>
+
+          <h2>Welcome to Placely Talent</h2>
+
+          <p class="panel-copy">
+            Start with the side that fits you best. Employers can begin hiring stronger talent. Candidates can explore better opportunities and build their next move.
+          </p>
+
+          <div class="buttons">
+            <a href="employers.html" class="btn btn-primary">Hire Talent</a>
+            <a href="candidates.html" class="btn btn-secondary">Find Work</a>
+          </div>
+
+          <p class="fine-print">
+            Professional recruiting support for serious companies and skilled candidates.
+          </p>
+
+          <div class="stats-row">
+            <div class="stat">
+              <strong>Fast</strong>
+              <span>Hiring process</span>
+            </div>
+            <div class="stat">
+              <strong>Direct</strong>
+              <span>Talent access</span>
+            </div>
+            <div class="stat">
+              <strong>Clean</strong>
+              <span>Modern experience</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
   </div>
-
 </body>
 </html>
