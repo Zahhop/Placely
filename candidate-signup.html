@@ -439,60 +439,9 @@
     </main>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/js/supabase.js"></script>
-
+<script src="config.js"></script>
 <script>
-  const supabase = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-  );
-
-  const form = document.getElementById("candidateSignupForm");
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const fullName = document.getElementById("fullName").value;
-    const phone = document.getElementById("phone").value;
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    const location = document.getElementById("location").value;
-    const trade = document.getElementById("trade").value;
-    const experience = document.getElementById("experience").value;
-
-    const { data, error } = await supabase.auth.signUp({
-      email: email,
-      password: password
-    });
-
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
-    const userId = data.user.id;
-
-    await supabase.from("profiles").insert([
-      {
-        id: userId,
-        email: email,
-        role: "candidate"
-      }
-    ]);
-
-    await supabase.from("candidate_profiles").insert([
-      {
-        id: userId,
-        full_name: fullName,
-        phone: phone,
-        location: location,
-        trade: trade,
-        experience: experience
-      }
-    ]);
-
-    window.location.href = "candidate-dashboard.html";
-  });
+  console.log("TEST:", SUPABASE_URL);
 </script>
 </body>
 </html>
