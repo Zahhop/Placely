@@ -257,6 +257,17 @@
       color: #ffffff;
     }
 
+    .forgot-link {
+  font-size: 13px;
+  color: #93c5fd;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.forgot-link:hover {
+  color: #ffffff;
+}
+
     @media (max-width: 700px) {
       .login-card {
         padding: 28px 22px;
@@ -334,6 +345,14 @@
                 <label>Password</label>
                 <input type="password" placeholder="Enter your password" required>
               </div>
+
+              <div style="display: flex; justify-content: flex-end; margin-top: 6px;">
+  <a href="forgot-password.html" class="forgot-link">Forgot password?</a>
+</div>
+
+<button type="submit" class="submit-btn">
+  Login to Employer Account
+</button>
 
               <button type="submit" class="submit-btn">
                 Login to Employer Account
