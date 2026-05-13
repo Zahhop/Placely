@@ -446,6 +446,76 @@
     SUPABASE_URL,
     SUPABASE_ANON_KEY
   );
+  
+  const form = document.getElementById("candidateSignupForm");
+
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    console.log("Form submitted");
+
+    const fullName = document.getElementById("fullName").value;
+    const phone = document.getElementById("phone").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const location = document.getElementById("location").value;
+    const trade = document.getElementById("trade").value;
+    const experience = document.getElementById("experience").value;
+
+    const { data, error } = await placelySupabase.auth.signUp({
+      email: email,
+      password: password
+    });
+
+    if (error) {
+      console.error(error);
+      alert(error.message);
+      return;
+    }
+
+    console.log("User created:", data);
+
+    const userId = data.user.id;
+
+    const { error: profileError } = await placelySupabase
+      .from("profiles")
+      .insert([
+        {
+          id: userId,
+          email: email,
+          role: "candidate"
+        }
+      ]);
+
+    if (profileError) {
+      console.error(profileError);
+      alert(profileError.message);
+      return;
+    }
+
+    const { error: candidateError } = await placelySupabase
+      .from("candidate_profiles")
+      .insert([
+        {
+          id: userId,
+          full_name: fullName,
+          phone: phone,
+          location: location,
+          trade: trade,
+          experience: experience
+        }
+      ]);
+
+    if (candidateError) {
+      console.error(candidateError);
+      alert(candidateError.message);
+      return;
+    }
+
+    alert("Candidate account created successfully!");
+    window.location.href = "candidate-dashboard.html";
+  });
+</script>
 </script>
 </body>
 </html>
