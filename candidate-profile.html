@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Candidate Profile | Placely Talent</title>
+  <link rel="stylesheet" href="candidate-profile.css" />
+</head>
+<body>
+
+  <header class="navbar">
+    <div class="nav-container">
+      <h2>PLACELY TALENT</h2>
+      <a href="candidate-account.html" class="back-btn">Back to Dashboard</a>
+    </div>
+  </header>
+
+  <main class="page-container">
+
+    <section class="profile-header">
+      <div class="profile-photo-box">
+        <img src="https://via.placeholder.com/140" alt="Profile Photo" class="profile-photo">
+        <button class="small-btn">Upload Photo</button>
+      </div>
+
+      <div class="profile-main-info">
+        <input type="text" placeholder="Full Name" class="name-input" />
+        <input type="text" placeholder="Trade / Job Title ex. Electrician Apprentice" />
+        <input type="text" placeholder="Location ex. Calgary, AB" />
+
+        <textarea placeholder="Short bio about yourself, your experience, and what kind of work you're looking for..."></textarea>
+      </div>
+    </section>
+
+    <section class="content-grid">
+
+      <div class="card">
+        <h3>Work Details</h3>
+
+        <label>Years of Experience</label>
+        <input type="text" placeholder="ex. 2 years" />
+
+        <label>Skills</label>
+        <input type="text" placeholder="ex. Wiring, conduit, troubleshooting" />
+
+        <label>Certifications</label>
+        <input type="text" placeholder="ex. CSTS, WHMIS, Fall Protection" />
+
+        <label>Availability</label>
+        <select>
+          <option>Available Immediately</option>
+          <option>Available in 2 Weeks</option>
+          <option>Currently Employed</option>
+        </select>
+      </div>
+
+      <div class="card">
+        <h3>Contact Info</h3>
+
+        <label>Email</label>
+        <input type="email" placeholder="you@example.com" />
+
+        <label>Phone</label>
+        <input type="text" placeholder="(403) 000-0000" />
+
+        <label>Preferred Contact Method</label>
+        <select>
+          <option>Email</option>
+          <option>Phone</option>
+          <option>Text</option>
+        </select>
+      </div>
+
+      <div class="card resume-card">
+        <h3>Resume</h3>
+        <p>Upload your resume so employers can review your experience.</p>
+
+        <div class="resume-drop">
+          <p>Drop resume here</p>
+          <span>or click to upload PDF/DOCX</span>
+          <input type="file" />
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Profile Visibility</h3>
+        <p>Control whether employers can see your profile.</p>
+
+        <label class="toggle-row">
+          <input type="checkbox" checked />
+          <span>Visible to Employers</span>
+        </label>
+
+        <button class="save-btn">Save Profile</button>
+      </div>
+
+    </section>
+
+  </main>
+
+</body>
+</html>
