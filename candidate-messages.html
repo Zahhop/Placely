@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Messages | Placely Talent</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background: #f8fafc;
+      color: #0f172a;
+    }
+
+    header {
+      background: #0f172a;
+      padding: 18px 8%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      color: white;
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: 1px;
+    }
+
+    .back-btn {
+      background: #2563eb;
+      color: white;
+      text-decoration: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+
+    .container {
+      padding: 40px 8%;
+    }
+
+    .top-section {
+      margin-bottom: 28px;
+    }
+
+    .top-section h1 {
+      font-size: 34px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .top-section p {
+      color: #64748b;
+    }
+
+    .messages-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 24px;
+      height: 700px;
+    }
+
+    .conversations,
+    .chat-window {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+    }
+
+    .sidebar-header,
+    .chat-header {
+      padding: 22px;
+      border-bottom: 1px solid #e2e8f0;
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .conversation {
+      padding: 18px 22px;
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .conversation:hover {
+      background: #f8fafc;
+    }
+
+    .conversation.active {
+      background: #eff6ff;
+      border-left: 4px solid #2563eb;
+    }
+
+    .conversation-name {
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .conversation-preview {
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    .chat-messages {
+      padding: 24px;
+      height: calc(100% - 150px);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      background: #f8fafc;
+    }
+
+    .message {
+      max-width: 75%;
+      padding: 14px 18px;
+      border-radius: 16px;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .message.received {
+      background: white;
+      border: 1px solid #e2e8f0;
+      align-self: flex-start;
+    }
+
+    .message.sent {
+      background: linear-gradient(135deg, #2563eb, #1e40af);
+      color: white;
+      align-self: flex-end;
+    }
+
+    .chat-input-area {
+      border-top: 1px solid #e2e8f0;
+      padding: 18px;
+      display: flex;
+      gap: 14px;
+      background: white;
+    }
+
+    .chat-input-area input {
+      flex: 1;
+      border: 1px solid #dbe3ef;
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 14px;
+    }
+
+    .send-btn {
+      background: linear-gradient(135deg, #2563eb, #1e40af);
+      color: white;
+      border: none;
+      padding: 14px 22px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    @media (max-width: 900px) {
+
+      .messages-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+
+      .chat-window {
+        min-height: 600px;
+      }
+
+    }
+
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">PLACELY TALENT</div>
+
+  <a href="candidate-dashboard.html" class="back-btn">
+    Back to Dashboard
+  </a>
+</header>
+
+<div class="container">
+
+  <div class="top-section">
+    <h1>Messages</h1>
+    <p>Chat with employers and manage your conversations.</p>
+  </div>
+
+  <div class="messages-layout">
+
+    <aside class="conversations">
+
+      <div class="sidebar-header">
+        Conversations
+      </div>
+
+      <div class="conversation active">
+        <div class="conversation-name">Northwest Electric Ltd.</div>
+        <div class="conversation-preview">
+          We'd like to schedule an interview...
+        </div>
+      </div>
+
+      <div class="conversation">
+        <div class="conversation-name">Prairie Industrial</div>
+        <div class="conversation-preview">
+          Thanks for applying to our position.
+        </div>
+      </div>
+
+      <div class="conversation">
+        <div class="conversation-name">Summit Civil Group</div>
+        <div class="conversation-preview">
+          Are you available for rotation work?
+        </div>
+      </div>
+
+    </aside>
+
+    <section class="chat-window">
+
+      <div class="chat-header">
+        Northwest Electric Ltd.
+      </div>
+
+      <div class="chat-messages">
+
+        <div class="message received">
+          Hi Austin, thanks for applying to our Electrical Apprentice position.
+        </div>
+
+        <div class="message sent">
+          Thanks for reaching out. I'm definitely interested in the opportunity.
+        </div>
+
+        <div class="message received">
+          Great. We'd like to schedule a quick phone interview sometime this week.
+        </div>
+
+        <div class="message sent">
+          Sounds good. I’m available anytime after 3 PM.
+        </div>
+
+      </div>
+
+      <div class="chat-input-area">
+        <input type="text" placeholder="Type your message...">
+        <button class="send-btn">Send</button>
+      </div>
+
+    </section>
+
+  </div>
+
+</div>
+
+</body>
+</html>
