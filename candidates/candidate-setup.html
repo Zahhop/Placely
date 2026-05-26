@@ -39,7 +39,17 @@
       grid-template-columns: 280px 1fr;
       min-height: calc(100vh - 72px);
     }
+    .form-step {
+      display: none;
+    }
 
+    .form-step.active {
+      display: block;
+    }
+
+.step-item {
+  cursor: pointer;
+}
     .sidebar {
       background: white;
       border-right: 1px solid #e2e8f0;
@@ -265,122 +275,119 @@
         Add your work details and preferences so we can match you with the right employers and opportunities.
       </p>
 
-      <form id="setupForm">
+   <form id="setupForm">
 
-        <div class="form-grid">
+  <div class="form-step active">
+    <h1>Work Information</h1>
 
-          <div class="form-group">
-            <label>Industry</label>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Industry</label>
+        <select required>
+          <option value="">Select Industry</option>
+          <option>Electrical</option>
+          <option>Welding</option>
+          <option>Construction</option>
+          <option>Plumbing</option>
+          <option>HVAC</option>
+        </select>
+      </div>
 
-            <select required>
-              <option value="">Select Industry</option>
-              <option>Electrical</option>
-              <option>Welding</option>
-              <option>Construction</option>
-              <option>Plumbing</option>
-              <option>HVAC</option>
-              <option>Oil & Gas</option>
-            </select>
-          </div>
+      <div class="form-group">
+        <label>Current Position</label>
+        <input type="text" placeholder="Electrical Apprentice">
+      </div>
+    </div>
+  </div>
 
-          <div class="form-group">
-            <label>Current Position</label>
+  <div class="form-step">
+    <h1>Job Preferences</h1>
 
-            <input type="text" placeholder="Electrical Apprentice">
-          </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Employment Type</label>
+        <select>
+          <option>Full-Time</option>
+          <option>Part-Time</option>
+          <option>Contract</option>
+          <option>Rotation</option>
+        </select>
+      </div>
 
-          <div class="form-group">
-            <label>Years of Experience</label>
+      <div class="form-group">
+        <label>Preferred Work Location</label>
+        <input type="text" placeholder="Calgary, AB">
+      </div>
+    </div>
+  </div>
 
-            <select>
-              <option>0-1 Years</option>
-              <option>2-4 Years</option>
-              <option>5-10 Years</option>
-              <option>10+ Years</option>
-            </select>
-          </div>
+  <div class="form-step">
+    <h1>Experience</h1>
 
-          <div class="form-group">
-            <label>Employment Type</label>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Years of Experience</label>
+        <select>
+          <option>0-1 Years</option>
+          <option>2-4 Years</option>
+          <option>5-10 Years</option>
+          <option>10+ Years</option>
+        </select>
+      </div>
 
-            <select>
-              <option>Full-Time</option>
-              <option>Part-Time</option>
-              <option>Contract</option>
-              <option>Temporary</option>
-              <option>Rotation</option>
-            </select>
-          </div>
+      <div class="form-group full">
+        <label>Skills</label>
+        <input type="text" placeholder="Conduit bending, troubleshooting, blueprint reading...">
+      </div>
 
-          <div class="form-group">
-            <label>Preferred Work Location</label>
+      <div class="form-group full">
+        <label>Bio</label>
+        <textarea placeholder="Tell employers about your experience..."></textarea>
+      </div>
+    </div>
+  </div>
 
-            <input type="text" placeholder="Calgary, AB">
-          </div>
+  <div class="form-step">
+    <h1>Certifications</h1>
 
-          <div class="form-group">
-            <label>Availability</label>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Certifications</label>
+        <input type="text" placeholder="CSTS, WHMIS, Fall Protection...">
+      </div>
 
-            <select>
-              <option>Immediately</option>
-              <option>2 Weeks Notice</option>
-              <option>1 Month</option>
-            </select>
-          </div>
+      <div class="form-group full">
+        <label>Tickets / Licenses</label>
+        <input type="text" placeholder="First Aid, Red Seal, Drivers License...">
+      </div>
+    </div>
+  </div>
 
-          <div class="form-group full">
-            <label>Skills</label>
+  <div class="form-step">
+    <h1>Resume Upload</h1>
 
-            <input type="text" placeholder="Conduit bending, troubleshooting, blueprint reading...">
-          </div>
+    <div class="form-group full">
+      <label>Resume Upload</label>
 
-          <div class="form-group full">
-            <label>Bio</label>
+      <div class="resume-upload">
+        <h3>Upload Your Resume</h3>
+        <p>Drag and drop your resume here or click to upload PDF/DOCX files.</p>
+        <input type="file">
+      </div>
+    </div>
+  </div>
 
-            <textarea placeholder="Tell employers about yourself, your experience, and what kind of opportunities you're looking for..."></textarea>
-          </div>
+  <div class="form-step">
+    <h1>Finish Profile</h1>
+    <p>Review your information, then finish your profile setup.</p>
+  </div>
 
-          <div class="form-group full">
+  <div class="button-row">
+    <button type="button" class="back-btn" id="backBtn">Back</button>
+    <button type="button" class="finish-btn" id="nextBtn">Next</button>
+  </div>
 
-            <label>Certifications</label>
-
-            <input type="text" placeholder="CSTS, WHMIS, Fall Protection...">
-
-          </div>
-
-          <div class="form-group full">
-
-            <label>Resume Upload</label>
-
-            <div class="resume-upload">
-
-              <h3>Upload Your Resume</h3>
-
-              <p>
-                Drag and drop your resume here or click to upload PDF/DOCX files.
-              </p>
-
-              <input type="file">
-
-            </div>
-
-          </div>
-
-        </div>
-
-        <div class="button-row">
-
-          <button type="button" class="back-btn">
-            Back
-          </button>
-
-          <button type="submit" class="finish-btn">
-            Finish & Go To Dashboard
-          </button>
-
-        </div>
-
-      </form>
+</form>
 
     </div>
 
@@ -388,17 +395,7 @@
 
 </div>
 
-<script>
-
-  const form = document.getElementById("setupForm");
-
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-
-    window.location.href = "candidate-account.html";
-  });
-
-</script>
+<script src="../js/candidate-setup.js"></script>
 
 </body>
 </html>

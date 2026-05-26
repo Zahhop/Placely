@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Employer Login | Placely Talent</title>
+  <title>Candidate Login | Placely Talent</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
@@ -303,122 +303,66 @@
   <div class="page-wrapper">
 
     <header>
-      <a href="index.html" class="logo">PLACELY TALENT</a>
-      <a href="login.html" class="back-link">Back to Login</a>
+      <a href="../index.html" class="logo">PLACELY TALENT</a>
+      <a href="../public/login.html" class="back-link">Back to Login</a>
     </header>
 
     <main>
+
       <section class="login-shell">
 
         <div class="eyebrow">
           <span></span>
-          Employer Login
+          Candidate Login
         </div>
 
-        <h1>Access your <strong>employer account</strong></h1>
+        <h1>Access your <strong>candidate account</strong></h1>
 
         <p class="description">
-          Login to manage your company profile, view candidates, and start building your hiring pipeline with Placely Talent.
+          Login to manage your profile, applications, and opportunities with Placely Talent.
         </p>
 
         <div class="login-card">
+
           <div class="form-inner">
 
             <div class="form-top">
               <div>
-                <div class="form-label">Placely Employer Access</div>
+                <div class="form-label">Placely Candidate Access</div>
                 <h2>Login</h2>
               </div>
 
               <div class="secure-pill">
-                Secure Employer Portal
+                Secure Candidate Portal
               </div>
             </div>
 
-          <form id="loginForm">
-  <div class="form-group">
-    <label>Email Address</label>
-    <input type="email" id="email" placeholder="company@example.com" required>
-  </div>
+            <form id="loginForm">
+  <input type="email" id="email" placeholder="you@example.com" required>
+  <input type="password" id="password" placeholder="Enter your password" required>
+  <button type="submit" class="submit-btn">Login to Account</button>
 
-  <div class="form-group">
-    <label>Password</label>
-    <input type="password" id="password" placeholder="Enter your password" required>
-  </div>
+              
 
-  <div style="display: flex; justify-content: flex-end; margin-top: 6px;">
-    <a href="forgot-password.html" class="forgot-link">Forgot password?</a>
-  </div>
+            </form>
 
-  <button type="submit" class="submit-btn">
-    Login to Employer Account
-  </button>
-</form>
-
-<p class="signup-note">
-  Don’t have an employer account?
-  <a href="employer-signup.html">Create one here</a>
-</p>
+            <p class="signup-note">
+              Don’t have an account?
+              <a href="candidate-signup.html">Create one here</a>
+            </p>
 
           </div>
+
         </div>
 
       </section>
+
     </main>
 
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./config.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/candidate-login.js"></script>
 
-<script>
-  const placelySupabase = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-  );
-
-  const form = document.getElementById("loginForm");
-
-  form.addEventListener("submit", async function (e) {
-    e.preventDefault();
-
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-
-    // 1. Try login
-    const { data, error } = await placelySupabase.auth.signInWithPassword({
-      email: email,
-      password: password
-    });
-
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
-    const userId = data.user.id;
-
-    // 2. Get role from profiles
-    const { data: profile, error: profileError } = await placelySupabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .single();
-
-    if (profileError || !profile) {
-      alert("Profile not found");
-      return;
-    }
-
-    // 3. ONLY allow employers
-    if (profile.role !== "employer") {
-      alert("This login is for employers only");
-      await placelySupabase.auth.signOut(); // log them back out
-      return;
-    }
-
-    // 4. Success → go to employer dashboard
-    window.location.href = "employer-dashboard.html";
-  });
-</script>
 </body>
 </html>
