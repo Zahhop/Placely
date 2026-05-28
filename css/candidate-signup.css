@@ -1,0 +1,140 @@
+/* candidate signup */
+
+
+* {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background: #f8fafc;
+      color: #0f172a;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #0f172a;
+      padding: 20px 8%;
+    }
+
+    .logo {
+      color: white;
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: 1px;
+    }
+
+    .signup-wrapper {
+      min-height: calc(100vh - 70px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 8%;
+    }
+
+    .signup-card {
+      width: 100%;
+      max-width: 620px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      padding: 36px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+
+    .signup-card h1 {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .signup-card p {
+      color: #64748b;
+      margin-bottom: 28px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group.full {
+      grid-column: span 2;
+    }
+
+    label {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    input {
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 13px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #2563eb;
+    }
+
+    .signup-btn {
+  width: 100%;
+  margin-top: 26px;
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: white;
+  border: none;
+  padding: 15px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: none;
+  display: block;
+  text-align: center;
+}
+
+    .login-text {
+      text-align: center;
+      margin-top: 20px;
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    .login-text a {
+      color: #2563eb;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .error-message {
+      margin-top: 16px;
+      color: #dc2626;
+      font-weight: 600;
+      font-size: 14px;
+      display: none;
+    }
+
+    @media (max-width: 700px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-group.full {
+        grid-column: span 1;
+      }
+
+      .signup-card {
+        padding: 28px;
+      }
+    }
