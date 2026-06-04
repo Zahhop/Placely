@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Employer Setup | Placely Talent</title>
+
+  <link rel="stylesheet" href="../css/employer-setup.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<header>
+  <a href="../index.html" class="logo">PLACELY TALENT</a>
+</header>
+
+<div class="setup-layout">
+
+  <aside class="sidebar">
+    <h2>Employer Setup</h2>
+    <p>Complete your hiring profile so Placely can understand your company needs.</p>
+
+    <div class="step-list">
+      <div class="step-item active">1. Company Info</div>
+      <div class="step-item">2. Hiring Focus</div>
+      <div class="step-item">3. Candidate Requirements</div>
+      <div class="step-item">4. Job Preferences</div>
+      <div class="step-item">5. Finish</div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <form id="employerSetupForm" class="setup-card">
+
+      <div class="form-step active">
+        <h1>Company Info</h1>
+        <p>Tell us a little more about your company.</p>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Company Size</label>
+            <select>
+              <option>1-10 employees</option>
+              <option>11-50 employees</option>
+              <option>51-200 employees</option>
+              <option>200+ employees</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Company Location</label>
+            <input type="text" placeholder="Calgary, AB">
+          </div>
+
+          <div class="form-group full">
+            <label>Company Description</label>
+            <textarea placeholder="Briefly describe your company, what you do, and the type of team you’re building."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-step">
+        <h1>Hiring Focus</h1>
+        <p>What industries or trades do you mainly hire for?</p>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Main Industry</label>
+            <select>
+              <option>Construction</option>
+              <option>Electrical</option>
+              <option>Plumbing</option>
+              <option>HVAC</option>
+              <option>Welding</option>
+              <option>Oil & Gas</option>
+              <option>General Labour</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Primary Roles You Hire</label>
+            <input type="text" placeholder="Electricians, apprentices, labourers">
+          </div>
+
+          <div class="form-group full">
+            <label>Hiring Needs</label>
+            <textarea placeholder="Explain what roles you usually need filled and what your current hiring needs are."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-step">
+        <h1>Candidate Requirements</h1>
+        <p>Help us understand what makes a candidate a good fit.</p>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Experience Level</label>
+            <select>
+              <option>Entry Level</option>
+              <option>Apprentice</option>
+              <option>Journeyman</option>
+              <option>Supervisor / Lead Hand</option>
+              <option>Any Experience Level</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Required Certifications</label>
+            <input type="text" placeholder="CSTS, WHMIS, Fall Protection">
+          </div>
+
+          <div class="form-group full">
+            <label>Must-Have Skills</label>
+            <input type="text" placeholder="Reliable, own transportation, tools, safety tickets">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-step">
+        <h1>Job Preferences</h1>
+        <p>Tell us what type of jobs you usually offer.</p>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Employment Type</label>
+            <select>
+              <option>Full-Time</option>
+              <option>Part-Time</option>
+              <option>Contract</option>
+              <option>Temporary</option>
+              <option>Rotation</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Typical Pay Range</label>
+            <input type="text" placeholder="$25 - $40/hr">
+          </div>
+
+          <div class="form-group">
+            <label>Hiring Timeline</label>
+            <select>
+              <option>Immediately</option>
+              <option>Within 2 weeks</option>
+              <option>Within 1 month</option>
+              <option>Ongoing hiring</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Work Location</label>
+            <input type="text" placeholder="Calgary, Edmonton, remote site, etc.">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-step">
+        <h1>Finish Setup</h1>
+        <p>Review your setup and continue to your employer dashboard.</p>
+
+        <div class="review-box">
+          Your employer hiring profile is ready to be created.
+        </div>
+      </div>
+
+      <div class="button-row">
+        <button type="button" class="back-btn" id="backBtn">Back</button>
+        <button type="button" class="next-btn" id="nextBtn">Next</button>
+      </div>
+
+    </form>
+
+  </main>
+
+</div>
+
+<script src="../emp-js/employer-setup.js"></script>
+
+</body>
+</html>
