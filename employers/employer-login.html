@@ -7,9 +7,6 @@
 
   <link rel="stylesheet" href="../css/employer-login.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-  
-  </style>
 </head>
 
 <body>
@@ -48,32 +45,30 @@
               </div>
             </div>
 
-          <form id="loginForm">
-  <div class="form-group">
-    <label>Email Address</label>
-    <input type="email" id="email" placeholder="company@example.com" required>
-  </div>
+            <form id="loginForm">
+              <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="email" placeholder="company@example.com" required>
+              </div>
 
-  <div class="form-group">
-    <label>Password</label>
-    <input type="password" id="password" placeholder="Enter your password" required>
-  </div>
+              <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="Enter your password" required>
+              </div>
 
-  <div style="display: flex; justify-content: flex-end; margin-top: 6px;">
-    <a href="../public/forgot-password.html" class="forgot-link">Forgot password?</a>
-  </div>
+              <div style="display: flex; justify-content: flex-end; margin-top: 6px;">
+                <a href="../public/forgot-password.html" class="forgot-link">Forgot password?</a>
+              </div>
 
-  <a href="employer-dashboard.html" class="login-btn">
-  Login to Employer Account
-</a>
+              <button type="submit" class="login-btn">
+                Login to Employer Account
+              </button>
+            </form>
 
-  </button>
-</form>
-
-<p class="signup-note">
-  Don’t have an employer account?
-  <a href="employer-signup.html">Create one here</a>
-</p>
+            <p class="signup-note">
+              Don’t have an employer account?
+              <a href="employer-signup.html">Create one here</a>
+            </p>
 
           </div>
         </div>
@@ -82,6 +77,7 @@
     </main>
 
   </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/config.js"></script>
   <script src="../emp js/employer-login.js"></script>
