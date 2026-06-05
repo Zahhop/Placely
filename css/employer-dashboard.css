@@ -217,3 +217,15 @@ header {
     grid-template-columns: 1fr;
   }
 }
+
+.nav-link {
+  color: #cbd5e1;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 14px;
+  transition: 0.2s ease;
+}
+
+.nav-link:hover {
+  color: white;
+}
