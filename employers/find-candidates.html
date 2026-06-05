@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Find Candidates | Placely Talent</title>
+
+  <link rel="stylesheet" href="../css/find-candidates.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<header>
+  <a href="../index.html" class="logo">PLACELY TALENT</a>
+  <a href="employer-dashboard.html" class="back-btn">Back to Dashboard</a>
+</header>
+
+<main class="page-container">
+
+  <section class="page-header">
+    <h1>Find Candidates</h1>
+    <p>Search skilled candidates by trade, city, experience, availability, and certifications.</p>
+  </section>
+
+  <section class="search-section">
+    <div class="search-row">
+      <input type="text" placeholder="Search by trade, name, skill, or keyword..." />
+
+      <button type="button" class="filter-btn" id="filterBtn">
+        Filters
+      </button>
+
+      <button type="button" class="search-btn">
+        Search
+      </button>
+    </div>
+
+    <div class="filters-panel" id="filtersPanel">
+      <div class="filter-grid">
+
+        <div class="filter-group">
+          <label>City</label>
+          <input type="text" placeholder="Calgary, Edmonton, Vancouver..." />
+        </div>
+
+        <div class="filter-group">
+          <label>Experience</label>
+          <select>
+            <option>Any Experience</option>
+            <option>0-1 Years</option>
+            <option>2-4 Years</option>
+            <option>5-10 Years</option>
+            <option>10+ Years</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Can Start</label>
+          <select>
+            <option>Any Time</option>
+            <option>Immediately</option>
+            <option>Within 1 Week</option>
+            <option>Within 2 Weeks</option>
+            <option>Within 1 Month</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Job Type</label>
+          <select>
+            <option>Any Type</option>
+            <option>Full-Time</option>
+            <option>Part-Time</option>
+            <option>Contract</option>
+            <option>Rotation</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Certification</label>
+          <input type="text" placeholder="CSTS, WHMIS, Fall Protection..." />
+        </div>
+
+        <div class="filter-group">
+          <label>Trade</label>
+          <select>
+            <option>Any Trade</option>
+            <option>Electrical</option>
+            <option>Welding</option>
+            <option>Plumbing</option>
+            <option>HVAC</option>
+            <option>Construction</option>
+            <option>Oil & Gas</option>
+          </select>
+        </div>
+
+      </div>
+
+      <div class="filter-actions">
+        <button type="button" class="clear-btn">Clear Filters</button>
+        <button type="button" class="apply-btn">Apply Filters</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="candidate-grid">
+
+    <div class="candidate-card">
+      <div class="candidate-top">
+        <div class="avatar">JT</div>
+
+        <div>
+          <h3>Jordan Taylor</h3>
+          <p>Electrical Apprentice</p>
+        </div>
+      </div>
+
+      <div class="candidate-info">
+        <span>Calgary, AB</span>
+        <span>2 Years Experience</span>
+        <span>Can start immediately</span>
+      </div>
+
+      <p class="candidate-bio">
+        Motivated apprentice with commercial site experience, conduit work, troubleshooting, and safety certifications.
+      </p>
+
+      <div class="tag-row">
+        <span>CSTS</span>
+        <span>WHMIS</span>
+        <span>Fall Protection</span>
+      </div>
+
+      <div class="card-actions">
+        <button>View Profile</button>
+        <button class="secondary">Save</button>
+      </div>
+    </div>
+
+    <div class="candidate-card">
+      <div class="candidate-top">
+        <div class="avatar">MR</div>
+
+        <div>
+          <h3>Maya Robinson</h3>
+          <p>Journeyman Welder</p>
+        </div>
+      </div>
+
+      <div class="candidate-info">
+        <span>Edmonton, AB</span>
+        <span>6 Years Experience</span>
+        <span>Available in 2 weeks</span>
+      </div>
+
+      <p class="candidate-bio">
+        Experienced welder with industrial, shop, and shutdown work background. Comfortable with rotation work.
+      </p>
+
+      <div class="tag-row">
+        <span>CWB</span>
+        <span>First Aid</span>
+        <span>Confined Space</span>
+      </div>
+
+      <div class="card-actions">
+        <button>View Profile</button>
+        <button class="secondary">Save</button>
+      </div>
+    </div>
+
+    <div class="candidate-card">
+      <div class="candidate-top">
+        <div class="avatar">CS</div>
+
+        <div>
+          <h3>Chris Smith</h3>
+          <p>Heavy Equipment Operator</p>
+        </div>
+      </div>
+
+      <div class="candidate-info">
+        <span>Fort McMurray, AB</span>
+        <span>8 Years Experience</span>
+        <span>Open to rotation</span>
+      </div>
+
+      <p class="candidate-bio">
+        Operator with excavator, loader, and civil construction experience. Strong safety record and remote site background.
+      </p>
+
+      <div class="tag-row">
+        <span>Ground Disturbance</span>
+        <span>CSTS</span>
+        <span>H2S Alive</span>
+      </div>
+
+      <div class="card-actions">
+        <button>View Profile</button>
+        <button class="secondary">Save</button>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<script src="../js/find-candidates.js"></script>
+
+</body>
+</html>
