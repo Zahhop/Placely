@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Hiring Requests | Placely Talent</title>
+
+  <link rel="stylesheet" href="../css/hiring-requests.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<header>
+  <a href="../index.html" class="logo">PLACELY TALENT</a>
+  <a href="employer-dashboard.html" class="back-btn">Back to Dashboard</a>
+</header>
+
+<main class="page-container">
+
+  <section class="page-header">
+    <h1>Hiring Request</h1>
+    <p>Tell Placely what kind of hiring help you need, and we’ll use this to support your candidate search.</p>
+  </section>
+
+  <form class="request-card">
+
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>Company Name</label>
+        <input type="text" placeholder="Your company name" />
+      </div>
+
+      <div class="form-group">
+        <label>Contact Name</label>
+        <input type="text" placeholder="Your name" />
+      </div>
+
+      <div class="form-group">
+        <label>Role Needed</label>
+        <input type="text" placeholder="Electrical Apprentice, Welder, Labourer..." />
+      </div>
+
+      <div class="form-group">
+        <label>Number of Workers Needed</label>
+        <input type="number" placeholder="3" />
+      </div>
+
+      <div class="form-group">
+        <label>City / Job Location</label>
+        <input type="text" placeholder="Calgary, AB" />
+      </div>
+
+      <div class="form-group">
+        <label>Start Timeline</label>
+        <select>
+          <option>Immediately</option>
+          <option>Within 1 Week</option>
+          <option>Within 2 Weeks</option>
+          <option>Within 1 Month</option>
+          <option>Ongoing Hiring</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Employment Type</label>
+        <select>
+          <option>Full-Time</option>
+          <option>Part-Time</option>
+          <option>Contract</option>
+          <option>Temporary</option>
+          <option>Rotation</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Experience Level</label>
+        <select>
+          <option>Any Experience</option>
+          <option>Entry Level</option>
+          <option>Apprentice</option>
+          <option>Journeyman</option>
+          <option>Supervisor / Lead Hand</option>
+        </select>
+      </div>
+
+      <div class="form-group full">
+        <label>Required Skills / Certifications</label>
+        <textarea placeholder="CSTS, WHMIS, Fall Protection, driver's license, own tools, reliable transportation, etc."></textarea>
+      </div>
+
+      <div class="form-group full">
+        <label>What Do You Need Help With?</label>
+        <textarea placeholder="Example: We need help finding 3 apprentice electricians for a commercial project starting next week. We need candidates screened for safety tickets and availability."></textarea>
+      </div>
+
+      <div class="form-group full">
+        <label>Additional Notes</label>
+        <textarea placeholder="Pay range, schedule, project details, jobsite expectations, interview process, or anything Placely should know."></textarea>
+      </div>
+
+    </div>
+
+    <div class="button-row">
+      <button type="button" class="secondary-btn">Save Draft</button>
+      <button type="button" class="submit-btn">Submit Hiring Request</button>
+    </div>
+
+  </form>
+
+</main>
+
+</body>
+</html>

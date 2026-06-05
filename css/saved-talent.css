@@ -1,0 +1,190 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Inter, Arial, sans-serif;
+}
+
+body {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+header {
+  background: #0f172a;
+  padding: 20px 8%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  color: white;
+  text-decoration: none;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.back-btn {
+  background: #2563eb;
+  color: white;
+  text-decoration: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.page-container {
+  width: 84%;
+  max-width: 1250px;
+  margin: 40px auto;
+}
+
+.page-header {
+  margin-bottom: 26px;
+}
+
+.page-header h1 {
+  font-size: 38px;
+  margin-bottom: 8px;
+}
+
+.page-header p {
+  color: #64748b;
+}
+
+.saved-actions {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 22px;
+  margin-bottom: 28px;
+  display: flex;
+  gap: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+}
+
+.saved-actions input,
+.saved-actions select {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 15px;
+  outline: none;
+  background: white;
+}
+
+.saved-actions input {
+  flex: 1;
+}
+
+.talent-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 22px;
+}
+
+.talent-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+}
+
+.talent-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #dbeafe;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+}
+
+.talent-top h3 {
+  font-size: 21px;
+  margin-bottom: 4px;
+}
+
+.talent-top p {
+  color: #2563eb;
+  font-weight: 700;
+}
+
+.talent-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #64748b;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.talent-bio {
+  color: #475569;
+  line-height: 1.6;
+  margin-bottom: 18px;
+}
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.tag-row span {
+  background: #f1f5f9;
+  color: #334155;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.card-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.card-actions button {
+  flex: 1;
+  border: none;
+  background: #2563eb;
+  color: white;
+  padding: 11px;
+  border-radius: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.card-actions .secondary {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.card-actions .remove {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+@media (max-width: 900px) {
+  header,
+  .saved-actions {
+    flex-direction: column;
+  }
+
+  .talent-grid {
+    grid-template-columns: 1fr;
+  }
+}
