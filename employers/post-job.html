@@ -24,28 +24,28 @@
     <p>Create a job listing for candidates to view and apply to.</p>
   </section>
 
-  <form class="job-card">
+  <form class="job-card" id="jobForm">
 
     <div class="form-grid">
 
       <div class="form-group">
         <label>Job Title</label>
-        <input type="text" placeholder="Electrical Apprentice" />
+        <input id="jobTitle" type="text" placeholder="Electrical Apprentice" required />
       </div>
 
       <div class="form-group">
         <label>Company Name</label>
-        <input type="text" placeholder="Your company name" />
+        <input id="companyName" type="text" placeholder="Your company name" />
       </div>
 
       <div class="form-group">
         <label>Location</label>
-        <input type="text" placeholder="Calgary, AB" />
+        <input id="location" type="text" placeholder="Calgary, AB" />
       </div>
 
       <div class="form-group">
         <label>Employment Type</label>
-        <select>
+        <select id="employmentType">
           <option>Full-Time</option>
           <option>Part-Time</option>
           <option>Contract</option>
@@ -56,12 +56,12 @@
 
       <div class="form-group">
         <label>Pay Range</label>
-        <input type="text" placeholder="$25 - $40/hr" />
+        <input id="payRange" type="text" placeholder="$25 - $40/hr" />
       </div>
 
       <div class="form-group">
         <label>Experience Level</label>
-        <select>
+        <select id="experienceLevel">
           <option>Entry Level</option>
           <option>Apprentice</option>
           <option>Journeyman</option>
@@ -71,29 +71,33 @@
 
       <div class="form-group full">
         <label>Job Description</label>
-        <textarea placeholder="Describe the role, responsibilities, schedule, job site, and what the candidate will be doing."></textarea>
+        <textarea id="jobDescription" placeholder="Describe the role, responsibilities, schedule, job site, and what the candidate will be doing."></textarea>
       </div>
 
       <div class="form-group full">
         <label>Required Skills / Certifications</label>
-        <textarea placeholder="CSTS, WHMIS, Fall Protection, tools, license, reliable transportation, etc."></textarea>
+        <textarea id="requiredSkills" placeholder="CSTS, WHMIS, Fall Protection, tools, license, reliable transportation, etc."></textarea>
       </div>
 
       <div class="form-group full">
         <label>Benefits / Perks</label>
-        <textarea placeholder="Overtime, benefits, growth opportunities, paid training, company vehicle, etc."></textarea>
+        <textarea id="benefits" placeholder="Overtime, benefits, growth opportunities, paid training, company vehicle, etc."></textarea>
       </div>
 
     </div>
 
     <div class="button-row">
       <button type="button" class="secondary-btn">Save Draft</button>
-      <button type="button" class="submit-btn">Post Job</button>
+      <button type="submit" class="submit-btn">Post Job</button>
     </div>
 
   </form>
 
 </main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
+<script src="../emp-js/post-job.js"></script>
 
 </body>
 </html>
