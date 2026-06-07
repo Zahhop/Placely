@@ -14,7 +14,7 @@ async function loadEmployerProfile() {
   const { data: profile, error } = await employerSupabase
     .from("employer_profiles")
     .select("*")
-    .eq("user_id", user.id)
+    .eq("id", user.id)
     .single();
 
   if (error) {
@@ -48,9 +48,7 @@ form.addEventListener("submit", async (e) => {
 
   const { data: { user } } = await employerSupabase.auth.getUser();
 
-  const updates = {
-    user_id: user.id,
-
+  const updates = { 
     company_name: document.getElementById("company_name").value,
     industry: document.getElementById("industry").value,
     main_hiring_industry: document.getElementById("main_hiring_industry").value,
@@ -68,7 +66,7 @@ form.addEventListener("submit", async (e) => {
   const { error } = await employerSupabase
     .from("employer_profiles")
     .update(updates)
-    .eq("user_id", user.id);
+    .eq("id", user.id);
 
   if (error) {
   console.error("Save error:", error.message, error.details, error.hint, error);
