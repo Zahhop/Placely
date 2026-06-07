@@ -20,7 +20,7 @@
   </div>
 </header>
 
-<div class="profile-container">
+<form id="employerProfileForm" class="profile-container">
 
   <div class="profile-header">
     <div class="company-photo">
@@ -46,37 +46,37 @@
 
       <div class="form-group">
         <label>Company Name</label>
-        <input type="text" placeholder="Northern Electric Ltd." />
+        <input id="company_name" type="text">
       </div>
 
       <div class="form-group">
         <label>Industry</label>
-        <input type="text" placeholder="Electrical / Construction" />
+        <input id="industry" type="text">
       </div>
 
       <div class="form-group">
         <label>Company Email</label>
-        <input type="email" placeholder="info@company.com" />
+        <input id="company_email" type="text">
       </div>
 
       <div class="form-group">
         <label>Phone Number</label>
-        <input type="text" placeholder="(403) 555-5555" />
+        <input id="phone" type="text">
       </div>
 
       <div class="form-group">
         <label>Company Website</label>
-        <input type="text" placeholder="www.company.com" />
+        <input id="company_website" type="text">
       </div>
 
       <div class="form-group">
         <label>Company Location</label>
-        <input type="text" placeholder="Calgary, AB" />
+        <input id="company_location" type="text">
       </div>
 
       <div class="form-group full">
         <label>Company Description</label>
-        <textarea placeholder="Tell candidates about your company, team culture, projects, and what makes your workplace stand out."></textarea>
+        <textarea id="company_description"></textarea>
       </div>
 
     </div>
@@ -93,7 +93,7 @@
 
       <div class="form-group">
         <label>Main Hiring Industry</label>
-        <select>
+        <select id="main_hiring_industry">
           <option>Electrical</option>
           <option>Construction</option>
           <option>HVAC</option>
@@ -104,7 +104,7 @@
 
       <div class="form-group">
         <label>Employment Type</label>
-        <select>
+        <select id="employment_type">
           <option>Full-Time</option>
           <option>Part-Time</option>
           <option>Contract</option>
@@ -113,12 +113,12 @@
 
       <div class="form-group">
         <label>Typical Pay Range</label>
-        <input type="text" placeholder="$25 - $45/hr" />
+        <input id="pay_range" type="text">
       </div>
 
       <div class="form-group">
         <label>Hiring Timeline</label>
-        <select>
+        <select id="hiring_timeline">
           <option>Immediately</option>
           <option>Within 2 Weeks</option>
           <option>Ongoing Hiring</option>
@@ -127,7 +127,7 @@
 
       <div class="form-group full">
         <label>Preferred Candidate Qualities</label>
-        <textarea placeholder="Reliable, experienced, safety certified, team-oriented, etc."></textarea>
+        <textarea id="candidate_qualities"></textarea>
       </div>
 
     </div>
@@ -135,10 +135,14 @@
   </div>
 
   <div class="save-row">
-    <button class="save-btn">Save Profile Changes</button>
-  </div>
-
+  <button type="submit" class="save-btn">Save Profile Changes</button>
 </div>
+
+</form>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
+<script src="../emp-js/employer-profile.js"></script>
 
 </body>
 </html>
