@@ -25,6 +25,7 @@ async function loadEmployerProfile() {
   document.getElementById("company_name").value = profile.company_name || "";
   document.getElementById("industry").value = profile.industry || "";
   document.getElementById("company_email").value = profile.company_email || user.email || "";
+  document.getElementById("contact_name").value = profile.contact_name || "";
   document.getElementById("phone").value = profile.phone || "";
   document.getElementById("company_website").value = profile.company_website || "";
   document.getElementById("company_location").value = profile.company_location || "";
@@ -53,6 +54,7 @@ form.addEventListener("submit", async (e) => {
     industry: document.getElementById("industry").value,
     main_hiring_industry: document.getElementById("main_hiring_industry").value,
     company_email: document.getElementById("company_email").value,
+    contact_name: document.getElementById("contact_name").value,
     phone: document.getElementById("phone").value,
     company_website: document.getElementById("company_website").value,
     company_location: document.getElementById("company_location").value,
