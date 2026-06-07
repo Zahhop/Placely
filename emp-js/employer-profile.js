@@ -24,7 +24,7 @@ async function loadEmployerProfile() {
 
   document.getElementById("company_name").value = profile.company_name || "";
   document.getElementById("industry").value = profile.industry || "";
-  document.getElementById("company_email").value = profile.email || user.email || "";
+  document.getElementById("company_email").value = profile.company_email || user.email || "";
   document.getElementById("phone").value = profile.phone || "";
   document.getElementById("company_website").value = profile.company_website || "";
   document.getElementById("company_location").value = profile.company_location || "";
@@ -54,7 +54,7 @@ form.addEventListener("submit", async (e) => {
     company_name: document.getElementById("company_name").value,
     industry: document.getElementById("industry").value,
     main_hiring_industry: document.getElementById("main_hiring_industry").value,
-    email: document.getElementById("company_email").value,
+    company_email: document.getElementById("company_email").value,
     phone: document.getElementById("phone").value,
     company_website: document.getElementById("company_website").value,
     company_location: document.getElementById("company_location").value,
@@ -71,10 +71,10 @@ form.addEventListener("submit", async (e) => {
     .eq("user_id", user.id);
 
   if (error) {
-    console.error(error);
-    alert("Error saving profile");
-    return;
-  }
+  console.error("Save error:", error.message, error.details, error.hint, error);
+  alert("Error saving profile: " + error.message);
+  return;
+}
 
   alert("Profile updated successfully!");
 });
