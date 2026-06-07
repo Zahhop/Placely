@@ -24,11 +24,26 @@
       </div>
 
       <div class="profile-main-info">
-        <input type="text" placeholder="Full Name" class="name-input" />
-        <input type="text" placeholder="Trade / Job Title ex. Electrician Apprentice" />
-        <input type="text" placeholder="Location ex. Calgary, AB" />
+          <input
+            id="full_name"
+            type="text"
+            placeholder="Full Name"
+            class="name-input"/>
 
-        <textarea placeholder="Short bio about yourself, your experience, and what kind of work you're looking for..."></textarea>
+        <input
+            id="trade"
+            type="text"
+            placeholder="Trade / Job Title ex. Electrician Apprentice"/>
+
+        <input
+            id="location"
+            type="text"
+            placeholder="Location ex. Calgary, AB"/>
+
+        <textarea
+            id="bio"
+            placeholder="Short bio about yourself, your experience, and what kind of work you're looking for..."></textarea>
+
       </div>
     </section>
 
@@ -38,16 +53,16 @@
         <h3>Work Details</h3>
 
         <label>Years of Experience</label>
-        <input type="text" placeholder="ex. 2 years" />
+        <input  id="experience" type="text" placeholder="ex. 2 years" />
 
         <label>Skills</label>
-        <input type="text" placeholder="ex. Wiring, conduit, troubleshooting" />
+        <input id="skills" type="text" placeholder="ex. Wiring, conduit, troubleshooting" />
 
         <label>Certifications</label>
-        <input type="text" placeholder="ex. CSTS, WHMIS, Fall Protection" />
+        <input id="certifications" type="text" placeholder="ex. CSTS, WHMIS, Fall Protection" />
 
         <label>Availability</label>
-        <select>
+        <select id="availability">
           <option>Available Immediately</option>
           <option>Available in 2 Weeks</option>
           <option>Currently Employed</option>
@@ -58,13 +73,13 @@
         <h3>Contact Info</h3>
 
         <label>Email</label>
-        <input type="email" placeholder="you@example.com" />
+        <input id="email" type="email" placeholder="you@example.com" />
 
         <label>Phone</label>
-        <input type="text" placeholder="(403) 000-0000" />
+        <input id="phone" type="text" placeholder="(403) 000-0000" />
 
         <label>Preferred Contact Method</label>
-        <select>
+        <select id="contact_method">
           <option>Email</option>
           <option>Phone</option>
           <option>Text</option>
@@ -78,7 +93,7 @@
         <div class="resume-drop">
           <p>Drop resume here</p>
           <span>or click to upload PDF/DOCX</span>
-          <input type="file" />
+          <input id="resume_url" type="file" />
         </div>
       </div>
 
@@ -87,7 +102,7 @@
         <p>Control whether employers can see your profile.</p>
 
         <label class="toggle-row">
-          <input type="checkbox" checked />
+          <input id="profile_visible" type="checkbox" checked />
           <span>Visible to Employers</span>
         </label>
 
@@ -97,6 +112,10 @@
     </section>
 
   </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/candidate-profile.js"></script>
 
 </body>
 </html>
