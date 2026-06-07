@@ -93,6 +93,15 @@ header {
   color: #2563eb;
 }
 
+.job-board-btn {
+  background: #1e293b;
+  color: white;
+  text-decoration: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
 .jobs-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
