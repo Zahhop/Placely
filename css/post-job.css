@@ -18,6 +18,12 @@ header {
   align-items: center;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .logo {
   color: white;
   text-decoration: none;
@@ -27,6 +33,15 @@ header {
 
 .back-btn {
   background: #2563eb;
+  color: white;
+  text-decoration: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.job-board-btn {
+  background: #1e293b;
   color: white;
   text-decoration: none;
   padding: 10px 16px;
