@@ -25,11 +25,11 @@
 
       const { data: employerProfile, error: employerError } = await placelySupabase
         .from("employer_profiles")
-        .select("company_name, contact_name, phone, industry, hiring_needs")
+        .select("company_name, company_email, contact_name, phone, industry, hiring_needs")
         .eq("id", user.id)
         .single();
 
-      document.getElementById("userEmail").textContent = user.email || "Not available";
+      
 
       if (employerError || !employerProfile) {
         document.getElementById("companyName").textContent = "Not completed";
@@ -39,6 +39,8 @@
         document.getElementById("hiringNeeds").textContent = "No employer profile found yet.";
         return;
       }
+
+      document.getElementById("userEmail").textContent = employerProfile.company_email || user.email || "Not available";
 
       document.getElementById("companyNameTitle").textContent = employerProfile.company_name || "Employer";
       document.getElementById("companyName").textContent = employerProfile.company_name || "Not completed";
