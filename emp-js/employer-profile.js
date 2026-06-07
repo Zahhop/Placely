@@ -1,17 +1,17 @@
-const supabase = window.supabase.createClient(
+const employerSupabase = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
 );
 
 async function loadEmployerProfile() {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await employerSupabase.auth.getUser();
 
   if (!user) {
     window.location.href = "employer-login.html";
     return;
   }
 
-  const { data: profile, error } = await supabase
+  const { data: profile, error } = await employerSupabase
     .from("employer_profiles")
     .select("*")
     .eq("user_id", user.id)
@@ -29,8 +29,8 @@ async function loadEmployerProfile() {
   document.getElementById("company_website").value = profile.company_website || "";
   document.getElementById("company_location").value = profile.company_location || "";
   document.getElementById("company_description").value = profile.company_description || "";
-  document.getElementById("contact_name").value = profile.contact_name || "";
-  document.getElementById("hiring_needs").value = profile.hiring_needs || "";
+//   document.getElementById("contact_name").value = profile.contact_name || "";
+//   document.getElementById("hiring_needs").value = profile.hiring_needs || ""; 
   document.getElementById("employment_type").value = profile.employment_type || "";
   document.getElementById("pay_range").value = profile.pay_range || "";
   document.getElementById("hiring_timeline").value = profile.hiring_timeline || "";
@@ -46,7 +46,7 @@ const form = document.getElementById("employerProfileForm");
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await employerSupabase.auth.getUser();
 
   const updates = {
     user_id: user.id,
@@ -65,7 +65,7 @@ form.addEventListener("submit", async (e) => {
     candidate_qualities:document.getElementById("candidate_qualities").value
     };
 
-  const { error } = await supabase
+  const { error } = await employerSupabase
     .from("employer_profiles")
     .update(updates)
     .eq("user_id", user.id);
