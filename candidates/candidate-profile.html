@@ -19,8 +19,9 @@
 
     <section class="profile-header">
       <div class="profile-photo-box">
-        <img src="https://via.placeholder.com/140" alt="Profile Photo" class="profile-photo">
-        <button class="small-btn">Upload Photo</button>
+        <img id="profile_photo_preview" src="https://via.placeholder.com/140" alt="Profile Photo" class="profile-photo">
+        <input id="profile_photo_file" type="file" accept="image/*" hidden>
+        <button type="button" id="uploadPhotoBtn" class="small-btn">Upload Photo</button>
       </div>
 
       <div class="profile-main-info">
@@ -90,10 +91,10 @@
         <h3>Resume</h3>
         <p>Upload your resume so employers can review your experience.</p>
 
-        <div class="resume-drop">
+        <div class="resume-drop" id="resumeDrop">
           <p>Drop resume here</p>
           <span>or click to upload PDF/DOCX</span>
-          <input id="resume_url" type="file" />
+          <input id="resume_file" type="file" accept=".pdf,.doc,.docx" hidden />
         </div>
       </div>
 

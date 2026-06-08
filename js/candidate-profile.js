@@ -38,12 +38,78 @@ async function loadCandidateProfile() {
 
 loadCandidateProfile();
 
+document.getElementById("profile_photo_preview").src =
+  profile.profile_photo_url || "https://via.placeholder.com/140";
+
+console.log("candidate-profile.js loaded");
+console.log(document.getElementById("uploadPhotoBtn"));
+console.log(document.getElementById("profile_photo_file"));
+
+document.getElementById("uploadPhotoBtn").addEventListener("click", () => {
+  document.getElementById("profile_photo_file").click();
+});
+
+document.getElementById("resumeDrop").addEventListener("click", () => {
+  document.getElementById("resume_file").click();
+});
+
 const saveBtn = document.querySelector(".save-btn");
 
 saveBtn.addEventListener("click", async (e) => {
   e.preventDefault();
 
   const { data: { user } } = await candidateSupabase.auth.getUser();
+
+
+  let profilePhotoUrl = null;
+let resumeUrl = null;
+
+const photoFile = document.getElementById("profile_photo_file")?.files[0];
+const resumeFile = document.getElementById("resume_file")?.files[0];
+
+if (photoFile) {
+  const photoPath = `${user.id}/${Date.now()}-${photoFile.name}`;
+
+  const { error: photoError } = await candidateSupabase.storage
+    .from("candidate_photos")
+    .upload(photoPath, photoFile, {
+      upsert: true
+    });
+
+  if (photoError) {
+    console.error("Photo upload error:", photoError);
+    alert("Error uploading profile photo: " + photoError.message);
+    return;
+  }
+
+  const { data } = candidateSupabase.storage
+    .from("candidate_photos")
+    .getPublicUrl(photoPath);
+
+  profilePhotoUrl = data.publicUrl;
+}
+
+if (resumeFile) {
+  const resumePath = `${user.id}/${Date.now()}-${resumeFile.name}`;
+
+  const { error: resumeError } = await candidateSupabase.storage
+    .from("candidate_resumes")
+    .upload(resumePath, resumeFile, {
+      upsert: true
+    });
+
+  if (resumeError) {
+    console.error("Resume upload error:", resumeError);
+    alert("Error uploading resume: " + resumeError.message);
+    return;
+  }
+
+  const { data } = candidateSupabase.storage
+    .from("candidate_resumes")
+    .getPublicUrl(resumePath);
+
+  resumeUrl = data.publicUrl;
+}
 
   const updates = {
     full_name: document.getElementById("full_name").value,
@@ -59,6 +125,19 @@ saveBtn.addEventListener("click", async (e) => {
     contact_method: document.getElementById("contact_method").value,
     profile_visible: document.getElementById("profile_visible").checked
   };
+
+
+
+
+    if (profilePhotoUrl) {
+    updates.profile_photo_url = profilePhotoUrl;
+    }
+
+    if (resumeUrl) {
+    updates.resume_url = resumeUrl;
+    }
+
+
 
   const { error } = await candidateSupabase
     .from("candidate_profiles")
