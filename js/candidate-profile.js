@@ -22,6 +22,16 @@ async function loadCandidateProfile() {
     return;
   }
 
+  console.log("Loaded profile:", profile);
+console.log("Loaded photo URL:", profile.profile_photo_url);
+
+document.getElementById("profile_photo_preview").src = profile.profile_photo_url || "https://placehold.co/140x140";
+
+console.log(
+  "Image src after setting:",
+  document.getElementById("profile_photo_preview").src
+);
+
   document.getElementById("full_name").value = profile.full_name || "";
   document.getElementById("trade").value = profile.trade || "";
   document.getElementById("location").value = profile.location || "";
@@ -38,15 +48,22 @@ async function loadCandidateProfile() {
 
 loadCandidateProfile();
 
-document.getElementById("profile_photo_preview").src =
-  profile.profile_photo_url || "https://via.placeholder.com/140";
-
+    
 console.log("candidate-profile.js loaded");
 console.log(document.getElementById("uploadPhotoBtn"));
 console.log(document.getElementById("profile_photo_file"));
 
 document.getElementById("uploadPhotoBtn").addEventListener("click", () => {
   document.getElementById("profile_photo_file").click();
+});
+
+document.getElementById("profile_photo_file").addEventListener("change", () => {
+  const file = document.getElementById("profile_photo_file").files[0];
+
+  if (file) {
+    document.getElementById("profile_photo_preview").src =
+      URL.createObjectURL(file);
+  }
 });
 
 document.getElementById("resumeDrop").addEventListener("click", () => {
@@ -87,6 +104,8 @@ if (photoFile) {
     .getPublicUrl(photoPath);
 
   profilePhotoUrl = data.publicUrl;
+
+  console.log("Generated photo URL:", profilePhotoUrl);
 }
 
 if (resumeFile) {
@@ -109,6 +128,7 @@ if (resumeFile) {
     .getPublicUrl(resumePath);
 
   resumeUrl = data.publicUrl;
+
 }
 
   const updates = {
@@ -138,11 +158,16 @@ if (resumeFile) {
     }
 
 
+    console.log("Final updates object:", updates);
+
 
   const { error } = await candidateSupabase
-    .from("candidate_profiles")
-    .update(updates)
-    .eq("id", user.id);
+  .from("candidate_profiles")
+  .upsert({
+    id: user.id,
+    ...updates
+  });
+
 
   if (error) {
     console.error("Save error:", error.message, error.details, error.hint, error);
