@@ -35,6 +35,8 @@ if (error) {
     document.getElementById("phone").textContent = profile.phone || "";
     document.getElementById("email").textContent = profile.email || "";
     document.getElementById("contact_method").textContent = profile.contact_method || "";
+    document.getElementById("resume_status").textContent = profile.resume_url ? "Uploaded" : "Not uploaded";
+    document.getElementById("profile_photo_url").src = profile.profile_photo_url || "https://via.placeholder.com/120";
   }
 
   document.getElementById("logoutBtn").addEventListener("click", async () => {
