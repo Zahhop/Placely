@@ -191,3 +191,46 @@ label {
     width: 92%;
   }
 }
+
+.resume-preview {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid #dbe3f1;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8fbff;
+}
+
+.file-icon {
+  font-size: 28px;
+}
+
+.file-info p {
+  margin: 0;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.file-info span {
+  font-size: 14px;
+  color: #64748b;
+}
+
+.remove-file-btn {
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.remove-file-btn:hover {
+  background: #fecaca;
+}

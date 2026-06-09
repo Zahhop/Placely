@@ -27,6 +27,14 @@ console.log("Loaded photo URL:", profile.profile_photo_url);
 
 document.getElementById("profile_photo_preview").src = profile.profile_photo_url || "https://placehold.co/140x140";
 
+if (profile.resume_url) {
+  const fileName = profile.resume_url.split("/").pop();
+
+  document.getElementById("resume_preview").style.display = "flex";
+  document.getElementById("resume_file_name").textContent =
+    decodeURIComponent(fileName);
+}
+
 console.log(
   "Image src after setting:",
   document.getElementById("profile_photo_preview").src
@@ -68,6 +76,25 @@ document.getElementById("profile_photo_file").addEventListener("change", () => {
 
 document.getElementById("resumeDrop").addEventListener("click", () => {
   document.getElementById("resume_file").click();
+});
+
+document.getElementById("resume_file").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+
+  if (!file) return;
+
+  document.getElementById("resume_preview").style.display = "flex";
+  document.getElementById("resume_file_name").textContent = file.name;
+});
+
+let removeResume = false;
+
+document.getElementById("remove_resume_btn").addEventListener("click", () => {
+  removeResume = true;
+
+  document.getElementById("resume_file").value = "";
+  document.getElementById("resume_preview").style.display = "none";
+  document.getElementById("resume_file_name").textContent = "";
 });
 
 const saveBtn = document.querySelector(".save-btn");
@@ -156,6 +183,10 @@ if (resumeFile) {
     if (resumeUrl) {
     updates.resume_url = resumeUrl;
     }
+
+    if (removeResume) {
+  updates.resume_url = null;
+}
 
 
     console.log("Final updates object:", updates);
