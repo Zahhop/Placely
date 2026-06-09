@@ -3,75 +3,85 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Candidate Login | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/candidate-login.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-  </head>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
 
 <body>
-  <div class="page-wrapper">
 
-    <header>
-      <a href="../index.html" class="logo">PLACELY TALENT</a>
-      <a href="../public/login.html" class="back-link">Back to Login</a>
-    </header>
+<header>
+  <a href="../index.html" class="logo">
+    PLACELY TALENT
+  </a>
 
-    <main>
+  <a href="candidates.html" class="nav-btn">Back to Candidate Page</a>
+</header>
 
-      <section class="login-shell">
+<main>
 
-        <div class="eyebrow">
-          <span></span>
-          Candidate Login
+  <section class="login-layout">
+
+    <div class="login-copy">
+      <div class="eyebrow">Candidate Login</div>
+
+      <h1>Access your candidate account.</h1>
+
+      <p>
+        Manage your profile, upload documents, view job opportunities, save roles, and keep your information ready for better trades opportunities.
+      </p>
+
+      <div class="feature-list">
+        <div>
+          <strong>Manage your profile</strong>
+          <span>Keep your trade, experience, certifications, and resume updated.</span>
         </div>
 
-        <h1>Access your <strong>candidate account</strong></h1>
-
-        <p class="description">
-          Login to manage your profile, applications, and opportunities with Placely Talent.
-        </p>
-
-        <div class="login-card">
-
-          <div class="form-inner">
-
-            <div class="form-top">
-              <div>
-                <div class="form-label">Placely Candidate Access</div>
-                <h2>Login</h2>
-              </div>
-
-              <div class="secure-pill">
-                Secure Candidate Portal
-              </div>
-            </div>
-
-            <form id="loginForm">
-  <input type="email" id="email" placeholder="you@example.com" required>
-  <input type="password" id="password" placeholder="Enter your password" required>
-  <button type="submit" class="submit-btn">Login to Account</button>
-
-              
-
-            </form>
-
-            <p class="signup-note">
-              Don’t have an account?
-              <a href="candidate-signup.html">Create one here</a>
-            </p>
-
-          </div>
-
+        <div>
+          <strong>Explore better roles</strong>
+          <span>View opportunities from employers looking for skilled trades candidates.</span>
         </div>
 
-      </section>
+        <div>
+          <strong>Stay ready</strong>
+          <span>Keep your candidate profile polished when the right opportunity appears.</span>
+        </div>
+      </div>
+    </div>
 
-    </main>
+    <div class="login-card">
+      <div class="card-top">
+        <div>
+          <span class="small-label">Placely Candidate Account</span>
+          <h2>Log in</h2>
+        </div>
 
-  </div>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <span class="secure-pill">Secure Access</span>
+      </div>
+
+      <form id="candidateLoginForm">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" placeholder="you@example.com" required />
+
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Enter your password" required />
+
+        <button type="submit">Log in to Account</button>
+      </form>
+
+      <div class="form-links">
+        <p>Don’t have an account? <a href="candidate-signup.html">Create one here</a></p>
+        <a href="forgot-password.html">Forgot password?</a>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/config.js"></script>
 <script src="../js/candidate-login.js"></script>
 

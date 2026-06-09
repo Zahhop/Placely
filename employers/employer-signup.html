@@ -3,97 +3,122 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Employer Sign Up | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/employer-signup.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
 <body>
-  <div class="page-wrapper">
-    <header>
-      <a href="../index.html" class="logo">PLACELY TALENT</a>
-      <a href="employers.html" class="back-link">Back to Employers</a>
-    </header>
 
-    <main>
-      <section class="signup-shell">
-        <div class="eyebrow"><span></span> Employer Sign Up</div>
+<header>
+  <a href="../index.html" class="logo">PLACELY TALENT</a>
+  <a href="employers.html" class="nav-btn">Back to Employers</a>
+</header>
 
-        <h1>Create your <strong>employer profile</strong></h1>
+<main>
 
-        <p class="description">
-          Join Placely Talent and start building a cleaner, faster hiring process for skilled candidates who match your company’s needs.
-        </p>
+  <section class="signup-layout">
 
-        <div class="signup-card">
-          <div class="form-inner">
-            <div class="form-top">
-              <div>
-                <div class="form-label">Placely Employer Access</div>
-                <h2>Sign up</h2>
-              </div>
-              <div class="secure-pill">Professional Hiring Network</div>
-            </div>
+    <div class="signup-copy">
+      <div class="eyebrow">Employer Account</div>
 
-            <form id="employerSignupForm">
-              <div class="form-grid">
-                <div class="form-group">
-                  <label for="companyName">Company Name</label>
-                  <input type="text" id="companyName" name="companyName" placeholder="Your company name" required>
-                </div>
+      <h1>Create your employer profile and start hiring faster.</h1>
 
-                <div class="form-group">
-                  <label for="contactName">Contact Name</label>
-                  <input type="text" id="contactName" name="contactName" placeholder="Your full name" required>
-                </div>
+      <p>
+        Start with the basics today. After your account is created, you’ll be able to complete your employer profile, post hiring needs, and connect with skilled trades candidates.
+      </p>
 
-                <div class="form-group">
-                  <label for="email">Email Address</label>
-                  <input type="email" id="email" name="email" placeholder="you@company.com" required>
-                </div>
+      <div class="feature-list">
+        <div>
+          <strong>Build a professional employer profile</strong>
+          <span>Show candidates your company, hiring focus, location, and what kind of opportunities you offer.</span>
+        </div>
 
-                <div class="form-group">
-                  <label for="password">Password</label>
-                  <input type="password" id="password" name="password" placeholder="Create a password" required>
-                </div>
+        <div>
+          <strong>Find skilled trades candidates</strong>
+          <span>Review candidates by trade, experience, certifications, availability, and profile details.</span>
+        </div>
 
-                <div class="form-group">
-                  <label for="phone">Phone Number</label>
-                  <input type="tel" id="phone" name="phone" placeholder="(555) 555-5555" required>
-                </div>
+        <div>
+          <strong>Hire with cleaner information</strong>
+          <span>Keep your hiring process organized and connect with better-fitting candidates faster.</span>
+        </div>
+      </div>
+    </div>
 
-                <div class="form-group">
-                  <label for="industry">Industry / Trade Focus</label>
-                  <input type="text" id="industry" name="industry" placeholder="Construction, HVAC, electrical" required>
-                </div>
-              </div>
+    <div class="signup-card">
+      <div class="card-top">
+        <div>
+          <span class="small-label">Placely Employer Portal</span>
+          <h2>Create account</h2>
+        </div>
 
-              <div class="form-footer">
-                <button type="submit" class="submit-btn">
-                  Continue to Setup
-                </button>
+        <span class="secure-pill">Step 1 of 2</span>
+      </div>
 
-                <p class="login-note">
-                  Already have an account? <a href="employer-login.html">Login here</a>
-                </p>
-              </div>
-            </form>
+      <p class="card-copy">
+        Start with your company details. You’ll complete your full employer setup next.
+      </p>
+
+      <form id="employerSignupForm">
+
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label for="companyName">Company Name</label>
+            <input type="text" id="companyName" name="companyName" placeholder="Company name" required>
           </div>
+
+          <div class="form-group">
+            <label for="contactName">Contact Name</label>
+            <input type="text" id="contactName" name="contactName" placeholder="Your full name" required>
+          </div>
+
+          <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input type="tel" id="phone" name="phone" placeholder="Phone number" required>
+          </div>
+
+          <div class="form-group">
+            <label for="industry">Industry / Trade Focus</label>
+            <input type="text" id="industry" name="industry" placeholder="Construction, HVAC, electrical" required>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" placeholder="you@company.com" required>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="Create a password" required minlength="6">
+          </div>
+
         </div>
 
-        <div class="benefit-line">
-          <div class="benefit-item"><strong>Fast</strong>Hiring setup</div>
-          <div class="benefit-item"><strong>Clean</strong>Employer profile</div>
-          <div class="benefit-item"><strong>Direct</strong>Candidate access</div>
-        </div>
-      </section>
-    </main>
-  </div>
+        <button type="submit" class="signup-btn">
+          Continue to Employer Setup
+        </button>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../js/config.js"></script>
-  <script src="../emp-js/employer-signup.js"></script>
+        <p class="error-message" id="errorMessage"></p>
+
+      </form>
+
+      <div class="login-text">
+        Already have an account?
+        <a href="employer-login.html">Log in</a>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
+<script src="../emp-js/employer-signup.js"></script>
 
 </body>
 </html>

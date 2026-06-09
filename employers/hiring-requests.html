@@ -24,38 +24,38 @@
     <p>Tell Placely what kind of hiring help you need, and we’ll use this to support your candidate search.</p>
   </section>
 
-  <form class="request-card">
+  <form class="request-card" id="hiringRequestForm">
 
     <div class="form-grid">
 
       <div class="form-group">
         <label>Company Name</label>
-        <input type="text" placeholder="Your company name" />
+        <input id="companyName" type="text" placeholder="Your company name" />
       </div>
 
       <div class="form-group">
         <label>Contact Name</label>
-        <input type="text" placeholder="Your name" />
+        <input id="contactName" type="text" placeholder="Your name" />
       </div>
 
       <div class="form-group">
         <label>Role Needed</label>
-        <input type="text" placeholder="Electrical Apprentice, Welder, Labourer..." />
+        <input id="roleNeeded" type="text" placeholder="Electrical Apprentice, Welder, Labourer..." required />
       </div>
 
       <div class="form-group">
         <label>Number of Workers Needed</label>
-        <input type="number" placeholder="3" />
+        <input id="workersNeeded" type="number" placeholder="3" />
       </div>
 
       <div class="form-group">
         <label>City / Job Location</label>
-        <input type="text" placeholder="Calgary, AB" />
+        <input id="location" type="text" placeholder="Calgary, AB" />
       </div>
 
       <div class="form-group">
         <label>Start Timeline</label>
-        <select>
+        <select id="startTimeline">
           <option>Immediately</option>
           <option>Within 1 Week</option>
           <option>Within 2 Weeks</option>
@@ -66,7 +66,7 @@
 
       <div class="form-group">
         <label>Employment Type</label>
-        <select>
+        <select id="employmentType">
           <option>Full-Time</option>
           <option>Part-Time</option>
           <option>Contract</option>
@@ -77,7 +77,7 @@
 
       <div class="form-group">
         <label>Experience Level</label>
-        <select>
+        <select id="experienceLevel">
           <option>Any Experience</option>
           <option>Entry Level</option>
           <option>Apprentice</option>
@@ -88,29 +88,33 @@
 
       <div class="form-group full">
         <label>Required Skills / Certifications</label>
-        <textarea placeholder="CSTS, WHMIS, Fall Protection, driver's license, own tools, reliable transportation, etc."></textarea>
+        <textarea id="requiredSkills" placeholder="CSTS, WHMIS, Fall Protection, driver's license, own tools, reliable transportation, etc."></textarea>
       </div>
 
       <div class="form-group full">
         <label>What Do You Need Help With?</label>
-        <textarea placeholder="Example: We need help finding 3 apprentice electricians for a commercial project starting next week. We need candidates screened for safety tickets and availability."></textarea>
+        <textarea id="helpNeeded" placeholder="Example: We need help finding 3 apprentice electricians for a commercial project starting next week. We need candidates screened for safety tickets and availability."></textarea>
       </div>
 
       <div class="form-group full">
         <label>Additional Notes</label>
-        <textarea placeholder="Pay range, schedule, project details, jobsite expectations, interview process, or anything Placely should know."></textarea>
+        <textarea id="additionalNotes" placeholder="Pay range, schedule, project details, jobsite expectations, interview process, or anything Placely should know."></textarea>
       </div>
 
     </div>
 
     <div class="button-row">
       <button type="button" class="secondary-btn">Save Draft</button>
-      <button type="button" class="submit-btn">Submit Hiring Request</button>
+      <button type="submit" class="submit-btn">Submit Hiring Request</button>
     </div>
 
   </form>
 
 </main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
+<script src="../emp-js/hiring-requests.js"></script>
 
 </body>
 </html>

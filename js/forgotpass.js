@@ -15,7 +15,7 @@
       const email = document.getElementById("email").value;
 
       const { error } = await placelySupabase.auth.resetPasswordForEmail(email, {
-        redirectTo: "https://placely-rho.vercel.app/reset-password.html"
+        redirectTo: "https://zahhop.github.io/Placely/public/reset-password.html"
       });
 
       if (error) {
