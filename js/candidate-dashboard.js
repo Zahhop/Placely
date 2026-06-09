@@ -10,7 +10,6 @@
       window.location.href = "login.html";
       return;
     }
-
     
   const { data: profile, error } = await candidateSupabase
   .from("candidate_profiles")
@@ -22,6 +21,13 @@ if (error) {
   console.error("Error loading candidate profile:", error);
   return;
 }
+
+  console.log("Dashboard profile:", profile);
+  console.log("Dashboard photo URL:", profile.profile_photo_url);
+  console.log("Dashboard image element:", document.getElementById("profile_photo_url"));
+
+  document.getElementById("profile_photo_url").src =
+  profile.profile_photo_url || "https://placehold.co/120x120";
 
     document.getElementById("full_name").textContent = profile.full_name || "Candidate";
 
@@ -35,13 +41,17 @@ if (error) {
     document.getElementById("phone").textContent = profile.phone || "";
     document.getElementById("email").textContent = profile.email || "";
     document.getElementById("contact_method").textContent = profile.contact_method || "";
-    document.getElementById("resume_status").textContent = profile.resume_url ? "Uploaded" : "Not uploaded";
-    document.getElementById("profile_photo_url").src = profile.profile_photo_url || "https://via.placeholder.com/120";
+      document.getElementById("resume_status").textContent = profile.resume_url ? "Uploaded" : "Not uploaded";
   }
 
-  document.getElementById("logoutBtn").addEventListener("click", async () => {
-    await supabase.auth.signOut();
+  
+  const logoutBtn = document.getElementById("logoutBtn");
+
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", async () => {
+    await candidateSupabase.auth.signOut();
     window.location.href = "candidate-login.html";
   });
+}
 
   loadUser();
