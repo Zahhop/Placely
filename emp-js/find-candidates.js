@@ -73,9 +73,15 @@ async function loadCandidates() {
     </div>
 
     <div class="card-actions">
-      <button>View Profile</button>
-      <button class="secondary">Save</button>
-    </div>
+  <button>View Profile</button>
+
+  <button 
+    class="secondary save-candidate-btn"
+    data-id="${candidate.id}"
+  >
+    Save
+  </button>
+</div>
   </div>
 `;
 
@@ -84,15 +90,6 @@ async function loadCandidates() {
 }
 
 
-candidatesGrid.addEventListener("click", (e) => {
-  const card = e.target.closest(".candidate-card");
-  if (!card) return;
-
-  const candidateId = card.dataset.id;
-  const candidate = loadedCandidates.find(c => c.id === candidateId);
-
-  openCandidatePanel(candidate);
-});
 
 
 loadCandidates();
@@ -153,4 +150,49 @@ function openCandidatePanel(candidate) {
 document.getElementById("closePanelBtn").addEventListener("click", () => {
   document.getElementById("findPage").classList.remove("panel-open");
   document.getElementById("candidateDetailPanel").classList.remove("open");
+});
+
+
+
+async function saveCandidate(candidateId) {
+  const { data: { user } } = await employerSupabase.auth.getUser();
+
+  if (!user) {
+    alert("Please log in first.");
+    return;
+  }
+
+  const { error } = await employerSupabase
+    .from("saved_candidates")
+    .upsert({
+      employer_id: user.id,
+      candidate_id: candidateId
+    });
+
+  if (error) {
+    console.error("Save candidate error:", error);
+    alert("Error saving candidate: " + error.message);
+    return;
+  }
+
+  alert("Candidate saved!");
+}
+
+
+candidatesGrid.addEventListener("click", (e) => {
+  const saveBtn = e.target.closest(".save-candidate-btn");
+
+  if (saveBtn) {
+    e.stopPropagation();
+    saveCandidate(saveBtn.dataset.id);
+    return;
+  }
+
+  const card = e.target.closest(".candidate-card");
+  if (!card) return;
+
+  const candidateId = card.dataset.id;
+  const candidate = loadedCandidates.find(c => c.id === candidateId);
+
+  openCandidatePanel(candidate);
 });

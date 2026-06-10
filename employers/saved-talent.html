@@ -37,77 +37,13 @@
     </select>
   </section>
 
-  <section class="talent-grid">
-
-    <div class="talent-card">
-      <div class="talent-top">
-        <div class="avatar">JT</div>
-
-        <div>
-          <h3>Jordan Taylor</h3>
-          <p>Electrical Apprentice</p>
-        </div>
-      </div>
-
-      <div class="talent-details">
-        <span>Calgary, AB</span>
-        <span>2 Years Experience</span>
-        <span>Available Immediately</span>
-      </div>
-
-      <p class="talent-bio">
-        Apprentice with commercial site experience, safety tickets, and strong interest in long-term electrical work.
-      </p>
-
-      <div class="tag-row">
-        <span>CSTS</span>
-        <span>WHMIS</span>
-        <span>Fall Protection</span>
-      </div>
-
-      <div class="card-actions">
-        <button>View Profile</button>
-        <button class="secondary">Message</button>
-        <button class="remove">Remove</button>
-      </div>
-    </div>
-
-    <div class="talent-card">
-      <div class="talent-top">
-        <div class="avatar">MR</div>
-
-        <div>
-          <h3>Maya Robinson</h3>
-          <p>Journeyman Welder</p>
-        </div>
-      </div>
-
-      <div class="talent-details">
-        <span>Edmonton, AB</span>
-        <span>6 Years Experience</span>
-        <span>Available in 2 Weeks</span>
-      </div>
-
-      <p class="talent-bio">
-        Journeyman welder with industrial, shutdown, and shop experience. Open to rotation and contract work.
-      </p>
-
-      <div class="tag-row">
-        <span>CWB</span>
-        <span>First Aid</span>
-        <span>Confined Space</span>
-      </div>
-
-      <div class="card-actions">
-        <button>View Profile</button>
-        <button class="secondary">Message</button>
-        <button class="remove">Remove</button>
-      </div>
-    </div>
-
-  </section>
+  <section class="talent-grid" id="savedTalentGrid"></section>
 
 </main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
+<script src="../emp-js/saved-talent.js"></script>
 
 </body>
 </html>
