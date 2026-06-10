@@ -3,82 +3,126 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Candidate Sign Up | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/candidate-signup.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
 <header>
-  <div class="logo">PLACELY TALENT</div>
+  <a href="../index.html" class="logo">
+    PLACELY TALENT
+</a>
+
+  <a href="candidates.html" class="nav-btn">Back to Candidate Page</a>
 </header>
 
-<section class="signup-wrapper">
+<main>
 
-  <div class="signup-card">
-    <h1>Create your account</h1>
-    <p>Start with the basics. You’ll complete your full work profile next.</p>
+  <section class="signup-layout">
 
-    <form id="candidateSignupForm">
+    <div class="signup-copy">
+      <div class="eyebrow">Candidate Account</div>
 
-      <div class="form-grid">
+      <h1>Create your trades profile and get ready for better opportunities.</h1>
 
-        <div class="form-group">
-          <label for="firstName">First Name</label>
-          <input type="text" id="firstName" required>
+      <p>
+        Start with the basics today. After your account is created, you’ll be able to complete your full candidate profile with your trade, experience, resume, certifications, and availability.
+      </p>
+
+      <div class="feature-list">
+        <div>
+          <strong>Build a professional profile</strong>
+          <span>Show employers your trade, experience, location, and work background clearly.</span>
         </div>
 
-        <div class="form-group">
-          <label for="lastName">Last Name</label>
-          <input type="text" id="lastName" required>
+        <div>
+          <strong>Upload resumes and certifications</strong>
+          <span>Keep important documents ready for employers reviewing your profile.</span>
         </div>
 
-        <div class="form-group">
-          <label for="phone">Phone Number</label>
-          <input type="tel" id="phone" required>
+        <div>
+          <strong>Find better-fitting roles</strong>
+          <span>Use Placely to connect with opportunities that match your skills and goals.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="signup-card">
+      <div class="card-top">
+        <div>
+          <span class="small-label">Placely Candidate Portal</span>
+          <h2>Create account</h2>
         </div>
 
-        <div class="form-group">
-          <label for="city">City</label>
-          <input type="text" id="city" required>
-        </div>
-
-        <div class="form-group">
-          <label for="postalCode">Postal Code</label>
-          <input type="text" id="postalCode" required>
-        </div>
-
-        <div class="form-group">
-          <label for="email">Email Address</label>
-          <input type="email" id="email" required>
-        </div>
-
-        <div class="form-group full">
-          <label for="password">Password</label>
-          <input type="password" id="password" required minlength="6">
-        </div>
-
+        <span class="secure-pill">Step 1 of 2</span>
       </div>
 
-      <a href="candidate-setup.html" class="signup-btn">
+      <p class="card-copy">
+        Start with your contact details. You’ll complete your full work profile next.
+      </p>
+
+      <form id="candidateSignupForm">
+
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label for="firstName">First Name</label>
+            <input type="text" id="firstName" placeholder="First name" required>
+          </div>
+
+          <div class="form-group">
+            <label for="lastName">Last Name</label>
+            <input type="text" id="lastName" placeholder="Last name" required>
+          </div>
+
+          <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input type="tel" id="phone" placeholder="Phone number" required>
+          </div>
+
+          <div class="form-group">
+            <label for="city">City</label>
+            <input type="text" id="city" placeholder="City" required>
+          </div>
+
+          <div class="form-group">
+            <label for="postalCode">Postal Code</label>
+            <input type="text" id="postalCode" placeholder="Postal code" required>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" placeholder="you@example.com" required>
+          </div>
+
+          <div class="form-group full">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Create a password" required minlength="6">
+          </div>
+
+        </div>
+
+        <button type="submit" class="signup-btn">
           Continue to Profile Setup
-      </a>
+        </button>
 
-      <p class="error-message" id="errorMessage"></p>
+        <p class="error-message" id="errorMessage"></p>
 
-    </form>
+      </form>
 
-    <div class="login-text">
-      Already have an account?
-      <a href="candidate-login.html">Log in</a>
+      <div class="login-text">
+        Already have an account?
+        <a href="candidate-login.html">Log in</a>
+      </div>
     </div>
-  </div>
 
-</section>
+  </section>
+
+</main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/config.js"></script>

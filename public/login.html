@@ -3,42 +3,92 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Placely Login</title>
+
+  <title>Account Login | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/login.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-  </head>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
 
 <body>
 
-  <div class="login-container">
+<header>
+  <a href="../index.html" class="logo">
+    PLACELY TALENT
+  </a>
 
-    <a href="../index.html" class="logo">PLACELY TALENT</a>
+  <a href="../index.html" class="nav-btn">
+    Back to Home
+  </a>
+</header>
 
-    <div class="small-label">Login Portal</div>
+<main>
 
-    <h1>Choose Your Account</h1>
+  <section class="portal-layout">
 
-    <p>
-      Select the account type that matches your role. Employers can manage hiring and talent access. Workers can explore opportunities and manage applications.
-    </p>
+    <div class="portal-copy">
+      <div class="eyebrow">
+        Account Access
+      </div>
 
-    <div class="buttons">
-      <a href="../employers/employer-login.html" class="btn btn-primary">
-        Employer Login
-      </a>
+      <h1>Access your Placely account.</h1>
 
-      <a href="../candidates/candidate-login.html" class="btn btn-secondary">
-        Worker Login
-      </a>
+      <p>
+        Choose the account type that matches your role. Candidates can manage profiles, resumes, and opportunities. Employers can manage hiring, job postings, and talent pipelines.
+      </p>
+
+      <div class="feature-list">
+        <div>
+          <strong>Candidate accounts</strong>
+          <span>Build your trades profile, upload your resume, and stay ready for better opportunities.</span>
+        </div>
+
+        <div>
+          <strong>Employer accounts</strong>
+          <span>Post roles, review candidates, and manage your hiring pipeline in one place.</span>
+        </div>
+
+        <div>
+          <strong>One professional platform</strong>
+          <span>Placely keeps trades hiring organized, modern, and easier to manage.</span>
+        </div>
+      </div>
     </div>
 
-    <a href="../index.html" class="back-home">
-      ← Back to Home
-    </a>
+    <div class="portal-card">
+      <div class="card-top">
+        <div>
+          <span class="small-label">Placely Account Portal</span>
+          <h2>Choose account type</h2>
+        </div>
 
-  </div>
+        <span class="secure-pill">Secure Access</span>
+      </div>
+
+      <p class="card-copy">
+        Select whether you are logging in as a candidate or an employer.
+      </p>
+
+      <div class="portal-actions">
+        <a href="../candidates/candidate-login.html" class="portal-btn primary">
+          Candidate Login
+        </a>
+
+        <a href="../employers/employer-login.html" class="portal-btn secondary">
+          Employer Login
+        </a>
+      </div>
+
+      <div class="portal-note">
+        <a href="../candidates/candidate-signup.html">Create candidate account</a>
+        <span>•</span>
+        <a href="../employers/employer-signup.html">Create employer account</a>
+      </div>
+    </div>
+
+  </section>
+
+</main>
 
 </body>
 </html>

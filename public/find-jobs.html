@@ -7,18 +7,18 @@
 
   <link rel="stylesheet" href="../css/find-jobs.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
 
-  </head>
-  <body>
+<body>
 
 <header>
   <div class="logo">PLACELY TALENT</div>
 
   <div class="header-actions">
-  <a href="#" class="manage-btn employer-only">Manage Jobs</a>
-  <a href="#" class="post-btn employer-only">Post Job</a>
-  <a href="#" class="back-btn" id="backDashboardBtn">Back to Dashboard</a>
-</div>
+    <a href="#" class="manage-btn employer-only">Manage Jobs</a>
+    <a href="#" class="post-btn employer-only">Post Job</a>
+    <a href="../candidates/candidate-dashboard.html" class="back-btn">Back to Dashboard</a>
+  </div>
 </header>
 
 <div class="container">
@@ -28,125 +28,48 @@
     <p>Browse jobs matched to your experience and trade.</p>
 
     <div class="search-bar">
-      <input type="text" placeholder="Search trades or keywords">
+      <input id="searchInput" type="text" placeholder="Search trades or keywords">
 
-      <select>
-        <option>All Locations</option>
-        <option>Calgary</option>
-        <option>Edmonton</option>
-        <option>Vancouver</option>
+      <select id="locationFilter">
+        <option value="">All Locations</option>
+        <option value="Calgary">Calgary</option>
+        <option value="Edmonton">Edmonton</option>
+        <option value="Vancouver">Vancouver</option>
+        <option value="Penticton">Penticton</option>
       </select>
 
-      <select>
-        <option>All Job Types</option>
-        <option>Full-Time</option>
-        <option>Part-Time</option>
-        <option>Contract</option>
+      <select id="jobTypeFilter">
+        <option value="">All Job Types</option>
+        <option value="Full-Time">Full-Time</option>
+        <option value="Part-Time">Part-Time</option>
+        <option value="Contract">Contract</option>
+        <option value="Temporary">Temporary</option>
+        <option value="Rotation">Rotation</option>
       </select>
 
-      <button class="search-btn">Search</button>
+      <button class="search-btn" id="searchBtn">Search</button>
     </div>
   </div>
 
-  <div class="jobs-grid">
+  <div class="jobs-layout">
 
-    <div class="job-card">
-
-      <div class="job-top">
-
-        <div>
-          <div class="job-title">Electrical Apprentice</div>
-          <div class="company">Northwest Electric Ltd.</div>
-          <div class="location">Calgary, Alberta</div>
-        </div>
-
-        <div class="job-tag">Full-Time</div>
-
-      </div>
-
-      <div class="description">
-        Looking for motivated electrical apprentices to join commercial projects across Calgary. Strong growth opportunities and competitive pay.
-      </div>
-
-      <div class="bottom-row">
-
-        <div class="salary">$28 - $38/hr</div>
-
-        <div class="buttons">
-          <button class="apply-btn">Apply Now</button>
-          <button class="save-btn">Save Job</button>
-        </div>
-
-      </div>
-
+    <div class="jobs-list" id="jobsGrid">
+      <div class="job-card">Loading jobs...</div>
     </div>
 
-    <div class="job-card">
-
-      <div class="job-top">
-
-        <div>
-          <div class="job-title">Journeyman Welder</div>
-          <div class="company">Prairie Industrial</div>
-          <div class="location">Edmonton, Alberta</div>
-        </div>
-
-        <div class="job-tag">Contract</div>
-
+    <div class="job-details-panel" id="jobDetailsPanel">
+      <div class="empty-details">
+        <h2>Select a job</h2>
+        <p>Click a job on the left to view the full details.</p>
       </div>
-
-      <div class="description">
-        Hiring experienced welders for shutdown and industrial maintenance projects throughout Alberta.
-      </div>
-
-      <div class="bottom-row">
-
-        <div class="salary">$42 - $52/hr</div>
-
-        <div class="buttons">
-          <button class="apply-btn">Apply Now</button>
-          <button class="save-btn">Save Job</button>
-        </div>
-
-      </div>
-
-    </div>
-
-    <div class="job-card">
-
-      <div class="job-top">
-
-        <div>
-          <div class="job-title">Heavy Equipment Operator</div>
-          <div class="company">Summit Civil Group</div>
-          <div class="location">Fort McMurray, Alberta</div>
-        </div>
-
-        <div class="job-tag">Rotation</div>
-
-      </div>
-
-      <div class="description">
-        Seeking operators with experience running excavators and loaders for remote industrial projects.
-      </div>
-
-      <div class="bottom-row">
-
-        <div class="salary">$45 - $58/hr</div>
-
-        <div class="buttons">
-          <button class="apply-btn">Apply Now</button>
-          <button class="save-btn">Save Job</button>
-        </div>
-
-      </div>
-
     </div>
 
   </div>
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
 <script src="../js/find-jobs.js"></script>
 
 </body>

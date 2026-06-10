@@ -3,84 +3,102 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Employer Login | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/employer-login.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
 <body>
-  <div class="page-wrapper">
 
-    <header>
-      <a href="../index.html" class="logo">PLACELY TALENT</a>
-      <a href="../public/login.html" class="back-link">Back to Login</a>
-    </header>
+<header>
+  <a href="../index.html" class="logo">PLACELY TALENT</a>
+  <a href="../public/login.html" class="nav-btn">Back to Login</a>
+</header>
 
-    <main>
-      <section class="login-shell">
+<main>
 
-        <div class="eyebrow">
-          <span></span>
-          Employer Login
+  <section class="login-layout">
+
+    <div class="login-copy">
+      <div class="eyebrow">Employer Login</div>
+
+      <h1>Access your employer account and manage hiring faster.</h1>
+
+      <p>
+        Log in to manage your company profile, review candidates, and keep your hiring pipeline organized with Placely Talent.
+      </p>
+
+      <div class="feature-list">
+        <div>
+          <strong>Manage your employer profile</strong>
+          <span>Keep company details, hiring focus, and contact information up to date.</span>
         </div>
 
-        <h1>Access your <strong>employer account</strong></h1>
-
-        <p class="description">
-          Login to manage your company profile, view candidates, and start building your hiring pipeline with Placely Talent.
-        </p>
-
-        <div class="login-card">
-          <div class="form-inner">
-
-            <div class="form-top">
-              <div>
-                <div class="form-label">Placely Employer Access</div>
-                <h2>Login</h2>
-              </div>
-
-              <div class="secure-pill">
-                Secure Employer Portal
-              </div>
-            </div>
-
-            <form id="loginForm">
-              <div class="form-group">
-                <label>Email Address</label>
-                <input type="email" id="email" placeholder="company@example.com" required>
-              </div>
-
-              <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="password" placeholder="Enter your password" required>
-              </div>
-
-              <div style="display: flex; justify-content: flex-end; margin-top: 6px;">
-                <a href="../public/forgot-password.html" class="forgot-link">Forgot password?</a>
-              </div>
-
-              <button type="submit" class="login-btn">
-                Login to Employer Account
-              </button>
-            </form>
-
-            <p class="signup-note">
-              Don’t have an employer account?
-              <a href="employer-signup.html">Create one here</a>
-            </p>
-
-          </div>
+        <div>
+          <strong>Review qualified candidates</strong>
+          <span>Search candidates by trade, experience, certifications, and availability.</span>
         </div>
 
-      </section>
-    </main>
+        <div>
+          <strong>Move faster on hiring</strong>
+          <span>Keep candidate review and outreach cleaner from one simple dashboard.</span>
+        </div>
+      </div>
+    </div>
 
-  </div>
+    <div class="login-card">
+      <div class="card-top">
+        <div>
+          <span class="small-label">Placely Employer Portal</span>
+          <h2>Login</h2>
+        </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../js/config.js"></script>
-  <script src="../emp-js/employer-login.js"></script>
+        <span class="secure-pill">Secure Access</span>
+      </div>
+
+      <p class="card-copy">
+        Enter your employer account details to continue to your dashboard.
+      </p>
+
+      <form id="loginForm">
+
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" placeholder="company@example.com" required>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="Enter your password" required>
+        </div>
+
+        <div class="forgot-row">
+          <a href="../public/forgot-password.html" class="forgot-link">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="login-btn">
+          Login to Employer Account
+        </button>
+
+        <p class="error-message" id="errorMessage"></p>
+
+      </form>
+
+      <div class="signup-note">
+        Don’t have an employer account?
+        <a href="employer-signup.html">Create one here</a>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
+<script src="../emp-js/employer-login.js"></script>
 
 </body>
 </html>

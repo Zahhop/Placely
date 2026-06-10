@@ -1,48 +1,45 @@
- const placelySupabase = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-  );
+const placelySupabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
 
-  const form = document.getElementById("loginForm");
+const form = document.getElementById("candidateLoginForm");
 
-  form.addEventListener("submit", async function (e) {
-    e.preventDefault();
+form.addEventListener("submit", async function (e) {
+  e.preventDefault();
 
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
 
-    // 1. Try login
-    const { data, error } = await placelySupabase.auth.signInWithPassword({
-      email: email,
-      password: password
-    });
-
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
-    const userId = data.user.id;
-
-    // 2. Get role from profiles
-    const { data: profile, error: profileError } = await placelySupabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .single();
-
-    if (profileError || !profile) {
-      alert("Profile not found");
-      return;
-    }
-
-    // 3. ONLY allow candidates
-    if (profile.role !== "candidate") {
-      alert("This login is for candidates only");
-      await placelySupabase.auth.signOut(); // logs them back out
-      return;
-    }
-
-    // 4. Success → go to candidate dashboard
-    window.location.href = "candidate-dashboard.html";
+  const { data, error } = await placelySupabase.auth.signInWithPassword({
+    email,
+    password
   });
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  const userId = data.user.id;
+
+  const { data: profile, error: profileError } = await placelySupabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single();
+
+  if (profileError) {
+    console.error(profileError);
+    alert("Login worked, but your profile role could not be checked.");
+    return;
+  }
+
+  if (profile.role !== "candidate") {
+    await placelySupabase.auth.signOut();
+    alert("This login is for candidate accounts only.");
+    return;
+  }
+
+  window.location.href = "candidate-dashboard.html";
+});

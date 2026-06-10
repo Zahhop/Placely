@@ -2,172 +2,224 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Complete Your Profile | Placely Talent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Complete Profile | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/candidate-setup.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
 <header>
-  <div class="logo">PLACELY TALENT</div>
+  <a href="../index.html" class="logo">PLACELY TALENT</a>
+  <a href="candidate-dashboard.html" class="skip-btn">Skip to Dashboard</a>
 </header>
 
-<div class="setup-layout">
+<main class="onboarding-container">
 
-  <aside class="sidebar">
+  <section class="onboarding-left">
+    <span class="onboarding-pill">Candidate Onboarding</span>
 
-    <h2>Profile Setup</h2>
+    <h1>Build a profile employers actually want to read.</h1>
 
     <p>
-      Complete your work profile so employers can discover and contact you.
+      Add your trade, experience, certifications, resume, and availability
+      so employers can find and review you faster.
     </p>
 
-    <div class="step-list">
-      <div class="step-item active">1. Work Information</div>
-      <div class="step-item">2. Job Preferences</div>
-      <div class="step-item">3. Experience</div>
-      <div class="step-item">4. Certifications</div>
-      <div class="step-item">5. Resume Upload</div>
-      <div class="step-item">6. Finish Profile</div>
+    <div class="steps">
+      <button class="step-item active" type="button">
+        <span class="step-number">01</span>
+        Trade
+      </button>
+
+      <button class="step-item" type="button">
+        <span class="step-number">02</span>
+        Skills
+      </button>
+
+      <button class="step-item" type="button">
+        <span class="step-number">03</span>
+        Availability
+      </button>
+
+      <button class="step-item" type="button">
+        <span class="step-number">04</span>
+        Uploads
+      </button>
+    </div>
+  </section>
+
+  <section class="onboarding-right">
+    <div class="form-header">
+      <div>
+        <p class="form-kicker">Placely Candidate Profile</p>
+        <h2>Complete profile</h2>
+      </div>
+
+      <span class="step-count" id="progressText">Step 1 of 4</span>
     </div>
 
-  </aside>
+    <div class="form-card">
+      <form id="candidateSetupForm">
 
-  <main class="main-content">
+        <div class="form-step active">
+          <div class="step-header">
+            <span class="section-pill">Trade background</span>
+            <h3>Show your experience</h3>
+            <p>Help employers understand what kind of work you do and how experienced you are.</p>
+          </div>
 
-    <div class="setup-card">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="trade">Primary Trade</label>
+              <select id="trade">
+                <option value="">Select your trade</option>
+                <option>Carpentry</option>
+                <option>Electrical</option>
+                <option>Plumbing</option>
+                <option>HVAC</option>
+                <option>Welding</option>
+                <option>Heavy Equipment</option>
+                <option>Concrete</option>
+                <option>Roofing</option>
+                <option>Painting</option>
+                <option>Landscaping</option>
+                <option>General Labour</option>
+                <option>Other</option>
+              </select>
+            </div>
 
-      <h1>Complete Your Profile</h1>
+            <div class="form-group">
+              <label for="experience">Experience</label>
+              <select id="experience">
+                <option value="">Select experience</option>
+                <option>No experience yet</option>
+                <option>Less than 1 year</option>
+                <option>1-2 years</option>
+                <option>3-5 years</option>
+                <option>5-10 years</option>
+                <option>10+ years</option>
+              </select>
+            </div>
 
-      <p>
-        Add your work details and preferences so we can match you with the right employers and opportunities.
-      </p>
+            <div class="form-group full">
+              <label for="bio">Professional Summary</label>
+              <textarea id="bio" placeholder="Tell employers about your work ethic, trade experience, strengths, and what kind of opportunities you’re looking for."></textarea>
+            </div>
+          </div>
+        </div>
 
-   <form id="setupForm">
+        <div class="form-step">
+          <div class="step-header">
+            <span class="section-pill">Skills & certifications</span>
+            <h3>Help employers find you</h3>
+            <p>Add searchable skills and certifications that match what employers are hiring for.</p>
+          </div>
 
-  <div class="form-step active">
-    <h1>Work Information</h1>
+          <div class="form-grid">
+            <div class="form-group full">
+              <label for="skills">Skills</label>
+              <textarea id="skills" placeholder="Framing, blueprint reading, forklift operation, concrete finishing"></textarea>
+              <small>Separate skills with commas.</small>
+            </div>
 
-    <div class="form-grid">
-      <div class="form-group">
-        <label>Industry</label>
-        <select required>
-          <option value="">Select Industry</option>
-          <option>Electrical</option>
-          <option>Welding</option>
-          <option>Construction</option>
-          <option>Plumbing</option>
-          <option>HVAC</option>
-        </select>
-      </div>
+            <div class="form-group full">
+              <label for="certifications">Certifications</label>
+              <textarea id="certifications" placeholder="WHMIS, First Aid, Fall Protection, Forklift Ticket, Red Seal"></textarea>
+              <small>Separate certifications with commas.</small>
+            </div>
+          </div>
+        </div>
 
-      <div class="form-group">
-        <label>Current Position</label>
-        <input type="text" placeholder="Electrical Apprentice">
-      </div>
+        <div class="form-step">
+          <div class="step-header">
+            <span class="section-pill">Availability & contact</span>
+            <h3>Control how employers reach you</h3>
+            <p>Choose when you’re available and what contact information employers can see.</p>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="availability">Availability</label>
+              <select id="availability">
+                <option value="">Select availability</option>
+                <option>Available immediately</option>
+                <option>Available within 1 week</option>
+                <option>Available within 2 weeks</option>
+                <option>Available within 1 month</option>
+                <option>Currently employed but open to offers</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="contactMethod">Preferred Contact Method</label>
+              <select id="contactMethod">
+                <option value="">Select contact method</option>
+                <option>Email</option>
+                <option>Phone</option>
+                <option>Text</option>
+                <option>Email or Phone</option>
+              </select>
+            </div>
+
+            <div class="form-group full">
+              <label for="shownContactMethod">Contact Info Shown To Employers</label>
+              <select id="shownContactMethod">
+                <option value="">Select visibility</option>
+                <option>Email only</option>
+                <option>Phone only</option>
+                <option>Email and phone</option>
+                <option>Hide contact info until I apply</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-header">
+            <span class="section-pill">Uploads & visibility</span>
+            <h3>Finish your professional profile</h3>
+            <p>Upload your resume and profile photo, then choose if employers can view your profile.</p>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="resume">Resume</label>
+              <input id="resume" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
+              <small>PDF or DOCX only.</small>
+            </div>
+
+            <div class="form-group">
+              <label for="profilePhoto">Profile Photo</label>
+              <input id="profilePhoto" type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" />
+              <small>PNG, JPG, or JPEG.</small>
+            </div>
+
+            <div class="form-group full">
+              <label class="visibility-toggle">
+                <input id="profileVisible" type="checkbox" checked />
+                Make my profile visible to employers
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button id="backBtn" type="button" class="back-btn">Back</button>
+          <button id="nextBtn" type="button" class="next-btn">Next</button>
+        </div>
+
+      </form>
     </div>
-  </div>
+  </section>
 
-  <div class="form-step">
-    <h1>Job Preferences</h1>
+</main>
 
-    <div class="form-grid">
-      <div class="form-group">
-        <label>Employment Type</label>
-        <select>
-          <option>Full-Time</option>
-          <option>Part-Time</option>
-          <option>Contract</option>
-          <option>Rotation</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>Preferred Work Location</label>
-        <input type="text" placeholder="Calgary, AB">
-      </div>
-    </div>
-  </div>
-
-  <div class="form-step">
-    <h1>Experience</h1>
-
-    <div class="form-grid">
-      <div class="form-group">
-        <label>Years of Experience</label>
-        <select>
-          <option>0-1 Years</option>
-          <option>2-4 Years</option>
-          <option>5-10 Years</option>
-          <option>10+ Years</option>
-        </select>
-      </div>
-
-      <div class="form-group full">
-        <label>Skills</label>
-        <input type="text" placeholder="Conduit bending, troubleshooting, blueprint reading...">
-      </div>
-
-      <div class="form-group full">
-        <label>Bio</label>
-        <textarea placeholder="Tell employers about your experience..."></textarea>
-      </div>
-    </div>
-  </div>
-
-  <div class="form-step">
-    <h1>Certifications</h1>
-
-    <div class="form-grid">
-      <div class="form-group full">
-        <label>Certifications</label>
-        <input type="text" placeholder="CSTS, WHMIS, Fall Protection...">
-      </div>
-
-      <div class="form-group full">
-        <label>Tickets / Licenses</label>
-        <input type="text" placeholder="First Aid, Red Seal, Drivers License...">
-      </div>
-    </div>
-  </div>
-
-  <div class="form-step">
-    <h1>Resume Upload</h1>
-
-    <div class="form-group full">
-      <label>Resume Upload</label>
-
-      <div class="resume-upload">
-        <h3>Upload Your Resume</h3>
-        <p>Drag and drop your resume here or click to upload PDF/DOCX files.</p>
-        <input type="file">
-      </div>
-    </div>
-  </div>
-
-  <div class="form-step">
-    <h1>Finish Profile</h1>
-    <p>Review your information, then finish your profile setup.</p>
-  </div>
-
-  <div class="button-row">
-    <button type="button" class="back-btn" id="backBtn">Back</button>
-    <button type="button" class="finish-btn" id="nextBtn">Next</button>
-  </div>
-
-</form>
-
-    </div>
-
-  </main>
-
-</div>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
 <script src="../js/candidate-setup.js"></script>
 
 </body>
