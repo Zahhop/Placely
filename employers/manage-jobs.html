@@ -7,159 +7,131 @@
   <title>Active Jobs | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/manage-jobs.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
 <header>
-  <a href="../index.html" class="logo">PLACELY TALENT</a>
-
-  <div class="header-actions">
-    <a href="post-job.html" class="post-btn">Post New Job</a>
-    <a href="employer-dashboard.html" class="back-btn">Dashboard</a>
-    <a href="../public/find-jobs.html?role=employer" class="job-board-btn">Job Board</a>
+  <div class="logo-wrapper">
+    <a href="../index.html" class="logo">PLACELY TALENT</a>
+    <div class="logo-subtitle">Employer Platform</div>
   </div>
+
+  <nav>
+    <a href="manage-jobs.html" class="active">Jobs</a>
+    <a href="employer-candidates.html">Candidates</a>
+    <a href="saved-talent.html">Saved Talent</a>
+    <a href="employer-messages.html">Messages</a>
+    <a href="company-profile.html">Company</a>
+    <button id="logoutBtn" class="logout-btn">Logout</button>
+  </nav>
 </header>
 
-<main class="page-container">
+<main class="page-shell">
 
-  <section class="page-header">
+  <section class="hero-card">
     <div>
-      <h1>Active Jobs</h1>
-      <p>Manage, edit, pause, and review your current job postings.</p>
+      <span class="eyebrow">JOB MANAGEMENT</span>
+      <h1>Active jobs</h1>
+      <p>Manage postings, review candidate activity, and keep your open roles moving.</p>
     </div>
 
-    <div class="job-stats">
-      <div class="stat-box">
-        <span>Active</span>
-        <strong>3</strong>
-      </div>
-
-      <div class="stat-box">
-        <span>Applications</span>
-        <strong>12</strong>
-      </div>
+    <div class="hero-actions">
+      <a href="post-job.html" class="primary-link">Post New Job</a>
+      <a href="employer-dashboard.html" class="secondary-link">Dashboard</a>
     </div>
   </section>
 
-  <section class="jobs-grid">
-
-    <!-- JOB CARD -->
-
-    <div class="job-card">
-
-      <div class="job-top">
-        <div>
-          <h2>Electrical Apprentice</h2>
-          <p>Calgary, AB • Full-Time</p>
-        </div>
-
-        <span class="status active">Active</span>
-      </div>
-
-      <div class="job-info">
-        <span>$25 - $38/hr</span>
-        <span>Posted 3 days ago</span>
-        <span>5 Applicants</span>
-      </div>
-
-      <p class="job-description">
-        Looking for apprentice electricians for commercial construction projects.
-        Must have CSTS and reliable transportation.
-      </p>
-
-      <div class="tag-row">
-        <span>Electrical</span>
-        <span>CSTS</span>
-        <span>Commercial</span>
-      </div>
-
-      <div class="job-actions">
-        <button class="primary">Edit Job</button>
-        <button class="secondary">View Applicants</button>
-        <button class="danger">Pause</button>
-      </div>
-
+  <section class="overview-grid">
+    <div class="overview-card">
+      <span>Active jobs</span>
+      <strong id="activeJobsCount">0</strong>
+      <p>Currently visible to candidates</p>
     </div>
 
-    <!-- JOB CARD -->
-
-    <div class="job-card">
-
-      <div class="job-top">
-        <div>
-          <h2>Journeyman Welder</h2>
-          <p>Edmonton, AB • Rotation</p>
-        </div>
-
-        <span class="status active">Active</span>
-      </div>
-
-      <div class="job-info">
-        <span>$42 - $52/hr</span>
-        <span>Posted 1 week ago</span>
-        <span>4 Applicants</span>
-      </div>
-
-      <p class="job-description">
-        Hiring welders for industrial shutdown work. Experience with field work and CWB preferred.
-      </p>
-
-      <div class="tag-row">
-        <span>Welding</span>
-        <span>CWB</span>
-        <span>Shutdown</span>
-      </div>
-
-      <div class="job-actions">
-        <button class="primary">Edit Job</button>
-        <button class="secondary">View Applicants</button>
-        <button class="danger">Pause</button>
-      </div>
-
+    <div class="overview-card">
+      <span>Paused jobs</span>
+      <strong id="pausedJobsCount">0</strong>
+      <p>Hidden or temporarily stopped</p>
     </div>
 
-    <!-- JOB CARD -->
+    <div class="overview-card">
+      <span>Applications</span>
+      <strong id="applicationsCount">0</strong>
+      <p>Total candidate responses</p>
+    </div>
 
-    <div class="job-card">
+    <div class="overview-card">
+      <span>Needs review</span>
+      <strong id="reviewCount">0</strong>
+      <p>Applicants waiting on action</p>
+    </div>
+  </section>
 
-      <div class="job-top">
+  <section class="content-layout">
+
+    <section class="jobs-panel">
+      <div class="panel-heading">
         <div>
-          <h2>General Labourer</h2>
-          <p>Fort McMurray, AB • Contract</p>
+          <span class="eyebrow">YOUR POSTINGS</span>
+          <h2>Current job posts</h2>
         </div>
 
-        <span class="status paused">Paused</span>
+        <div class="filter-row">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="active">Active</button>
+          <button class="filter-btn" data-filter="paused">Paused</button>
+        </div>
       </div>
 
-      <div class="job-info">
-        <span>$22 - $28/hr</span>
-        <span>Posted 2 weeks ago</span>
-        <span>3 Applicants</span>
+      <div id="jobsGrid" class="jobs-grid"></div>
+
+      <div id="emptyState" class="empty-state hidden">
+        <div class="empty-icon">PT</div>
+        <h3>No jobs posted yet</h3>
+        <p>Create your first job post so qualified trades candidates can review and apply.</p>
+        <a href="post-job.html">Create Job Post</a>
+      </div>
+    </section>
+
+    <aside class="side-panel">
+      <div class="sidebar-card">
+        <span class="eyebrow">NEXT STEP</span>
+        <h3>Keep your pipeline clean</h3>
+        <p>Pause roles that are filled, review applicants quickly, and keep active posts updated with clear pay and location details.</p>
+
+        <div class="checklist">
+          <div>
+            <strong>Review applicants</strong>
+            <span>Check new candidates daily</span>
+          </div>
+          <div>
+            <strong>Update stale posts</strong>
+            <span>Refresh roles older than 14 days</span>
+          </div>
+          <div>
+            <strong>Save strong talent</strong>
+            <span>Build a shortlist for later roles</span>
+          </div>
+        </div>
       </div>
 
-      <p class="job-description">
-        Looking for reliable labourers for ongoing civil and site cleanup work.
-      </p>
-
-      <div class="tag-row">
-        <span>Labour</span>
-        <span>Construction</span>
-        <span>Site Work</span>
+      <div class="sidebar-card compact">
+        <span class="eyebrow">SHORTCUTS</span>
+        <a href="post-job.html">Create a new job</a>
+        <a href="saved-talent.html">Review saved talent</a>
+        <a href="employer-dashboard.html">Back to dashboard</a>
       </div>
-
-      <div class="job-actions">
-        <button class="primary">Edit Job</button>
-        <button class="secondary">View Applicants</button>
-        <button class="success">Reactivate</button>
-      </div>
-
-    </div>
+    </aside>
 
   </section>
 
 </main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
+<script src="../js/manage-jobs.js"></script>
 
 </body>
 </html>

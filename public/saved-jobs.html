@@ -2,41 +2,112 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Saved Jobs | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/saved-jobs.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
 <header>
-  <div class="logo">PLACELY TALENT</div>
+  <div class="logo-wrapper">
+    <a href="../index.html" class="logo">PLACELY TALENT</a>
+    <div class="logo-subtitle">Talent Platform</div>
+  </div>
 
-  <a href="../candidates/candidate-dashboard.html" class="back-btn">
-    Back to Dashboard
-  </a>
+  <nav>
+    <a href="../candidates/candidate-dashboard.html">Dashboard</a>
+    <a href="find-jobs.html?role=candidate">Find Jobs</a>
+    <a href="saved-jobs.html" class="active">Saved Jobs</a>
+    <a href="../candidates/candidate-applications.html">Applications</a>
+    <a href="../candidates/candidate-messages.html">Messages</a>
+    <a href="../candidates/candidate-profile.html">Profile</a>
+  </nav>
 </header>
 
-<div class="container">
+<main class="page-shell">
 
-  <div class="top-section">
-    <h1>Saved Jobs</h1>
-    <p>Jobs you've saved to review later.</p>
-  </div>
-
-  <div class="jobs-grid" id="jobsGrid">
-    <div class="job-card">
-      Loading jobs...
+  <section class="hero-card">
+    <div>
+      <span class="eyebrow">Saved Jobs</span>
+      <h1>Keep track of roles you want to revisit.</h1>
+      <p>Review your saved opportunities, compare pay and location, and apply when you’re ready.</p>
     </div>
-  </div>
 
-</div>
+    <a href="find-jobs.html?role=candidate" class="primary-btn">Find More Jobs</a>
+  </section>
+
+  <section class="stats-grid">
+    <div class="stat-card">
+      <span>Saved Roles</span>
+      <strong id="savedCount">0</strong>
+      <p>Jobs saved to your shortlist</p>
+    </div>
+
+    <div class="stat-card">
+      <span>Ready to Apply</span>
+      <strong id="readyCount">0</strong>
+      <p>Open saved jobs available now</p>
+    </div>
+
+    <div class="stat-card">
+      <span>Newest Save</span>
+      <strong id="newestSave">—</strong>
+      <p>Most recent saved role</p>
+    </div>
+  </section>
+
+  <section class="content-grid">
+
+    <section class="panel main-panel">
+      <div class="panel-header">
+        <div>
+          <span class="small-label">Your Shortlist</span>
+          <h2>Saved opportunities</h2>
+        </div>
+
+        <a href="find-jobs.html?role=candidate" class="secondary-btn">Browse Jobs</a>
+      </div>
+
+      <div id="savedJobsList" class="saved-list">
+        <div class="empty-state">Loading saved jobs...</div>
+      </div>
+    </section>
+
+    <aside class="panel side-panel">
+      <span class="small-label">Next Best Step</span>
+      <h2>Move faster on good matches</h2>
+
+      <div class="tip-list">
+        <div class="tip-card">
+          <strong>Apply while the role is fresh</strong>
+          <p>Trades employers often move quickly when they find a candidate who matches the job.</p>
+        </div>
+
+        <div class="tip-card">
+          <strong>Keep your profile current</strong>
+          <p>Make sure your experience, availability, and resume are updated before applying.</p>
+        </div>
+
+        <div class="tip-card">
+          <strong>Compare saved roles</strong>
+          <p>Use pay, location, and experience level to decide which jobs are worth applying to first.</p>
+        </div>
+      </div>
+    </aside>
+
+  </section>
+
+</main>
+
+<div id="toast" class="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/config.js"></script>
-<script src="../public/"></script>
+<script src="../js/saved-jobs.js"></script>
 
 </body>
 </html>

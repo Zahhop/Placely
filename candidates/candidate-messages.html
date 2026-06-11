@@ -2,99 +2,161 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Messages | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/candidate-messages.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
- 
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
 <header>
-  <div class="logo">PLACELY TALENT</div>
-
-  <a href="candidate-dashboard.html" class="back-btn">
-    Back to Dashboard
-  </a>
-</header>
-
-<div class="container">
-
-  <div class="top-section">
-    <h1>Messages</h1>
-    <p>Chat with employers and manage your conversations.</p>
+  <div class="logo-wrapper">
+    <a href="../index.html" class="logo">PLACELY TALENT</a>
+    <div class="logo-subtitle">Talent Platform</div>
   </div>
 
-  <div class="messages-layout">
+  <nav>
+    <a href="candidate-dashboard.html">Dashboard</a>
+    <a href="../public/find-jobs.html?role=candidate">Find Jobs</a>
+    <a href="../public/saved-jobs.html">Saved Jobs</a>
+    <a href="candidate-applications.html">Applications</a>
+    <a href="candidate-messages.html" class="active">Messages</a>
+    <a href="candidate-profile.html">Profile</a>
+  </nav>
+</header>
 
-    <aside class="conversations">
+<main class="page-shell">
 
-      <div class="sidebar-header">
-        Conversations
-      </div>
+  <section class="hero-card">
+    <div>
+      <span class="eyebrow">Candidate Messages</span>
+      <h1>Stay connected with employers.</h1>
+      <p>Manage employer conversations, interview follow-ups, job questions, and opportunity updates in one place.</p>
+    </div>
 
-      <div class="conversation active">
-        <div class="conversation-name">Northwest Electric Ltd.</div>
-        <div class="conversation-preview">
-          We'd like to schedule an interview...
+    <a href="candidate-dashboard.html" class="secondary-btn">Back to Dashboard</a>
+  </section>
+
+  <section class="messages-layout">
+
+    <aside class="conversations-panel">
+      <div class="panel-header">
+        <div>
+          <span class="small-label">Inbox</span>
+          <h2>Conversations</h2>
         </div>
+        <span class="count-pill">3</span>
       </div>
 
-      <div class="conversation">
-        <div class="conversation-name">Prairie Industrial</div>
-        <div class="conversation-preview">
-          Thanks for applying to our position.
-        </div>
-      </div>
+      <div class="conversation-list">
+        <button class="conversation active" type="button" data-company="Northwest Electric Ltd." data-role="Electrical Apprentice">
+          <div class="conversation-top">
+            <strong>Northwest Electric Ltd.</strong>
+            <span>Today</span>
+          </div>
+          <p>We'd like to schedule an interview...</p>
+        </button>
 
-      <div class="conversation">
-        <div class="conversation-name">Summit Civil Group</div>
-        <div class="conversation-preview">
-          Are you available for rotation work?
-        </div>
-      </div>
+        <button class="conversation" type="button" data-company="Prairie Industrial" data-role="General Labourer">
+          <div class="conversation-top">
+            <strong>Prairie Industrial</strong>
+            <span>Yesterday</span>
+          </div>
+          <p>Thanks for applying to our position.</p>
+        </button>
 
+        <button class="conversation" type="button" data-company="Summit Civil Group" data-role="Rotation Labourer">
+          <div class="conversation-top">
+            <strong>Summit Civil Group</strong>
+            <span>Mon</span>
+          </div>
+          <p>Are you available for rotation work?</p>
+        </button>
+      </div>
     </aside>
 
-    <section class="chat-window">
+    <section class="chat-panel">
 
       <div class="chat-header">
-        Northwest Electric Ltd.
+        <div>
+          <span class="small-label">Active Conversation</span>
+          <h2 id="chatCompany">Northwest Electric Ltd.</h2>
+          <p id="chatRole">Electrical Apprentice opportunity</p>
+        </div>
+
+        <span class="status-chip">Employer</span>
       </div>
 
-      <div class="chat-messages">
+      <div class="chat-messages" id="chatMessages">
 
-        <div class="message received">
-          Hi Austin, thanks for applying to our Electrical Apprentice position.
+        <div class="message-row received">
+          <div class="message-bubble">
+            Hi Austin, thanks for applying to our Electrical Apprentice position.
+          </div>
         </div>
 
-        <div class="message sent">
-          Thanks for reaching out. I'm definitely interested in the opportunity.
+        <div class="message-row sent">
+          <div class="message-bubble">
+            Thanks for reaching out. I'm definitely interested in the opportunity.
+          </div>
         </div>
 
-        <div class="message received">
-          Great. We'd like to schedule a quick phone interview sometime this week.
+        <div class="message-row received">
+          <div class="message-bubble">
+            Great. We'd like to schedule a quick phone interview sometime this week.
+          </div>
         </div>
 
-        <div class="message sent">
-          Sounds good. I’m available anytime after 3 PM.
+        <div class="message-row sent">
+          <div class="message-bubble">
+            Sounds good. I’m available anytime after 3 PM.
+          </div>
         </div>
 
       </div>
 
-      <div class="chat-input-area">
-        <input type="text" placeholder="Type your message...">
-        <button class="send-btn">Send</button>
-      </div>
+      <form class="chat-input-area" id="messageForm">
+        <input id="messageInput" type="text" placeholder="Type your message..." autocomplete="off" />
+        <button class="primary-btn" type="submit">Send</button>
+      </form>
 
     </section>
 
-  </div>
+    <aside class="context-panel">
+      <span class="small-label">Conversation Details</span>
+      <h2 id="contextCompany">Northwest Electric Ltd.</h2>
+      <p id="contextRole">Electrical Apprentice</p>
 
-</div>
+      <div class="context-card">
+        <span>Recommended next step</span>
+        <strong>Confirm interview availability</strong>
+        <p>Reply with a clear time window and your preferred contact method.</p>
+      </div>
+
+      <div class="context-list">
+        <div>
+          <span>Status</span>
+          <strong>Active</strong>
+        </div>
+        <div>
+          <span>Response time</span>
+          <strong>Same day</strong>
+        </div>
+        <div>
+          <span>Source</span>
+          <strong>Application</strong>
+        </div>
+      </div>
+
+      <a href="candidate-applications.html" class="secondary-btn wide-btn">View Applications</a>
+    </aside>
+
+  </section>
+
+</main>
 
 <script src="../js/candidate-messages.js"></script>
 

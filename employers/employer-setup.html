@@ -3,180 +3,178 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Employer Setup | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/employer-setup.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
 <header>
-  <a href="../index.html" class="logo">PLACELY TALENT</a>
+  <div class="logo-wrapper">
+    <a href="../index.html" class="logo">PLACELY TALENT</a>
+    <div class="logo-subtitle">Employer Platform</div>
+  </div>
+
+  <a href="employer-dashboard.html" class="skip-btn">Skip to Dashboard</a>
 </header>
 
-<div class="setup-layout">
+<main class="setup-shell">
 
-  <aside class="sidebar">
-    <h2>Employer Setup</h2>
-    <p>Complete your hiring profile so Placely can understand your company needs.</p>
+  <aside class="setup-intro">
+    <span class="pill">Employer Onboarding</span>
 
-    <div class="step-list">
-      <div class="step-item active">1. Company Info</div>
-      <div class="step-item">2. Hiring Focus</div>
-      <div class="step-item">3. Candidate Requirements</div>
-      <div class="step-item">4. Job Preferences</div>
-      <div class="step-item">5. Finish</div>
+    <h1>Build a company profile candidates trust.</h1>
+
+    <p>
+      Complete your employer profile so trades candidates understand who you hire, what you offer, and what kind of people fit your team.
+    </p>
+
+    <div class="setup-steps">
+      <button type="button" class="step-item active" data-step-indicator="0">
+        <span>01</span>
+        <strong>Company</strong>
+      </button>
+
+      <button type="button" class="step-item" data-step-indicator="1">
+        <span>02</span>
+        <strong>Hiring Focus</strong>
+      </button>
+
+      <button type="button" class="step-item" data-step-indicator="2">
+        <span>03</span>
+        <strong>Opportunity</strong>
+      </button>
+
+      <button type="button" class="step-item" data-step-indicator="3">
+        <span>04</span>
+        <strong>Candidate Fit</strong>
+      </button>
     </div>
   </aside>
 
-  <main class="main-content">
+  <section class="setup-main">
+    <div class="setup-top">
+      <div>
+        <span class="eyebrow">PLACELY EMPLOYER PORTAL</span>
+        <h2>Complete company profile</h2>
+      </div>
+
+      <span class="step-badge" id="stepBadge">Step 1 of 4</span>
+    </div>
 
     <form id="employerSetupForm" class="setup-card">
 
-      <div class="form-step active">
-        <h1>Company Info</h1>
-        <p>Tell us a little more about your company.</p>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+
+      <section class="form-step active" data-step="0">
+        <span class="section-pill">Company profile</span>
+        <h3>Introduce your company</h3>
+        <p class="step-copy">This is what candidates will read first when they review your company.</p>
 
         <div class="form-grid">
           <div class="form-group">
-            <label>Company Size</label>
-            <select>
-              <option>1-10 employees</option>
-              <option>11-50 employees</option>
-              <option>51-200 employees</option>
-              <option>200+ employees</option>
-            </select>
+            <label>Company Website</label>
+            <input id="companyWebsite" type="url" placeholder="https://yourcompany.com" />
           </div>
 
           <div class="form-group">
             <label>Company Location</label>
-            <input type="text" placeholder="Calgary, AB">
+            <input id="companyLocation" type="text" placeholder="Calgary, AB" />
           </div>
 
           <div class="form-group full">
             <label>Company Description</label>
-            <textarea placeholder="Briefly describe your company, what you do, and the type of team you’re building."></textarea>
+            <textarea id="companyDescription" placeholder="Describe your company, the kind of work you do, your job sites, and what candidates should know."></textarea>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div class="form-step">
-        <h1>Hiring Focus</h1>
-        <p>What industries or trades do you mainly hire for?</p>
+      <section class="form-step" data-step="1">
+        <span class="section-pill">Hiring focus</span>
+        <h3>What roles are you hiring for?</h3>
+        <p class="step-copy">Help Placely understand the trades, industries, and positions your company needs most.</p>
 
         <div class="form-grid">
           <div class="form-group">
-            <label>Main Industry</label>
-            <select>
-              <option>Construction</option>
-              <option>Electrical</option>
-              <option>Plumbing</option>
-              <option>HVAC</option>
-              <option>Welding</option>
-              <option>Oil & Gas</option>
-              <option>General Labour</option>
-            </select>
+            <label>Main Hiring Industry</label>
+            <input id="mainHiringIndustry" type="text" placeholder="Construction, electrical, HVAC..." />
           </div>
 
           <div class="form-group">
-            <label>Primary Roles You Hire</label>
-            <input type="text" placeholder="Electricians, apprentices, labourers">
+            <label>Employment Type</label>
+            <select id="employmentType">
+              <option value="">Select type</option>
+              <option>Full-time</option>
+              <option>Part-time</option>
+              <option>Contract</option>
+              <option>Rotation</option>
+              <option>Temporary</option>
+            </select>
           </div>
 
           <div class="form-group full">
             <label>Hiring Needs</label>
-            <textarea placeholder="Explain what roles you usually need filled and what your current hiring needs are."></textarea>
+            <textarea id="hiringNeeds" placeholder="Example: electrical apprentices, journeyman welders, labourers, equipment operators, HVAC techs..."></textarea>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div class="form-step">
-        <h1>Candidate Requirements</h1>
-        <p>Help us understand what makes a candidate a good fit.</p>
-
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Experience Level</label>
-            <select>
-              <option>Entry Level</option>
-              <option>Apprentice</option>
-              <option>Journeyman</option>
-              <option>Supervisor / Lead Hand</option>
-              <option>Any Experience Level</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>Required Certifications</label>
-            <input type="text" placeholder="CSTS, WHMIS, Fall Protection">
-          </div>
-
-          <div class="form-group full">
-            <label>Must-Have Skills</label>
-            <input type="text" placeholder="Reliable, own transportation, tools, safety tickets">
-          </div>
-        </div>
-      </div>
-
-      <div class="form-step">
-        <h1>Job Preferences</h1>
-        <p>Tell us what type of jobs you usually offer.</p>
+      <section class="form-step" data-step="2">
+        <span class="section-pill">Opportunity details</span>
+        <h3>Show candidates what you offer</h3>
+        <p class="step-copy">Give candidates a clear picture of pay, timeline, and the type of opportunity.</p>
 
         <div class="form-grid">
-          <div class="form-group">
-            <label>Employment Type</label>
-            <select>
-              <option>Full-Time</option>
-              <option>Part-Time</option>
-              <option>Contract</option>
-              <option>Temporary</option>
-              <option>Rotation</option>
-            </select>
-          </div>
-
           <div class="form-group">
             <label>Typical Pay Range</label>
-            <input type="text" placeholder="$25 - $40/hr">
+            <input id="payRange" type="text" placeholder="$25 - $40/hr" />
           </div>
 
           <div class="form-group">
             <label>Hiring Timeline</label>
-            <select>
+            <select id="hiringTimeline">
+              <option value="">Select timeline</option>
               <option>Immediately</option>
+              <option>Within 1 week</option>
               <option>Within 2 weeks</option>
               <option>Within 1 month</option>
-              <option>Ongoing hiring</option>
+              <option>Always hiring</option>
             </select>
           </div>
+        </div>
+      </section>
 
-          <div class="form-group">
-            <label>Work Location</label>
-            <input type="text" placeholder="Calgary, Edmonton, remote site, etc.">
+      <section class="form-step" data-step="3">
+        <span class="section-pill">Candidate fit</span>
+        <h3>Define your ideal candidate</h3>
+        <p class="step-copy">Tell candidates what makes someone a strong fit before they apply or reach out.</p>
+
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Ideal Candidate Qualities</label>
+            <textarea id="candidateQualities" placeholder="Example: reliable, safety-focused, own transportation, CSTS/WHMIS, commercial experience, strong communication..."></textarea>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div class="form-step">
-        <h1>Finish Setup</h1>
-        <p>Review your setup and continue to your employer dashboard.</p>
-
-        <div class="review-box">
-          Your employer hiring profile is ready to be created.
-        </div>
-      </div>
-
-      <div class="button-row">
+      <div class="form-actions">
         <button type="button" class="back-btn" id="backBtn">Back</button>
         <button type="button" class="next-btn" id="nextBtn">Next</button>
       </div>
 
+      <p id="setupMessage" class="setup-message"></p>
     </form>
+  </section>
 
-  </main>
+</main>
 
-</div>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
 <script src="../emp-js/employer-setup.js"></script>
 
 </body>

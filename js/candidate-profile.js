@@ -3,13 +3,99 @@ const candidateSupabase = window.supabase.createClient(
   SUPABASE_ANON_KEY
 );
 
-async function loadCandidateProfile() {
-  const { data: { user } } = await candidateSupabase.auth.getUser();
+let currentUser = null;
+let currentProfile = {};
+let removeResume = false;
 
-  if (!user) {
+const PHOTO_BUCKET = "candidate_photos";
+const RESUME_BUCKET = "candidate_resumes";
+
+function getEl(id) {
+  return document.getElementById(id);
+}
+
+function showToast(message) {
+  const toast = getEl("toast");
+
+  if (!toast) {
+    alert(message);
+    return;
+  }
+
+  toast.textContent = message;
+  toast.classList.add("show");
+
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 2500);
+}
+
+function value(id) {
+  return getEl(id)?.value?.trim() || "";
+}
+
+function calculateStrength() {
+  let score = 0;
+
+  if (value("full_name")) score += 10;
+  if (value("trade")) score += 15;
+  if (value("location")) score += 10;
+  if (value("bio")) score += 10;
+  if (value("experience")) score += 15;
+  if (value("skills")) score += 10;
+  if (value("certifications")) score += 10;
+  if (value("availability")) score += 10;
+  if (value("email")) score += 5;
+  if (value("phone")) score += 5;
+
+  return Math.min(score, 100);
+}
+
+function updateStrength() {
+  const score = calculateStrength();
+
+  const number = getEl("profile_strength_number");
+  const bar = document.querySelector(".score-track div");
+
+  if (number) number.textContent = `${score}%`;
+  if (bar) bar.style.width = `${score}%`;
+}
+
+function updatePreview() {
+  const fullName = value("full_name") || "Candidate Name";
+  const trade = value("trade") || "Trade / Job Title";
+  const location = value("location") || "Location";
+
+  const previewName = getEl("preview_name");
+  const previewMeta = getEl("preview_meta");
+  const avatar = document.querySelector(".preview-avatar");
+
+  if (previewName) previewName.textContent = fullName;
+  if (previewMeta) previewMeta.textContent = `${trade} · ${location}`;
+
+  if (avatar) {
+    const initials = fullName
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(word => word[0].toUpperCase())
+      .join("");
+
+    avatar.textContent = initials || "PT";
+  }
+
+  updateStrength();
+}
+
+async function loadCandidateProfile() {
+  const { data: { user }, error: userError } = await candidateSupabase.auth.getUser();
+
+  if (userError || !user) {
     window.location.href = "candidate-login.html";
     return;
   }
+
+  currentUser = user;
 
   const { data: profile, error } = await candidateSupabase
     .from("candidate_profiles")
@@ -19,192 +105,220 @@ async function loadCandidateProfile() {
 
   if (error) {
     console.error("Error loading candidate profile:", error);
-    return;
+    currentProfile = {
+      id: user.id,
+      email: user.email,
+      profile_visible: true
+    };
+  } else {
+    currentProfile = profile;
   }
 
-  console.log("Loaded profile:", profile);
-console.log("Loaded photo URL:", profile.profile_photo_url);
+  getEl("profile_photo_preview").src =
+    currentProfile.profile_photo_url || "https://placehold.co/180x180";
 
-document.getElementById("profile_photo_preview").src = profile.profile_photo_url || "https://placehold.co/140x140";
+  if (currentProfile.resume_url) {
+    const fileName = currentProfile.resume_url.split("/").pop();
 
-if (profile.resume_url) {
-  const fileName = profile.resume_url.split("/").pop();
-
-  document.getElementById("resume_preview").style.display = "flex";
-  document.getElementById("resume_file_name").textContent =
-    decodeURIComponent(fileName);
-}
-
-console.log(
-  "Image src after setting:",
-  document.getElementById("profile_photo_preview").src
-);
-
-  document.getElementById("full_name").value = profile.full_name || "";
-  document.getElementById("trade").value = profile.trade || "";
-  document.getElementById("location").value = profile.location || "";
-  document.getElementById("bio").value = profile.bio || "";
-  document.getElementById("experience").value = profile.experience || "";
-  document.getElementById("skills").value = profile.skills || "";
-  document.getElementById("certifications").value = profile.certifications || "";
-  document.getElementById("availability").value = profile.availability || "";
-  document.getElementById("email").value = profile.email || user.email || "";
-  document.getElementById("phone").value = profile.phone || "";
-  document.getElementById("contact_method").value = profile.contact_method || "";
-  document.getElementById("profile_visible").checked = profile.profile_visible ?? true;
-}
-
-loadCandidateProfile();
-
-    
-console.log("candidate-profile.js loaded");
-console.log(document.getElementById("uploadPhotoBtn"));
-console.log(document.getElementById("profile_photo_file"));
-
-document.getElementById("uploadPhotoBtn").addEventListener("click", () => {
-  document.getElementById("profile_photo_file").click();
-});
-
-document.getElementById("profile_photo_file").addEventListener("change", () => {
-  const file = document.getElementById("profile_photo_file").files[0];
-
-  if (file) {
-    document.getElementById("profile_photo_preview").src =
-      URL.createObjectURL(file);
+    getEl("resume_preview").style.display = "flex";
+    getEl("resume_file_name").textContent = decodeURIComponent(fileName);
   }
-});
 
-document.getElementById("resumeDrop").addEventListener("click", () => {
-  document.getElementById("resume_file").click();
-});
+  getEl("full_name").value = currentProfile.full_name || "";
+  getEl("trade").value = currentProfile.trade || "";
+  getEl("location").value = currentProfile.location || "";
+  getEl("bio").value = currentProfile.bio || "";
+  getEl("experience").value = currentProfile.experience || "";
+  getEl("skills").value = currentProfile.skills || "";
+  getEl("certifications").value = currentProfile.certifications || "";
+  getEl("availability").value = currentProfile.availability || "Available Immediately";
+  getEl("email").value = currentProfile.email || user.email || "";
+  getEl("phone").value = currentProfile.phone || "";
+  getEl("contact_method").value = currentProfile.contact_method || "Email";
+  getEl("profile_visible").checked = currentProfile.profile_visible ?? true;
 
-document.getElementById("resume_file").addEventListener("change", (e) => {
-  const file = e.target.files[0];
+  updatePreview();
+}
 
-  if (!file) return;
+async function uploadFile(bucket, file, userId) {
+  const cleanName = file.name.replace(/\s+/g, "-").toLowerCase();
+  const path = `${userId}/${Date.now()}-${cleanName}`;
 
-  document.getElementById("resume_preview").style.display = "flex";
-  document.getElementById("resume_file_name").textContent = file.name;
-});
+  const { error } = await candidateSupabase.storage
+    .from(bucket)
+    .upload(path, file, { upsert: true });
 
-let removeResume = false;
-
-document.getElementById("remove_resume_btn").addEventListener("click", () => {
-  removeResume = true;
-
-  document.getElementById("resume_file").value = "";
-  document.getElementById("resume_preview").style.display = "none";
-  document.getElementById("resume_file_name").textContent = "";
-});
-
-const saveBtn = document.querySelector(".save-btn");
-
-saveBtn.addEventListener("click", async (e) => {
-  e.preventDefault();
-
-  const { data: { user } } = await candidateSupabase.auth.getUser();
-
-
-  let profilePhotoUrl = null;
-let resumeUrl = null;
-
-const photoFile = document.getElementById("profile_photo_file")?.files[0];
-const resumeFile = document.getElementById("resume_file")?.files[0];
-
-if (photoFile) {
-  const photoPath = `${user.id}/${Date.now()}-${photoFile.name}`;
-
-  const { error: photoError } = await candidateSupabase.storage
-    .from("candidate_photos")
-    .upload(photoPath, photoFile, {
-      upsert: true
-    });
-
-  if (photoError) {
-    console.error("Photo upload error:", photoError);
-    alert("Error uploading profile photo: " + photoError.message);
-    return;
+  if (error) {
+    throw error;
   }
 
   const { data } = candidateSupabase.storage
-    .from("candidate_photos")
-    .getPublicUrl(photoPath);
+    .from(bucket)
+    .getPublicUrl(path);
 
-  profilePhotoUrl = data.publicUrl;
-
-  console.log("Generated photo URL:", profilePhotoUrl);
+  return data.publicUrl;
 }
 
-if (resumeFile) {
-  const resumePath = `${user.id}/${Date.now()}-${resumeFile.name}`;
-
-  const { error: resumeError } = await candidateSupabase.storage
-    .from("candidate_resumes")
-    .upload(resumePath, resumeFile, {
-      upsert: true
-    });
-
-  if (resumeError) {
-    console.error("Resume upload error:", resumeError);
-    alert("Error uploading resume: " + resumeError.message);
+async function saveCandidateProfile() {
+  if (!currentUser) {
+    showToast("User not loaded yet.");
     return;
   }
 
-  const { data } = candidateSupabase.storage
-    .from("candidate_resumes")
-    .getPublicUrl(resumePath);
+  const saveButtons = document.querySelectorAll(".save-profile-btn, .save-top-btn");
+  saveButtons.forEach(btn => {
+    btn.disabled = true;
+    btn.textContent = "Saving...";
+  });
 
-  resumeUrl = data.publicUrl;
+  try {
+    let profilePhotoUrl = currentProfile.profile_photo_url || null;
+    let resumeUrl = currentProfile.resume_url || null;
 
-}
+    const photoFile = getEl("profile_photo_file")?.files[0];
+    const resumeFile = getEl("resume_file")?.files[0];
 
-  const updates = {
-    full_name: document.getElementById("full_name").value,
-    trade: document.getElementById("trade").value,
-    location: document.getElementById("location").value,
-    bio: document.getElementById("bio").value,
-    experience: document.getElementById("experience").value,
-    skills: document.getElementById("skills").value,
-    certifications: document.getElementById("certifications").value,
-    availability: document.getElementById("availability").value,
-    email: document.getElementById("email").value,
-    phone: document.getElementById("phone").value,
-    contact_method: document.getElementById("contact_method").value,
-    profile_visible: document.getElementById("profile_visible").checked
-  };
-
-
-
-
-    if (profilePhotoUrl) {
-    updates.profile_photo_url = profilePhotoUrl;
+    if (photoFile) {
+      profilePhotoUrl = await uploadFile(PHOTO_BUCKET, photoFile, currentUser.id);
     }
 
-    if (resumeUrl) {
-    updates.resume_url = resumeUrl;
+    if (resumeFile) {
+      resumeUrl = await uploadFile(RESUME_BUCKET, resumeFile, currentUser.id);
     }
 
     if (removeResume) {
-  updates.resume_url = null;
+      resumeUrl = null;
+    }
+
+    const updates = {
+      id: currentUser.id,
+      full_name: value("full_name"),
+      trade: value("trade"),
+      location: value("location"),
+      bio: value("bio"),
+      experience: value("experience"),
+      skills: value("skills"),
+      certifications: value("certifications"),
+      availability: value("availability"),
+      email: value("email") || currentUser.email,
+      phone: value("phone"),
+      contact_method: value("contact_method"),
+      profile_visible: getEl("profile_visible").checked,
+      profile_photo_url: profilePhotoUrl,
+      resume_url: resumeUrl
+    };
+
+    const { data, error } = await candidateSupabase
+      .from("candidate_profiles")
+      .upsert(updates)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    currentProfile = data;
+    removeResume = false;
+
+    showToast("Profile saved successfully.");
+    updatePreview();
+  } catch (error) {
+    console.error("Save error:", error);
+    showToast("Error saving profile: " + error.message);
+  } finally {
+    saveButtons.forEach(btn => {
+      btn.disabled = false;
+      btn.textContent = "Save Profile";
+    });
+  }
 }
 
+function setupEvents() {
+  const uploadPhotoBtn = getEl("uploadPhotoBtn");
+  const photoInput = getEl("profile_photo_file");
+  const resumeDrop = getEl("resumeDrop");
+  const resumeInput = getEl("resume_file");
+  const removeResumeBtn = getEl("remove_resume_btn");
 
-    console.log("Final updates object:", updates);
-
-
-  const { error } = await candidateSupabase
-  .from("candidate_profiles")
-  .upsert({
-    id: user.id,
-    ...updates
-  });
-
-
-  if (error) {
-    console.error("Save error:", error.message, error.details, error.hint, error);
-    alert("Error saving profile: " + error.message);
-    return;
+  if (uploadPhotoBtn && photoInput) {
+    uploadPhotoBtn.addEventListener("click", () => {
+      photoInput.click();
+    });
   }
 
-  alert("Candidate profile updated successfully!");
+  if (photoInput) {
+    photoInput.addEventListener("change", () => {
+      const file = photoInput.files[0];
+
+      if (!file) return;
+
+      getEl("profile_photo_preview").src = URL.createObjectURL(file);
+      updateStrength();
+    });
+  }
+
+  if (resumeDrop && resumeInput) {
+    resumeDrop.addEventListener("click", () => {
+      resumeInput.click();
+    });
+  }
+
+  if (resumeInput) {
+    resumeInput.addEventListener("change", () => {
+      const file = resumeInput.files[0];
+
+      if (!file) return;
+
+      removeResume = false;
+      getEl("resume_preview").style.display = "flex";
+      getEl("resume_file_name").textContent = file.name;
+      updateStrength();
+    });
+  }
+
+  if (removeResumeBtn) {
+    removeResumeBtn.addEventListener("click", () => {
+      removeResume = true;
+      resumeInput.value = "";
+      getEl("resume_preview").style.display = "none";
+      getEl("resume_file_name").textContent = "";
+      updateStrength();
+    });
+  }
+
+  document.querySelectorAll(".save-profile-btn, .save-top-btn").forEach(button => {
+    button.addEventListener("click", saveCandidateProfile);
+  });
+
+  document.querySelectorAll("input, textarea, select").forEach(input => {
+    input.addEventListener("input", updatePreview);
+    input.addEventListener("change", updatePreview);
+  });
+
+  document.querySelectorAll(".tag-row span").forEach(tag => {
+    tag.addEventListener("click", () => {
+      const text = tag.textContent.trim();
+
+      const skillsInput = getEl("skills");
+      const certInput = getEl("certifications");
+
+      const certWords = ["CSTS", "WHMIS", "Fall Protection", "First Aid"];
+
+      if (certWords.includes(text)) {
+        const existing = certInput.value.trim();
+        certInput.value = existing ? `${existing}, ${text}` : text;
+      } else {
+        const existing = skillsInput.value.trim();
+        skillsInput.value = existing ? `${existing}, ${text}` : text;
+      }
+
+      updatePreview();
+    });
+  });
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  setupEvents();
+  await loadCandidateProfile();
 });

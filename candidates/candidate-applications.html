@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Applications | Placely Talent</title>
+
+  <link rel="stylesheet" href="../css/candidate-applications.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<header>
+  <div class="logo-wrapper">
+    <a href="candidate-dashboard.html" class="logo">PLACELY TALENT</a>
+    <div class="logo-subtitle">Talent Platform</div>
+  </div>
+
+  <nav>
+    <a href="candidate-dashboard.html">Dashboard</a>
+    <a href="../public/find-jobs.html?role=candidate">Find Jobs</a>
+    <a href="../public/saved-jobs.html">Saved Jobs</a>
+    <a href="candidate-applications.html" class="active">Applications</a>
+    <a href="candidate-messages.html">Messages</a>
+    <a href="candidate-profile.html">Profile</a>
+  </nav>
+</header>
+
+<main class="page-shell">
+
+  <section class="hero-card">
+    <div>
+      <span class="eyebrow">Application Tracker</span>
+      <h1>Track every opportunity in one place.</h1>
+      <p>Stay organized with your submitted applications, interviews, follow-ups, and offers.</p>
+    </div>
+
+    <a href="../public/find-jobs.html?role=candidate" class="primary-btn">Find More Jobs</a>
+  </section>
+
+  <section class="stats-grid">
+    <div class="stat-card">
+      <span>Applied</span>
+      <strong id="applied_count">0</strong>
+      <p>Submitted applications</p>
+    </div>
+
+    <div class="stat-card">
+      <span>Interviewing</span>
+      <strong id="interviewing_count">0</strong>
+      <p>Active interview stages</p>
+    </div>
+
+    <div class="stat-card">
+      <span>Offers</span>
+      <strong id="offers_count">0</strong>
+      <p>Received job offers</p>
+    </div>
+
+    <div class="stat-card">
+      <span>Follow Ups</span>
+      <strong id="followups_count">0</strong>
+      <p>Recommended next steps</p>
+    </div>
+  </section>
+
+  <section class="content-grid">
+
+    <section class="panel main-panel">
+      <div class="panel-header">
+        <div>
+          <span class="small-label">Your Applications</span>
+          <h2>Application pipeline</h2>
+        </div>
+
+        <a href="../public/find-jobs.html?role=candidate" class="secondary-btn">Browse Jobs</a>
+      </div>
+
+      <div id="applications_list" class="applications-list"></div>
+    </section>
+
+    <aside class="panel side-panel">
+      <span class="small-label">Next Steps</span>
+      <h2>Keep momentum</h2>
+
+      <div class="tip-list">
+        <div class="tip-card">
+          <strong>Apply to quality matches</strong>
+          <p>Focus on roles that match your trade, location, availability, and experience.</p>
+        </div>
+
+        <div class="tip-card">
+          <strong>Keep your profile fresh</strong>
+          <p>Update your resume, certifications, and contact preferences regularly.</p>
+        </div>
+
+        <div class="tip-card">
+          <strong>Respond quickly</strong>
+          <p>Fast replies help employers move you forward before roles fill.</p>
+        </div>
+      </div>
+    </aside>
+
+  </section>
+
+</main>
+
+<script src="../js/candidate-applications.js"></script>
+
+</body>
+</html>

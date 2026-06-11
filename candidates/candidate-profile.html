@@ -3,86 +3,251 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Candidate Profile | Placely Talent</title>
+
+  <title>Edit Profile | Placely Talent</title>
+
   <link rel="stylesheet" href="../css/candidate-profile.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
+
 <body>
 
-  <header class="navbar">
-    <div class="nav-container">
-      <h2>PLACELY TALENT</h2>
-      <a href="candidate-dashboard.html" class="back-btn">Back to Dashboard</a>
+<header>
+  <div class="logo-wrapper">
+    <a href="../index.html" class="logo">PLACELY TALENT</a>
+    <div class="logo-subtitle">Talent Platform</div>
+  </div>
+
+  <nav>
+    <a href="candidate-dashboard.html">Dashboard</a>
+    <a href="../public/find-jobs.html?role=candidate">Find Jobs</a>
+    <a href="candidate-applications.html">Applications</a>
+    <a href="candidate-messages.html">Messages</a>
+    <button class="nav-btn save-top-btn" type="button">Save Profile</button>
+  </nav>
+</header>
+
+<main class="page-shell">
+
+  <section class="page-hero">
+    <div>
+      <span class="eyebrow">Profile Management</span>
+      <h1>Build a profile employers trust.</h1>
+      <p>Keep your trade, experience, resume, skills, and contact details updated so employers can quickly understand where you fit.</p>
     </div>
-  </header>
 
-  <main class="page-container">
+    <div class="hero-actions">
+      <a href="candidate-dashboard.html" class="secondary-btn">Back to Dashboard</a>
+      <button type="button" class="primary-btn save-profile-btn">Save Changes</button>
+    </div>
+  </section>
 
-    <section class="profile-header">
-      <div class="profile-photo-box">
-        <img
-  id="profile_photo_preview"
-  src="https://placehold.co/140x140"
-  alt="Profile Photo"
-  class="profile-photo"
-/>
-        <input id="profile_photo_file" type="file" accept="image/*" hidden>
-        <button type="button" id="uploadPhotoBtn" class="small-btn">Upload Photo</button>
+  <section class="profile-top-card company-top-card">
+
+    <aside class="photo-panel logo-panel">
+      <div class="photo-ring logo-frame">
+        <img id="profile_photo_preview" src="https://placehold.co/180x180" alt="Profile Photo" class="profile-photo" />
       </div>
 
-      <div class="profile-main-info">
-          <input
-            id="full_name"
-            type="text"
-            placeholder="Full Name"
-            class="name-input"/>
+      <input id="profile_photo_file" type="file" accept="image/*" hidden>
+      <button type="button" id="uploadPhotoBtn" class="primary-wide">Upload Photo</button>
 
-        <input
-            id="trade"
-            type="text"
-            placeholder="Trade / Job Title ex. Electrician Apprentice"/>
+      <div class="visibility-chip">Visible to Employers</div>
+    </aside>
 
-        <input
-            id="location"
-            type="text"
-            placeholder="Location ex. Calgary, AB"/>
-
-        <textarea
-            id="bio"
-            placeholder="Short bio about yourself, your experience, and what kind of work you're looking for..."></textarea>
-
+    <section class="profile-main-fields company-main-fields">
+      <div class="field-row top-row">
+        <input id="full_name" type="text" placeholder="Full Name" class="name-input company-name-input" />
       </div>
+
+      <div class="field-grid">
+        <input id="trade" type="text" placeholder="Trade / Job Title ex. Electrician Apprentice" />
+        <input id="location" type="text" placeholder="Location ex. Penticton, BC" />
+      </div>
+
+      <textarea id="bio" placeholder="Write a short professional summary about your experience, strengths, certifications, and the kind of work you're looking for..."></textarea>
     </section>
 
-    <section class="content-grid">
+    <aside class="score-card strength-card">
+      <span class="small-label">Profile Strength</span>
+      <strong id="profile_strength_number">82%</strong>
 
-      <div class="card">
-        <h3>Work Details</h3>
+      <div class="score-track">
+        <div></div>
+      </div>
 
-        <label>Years of Experience</label>
-        <input  id="experience" type="text" placeholder="ex. 2 years" />
+      <p>Complete your work history, skills, resume, and contact preferences to improve employer visibility.</p>
+
+      <div class="score-list">
+        <div><span>✓</span> Basic profile added</div>
+        <div><span>✓</span> Contact info ready</div>
+        <div><span>•</span> Add stronger work history</div>
+      </div>
+    </aside>
+
+  </section>
+
+  <section class="content-layout">
+
+    <aside class="sidebar-card">
+      <a href="#overview" class="active">Overview</a>
+      <a href="#experience-section">Experience</a>
+      <a href="#skills-section">Skills</a>
+      <a href="#documents-section">Documents</a>
+      <a href="#contact-section">Contact</a>
+      <a href="#visibility-section">Visibility</a>
+    </aside>
+
+    <section class="profile-content">
+
+      <section class="panel" id="overview">
+        <div class="panel-header">
+          <div>
+            <span class="small-label">Public Profile Preview</span>
+            <h2>How employers will see you</h2>
+          </div>
+          <span class="mini-pill">Live Preview</span>
+        </div>
+
+        <div class="preview-card">
+          <div class="preview-avatar">KW</div>
+
+          <div class="preview-info">
+            <h3 id="preview_name">Candidate Name</h3>
+            <p id="preview_meta">Trade / Job Title · Location</p>
+
+            <div class="preview-tags">
+              <span>Reliable</span>
+              <span>Certified</span>
+              <span>Available</span>
+            </div>
+          </div>
+
+          <button type="button" class="secondary-btn">View Preview</button>
+        </div>
+      </section>
+
+      <section class="panel" id="experience-section">
+        <div class="panel-header">
+          <div>
+            <span class="small-label">Work History</span>
+            <h2>Experience</h2>
+          </div>
+          <button type="button" class="small-outline-btn">+ Add Experience</button>
+        </div>
+
+        <div class="form-grid">
+          <div>
+            <label>Years of Experience</label>
+            <input id="experience" type="text" placeholder="ex. 2 years" />
+          </div>
+
+          <div>
+            <label>Availability</label>
+            <select id="availability">
+              <option>Available Immediately</option>
+              <option>Available in 2 Weeks</option>
+              <option>Currently Employed</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="work-list">
+          <article>
+            <div>
+              <strong>Most Recent Position</strong>
+              <p>Add your latest company, title, dates, and main responsibilities.</p>
+            </div>
+            <button type="button">Edit</button>
+          </article>
+
+          <article>
+            <div>
+              <strong>Add another role</strong>
+              <p>Build a stronger profile by showing previous jobs and trade experience.</p>
+            </div>
+            <button type="button">Add</button>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel" id="skills-section">
+        <div class="panel-header">
+          <div>
+            <span class="small-label">Searchable Strengths</span>
+            <h2>Skills & Certifications</h2>
+          </div>
+          <span class="mini-pill">Employer Search Info</span>
+        </div>
 
         <label>Skills</label>
-        <input id="skills" type="text" placeholder="ex. Wiring, conduit, troubleshooting" />
+        <input id="skills" type="text" placeholder="ex. Welding, conduit, blueprint reading" />
+
+        <div class="tag-row">
+          <span>Welding</span>
+          <span>Pipefitting</span>
+          <span>Blueprint Reading</span>
+          <span>Fabrication</span>
+          <span>Equipment Operation</span>
+        </div>
 
         <label>Certifications</label>
         <input id="certifications" type="text" placeholder="ex. CSTS, WHMIS, Fall Protection" />
 
-        <label>Availability</label>
-        <select id="availability">
-          <option>Available Immediately</option>
-          <option>Available in 2 Weeks</option>
-          <option>Currently Employed</option>
-        </select>
-      </div>
+        <div class="tag-row">
+          <span>CSTS</span>
+          <span>WHMIS</span>
+          <span>Fall Protection</span>
+          <span>First Aid</span>
+        </div>
+      </section>
 
-      <div class="card">
-        <h3>Contact Info</h3>
+      <section class="panel" id="documents-section">
+        <div class="panel-header">
+          <div>
+            <span class="small-label">Documents</span>
+            <h2>Resume Manager</h2>
+          </div>
+        </div>
 
-        <label>Email</label>
-        <input id="email" type="email" placeholder="you@example.com" />
+        <p class="panel-text">Upload your resume so employers can review your experience before contacting you.</p>
 
-        <label>Phone</label>
-        <input id="phone" type="text" placeholder="(403) 000-0000" />
+        <div class="resume-drop" id="resumeDrop">
+          <div class="upload-icon">↑</div>
+          <strong>Drop resume here</strong>
+          <span>or click to upload PDF/DOCX</span>
+          <input id="resume_file" type="file" accept=".pdf,.doc,.docx" hidden />
+        </div>
+
+        <div id="resume_preview" class="resume-preview" style="display:none;">
+          <div class="file-icon">📄</div>
+          <div>
+            <strong id="resume_file_name">Resume uploaded</strong>
+            <p>Ready for employers to review</p>
+          </div>
+          <button id="remove_resume_btn" type="button">Remove</button>
+        </div>
+      </section>
+
+      <section class="panel" id="contact-section">
+        <div class="panel-header">
+          <div>
+            <span class="small-label">Employer Communication</span>
+            <h2>Contact Info</h2>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div>
+            <label>Email</label>
+            <input id="email" type="email" placeholder="you@example.com" />
+          </div>
+
+          <div>
+            <label>Phone</label>
+            <input id="phone" type="text" placeholder="(403) 000-0000" />
+          </div>
+        </div>
 
         <label>Preferred Contact Method</label>
         <select id="contact_method">
@@ -90,57 +255,34 @@
           <option>Phone</option>
           <option>Text</option>
         </select>
-      </div>
+      </section>
 
-      <div class="card resume-card">
-  <h3>Resume</h3>
-  <p>Upload your resume so employers can review your experience.</p>
+      <section class="panel visibility-panel" id="visibility-section">
+        <div>
+          <span class="small-label">Privacy</span>
+          <h2>Profile Visibility</h2>
+          <p class="panel-text">Control whether employers can discover your profile in candidate searches.</p>
 
-  <div class="resume-drop" id="resumeDrop">
-    <p>Drop resume here</p>
-    <span>or click to upload PDF/DOCX</span>
+          <label class="toggle-row">
+            <input id="profile_visible" type="checkbox" checked />
+            <span>Visible to Employers</span>
+          </label>
+        </div>
 
-    <input
-      id="resume_file"
-      type="file"
-      accept=".pdf,.doc,.docx"
-      hidden
-    />
-  </div>
-
-  <div id="resume_preview" class="resume-preview" style="display: none;">
-  <div class="file-icon">📄</div>
-
-  <div class="file-info">
-    <p id="resume_file_name"></p>
-    <span>Resume uploaded</span>
-  </div>
-
-  <button id="remove_resume_btn" class="remove-file-btn">
-    ✕
-  </button>
-</div>
-</div>
-
-      <div class="card">
-        <h3>Profile Visibility</h3>
-        <p>Control whether employers can see your profile.</p>
-
-        <label class="toggle-row">
-          <input id="profile_visible" type="checkbox" checked />
-          <span>Visible to Employers</span>
-        </label>
-
-        <button class="save-btn">Save Profile</button>
-      </div>
+        <button class="primary-btn save-profile-btn" type="button">Save Profile</button>
+      </section>
 
     </section>
 
-  </main>
+  </section>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../js/config.js"></script>
-  <script src="../js/candidate-profile.js"></script>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
+<script src="../js/candidate-profile.js"></script>
 
 </body>
 </html>

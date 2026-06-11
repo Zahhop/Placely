@@ -7,117 +7,122 @@
   <title>Employer Messages | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/employer-messages.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
 <header>
-  <a href="../index.html" class="logo">PLACELY TALENT</a>
-  <a href="employer-dashboard.html" class="back-btn">Back to Dashboard</a>
+  <div class="logo-wrapper">
+    <a href="../index.html" class="logo">PLACELY TALENT</a>
+    <div class="logo-subtitle">Employer Platform</div>
+  </div>
+
+  <nav>
+    <a href="manage-jobs.html">Jobs</a>
+    <a href="find-candidates.html">Candidates</a>
+    <a href="saved-talent.html">Saved Talent</a>
+    <a href="employer-messages.html" class="active">Messages</a>
+    <a href="company-profile.html">Company</a>
+    <button id="logoutBtn" class="logout-btn">Logout</button>
+  </nav>
 </header>
 
-<main class="page-container">
+<main class="page-shell">
 
-  <section class="page-header">
-    <h1>Messages</h1>
-    <p>Message candidates directly, manage conversations, and follow up with saved talent.</p>
+  <section class="messages-hero">
+    <div>
+      <span class="eyebrow">EMPLOYER MESSAGES</span>
+      <h1>Manage candidate conversations.</h1>
+      <p>Follow up with applicants, saved talent, and active candidates from one clean employer inbox.</p>
+    </div>
+
+    <div class="hero-actions">
+      <a href="find-candidates.html" class="primary-link">Find Candidates</a>
+      <a href="employer-dashboard.html" class="secondary-link">Dashboard</a>
+    </div>
   </section>
 
   <section class="messages-layout">
 
     <aside class="conversation-list">
-
       <div class="conversation-header">
-        <h2>Conversations</h2>
-        <input type="text" placeholder="Search candidates..." />
-      </div>
-
-      <div class="conversation active">
-        <div class="avatar">JT</div>
-
-        <div class="conversation-info">
-          <div class="conversation-top">
-            <h3>Jordan Taylor</h3>
-            <span>10:42 AM</span>
-          </div>
-
-          <p>Sounds good, I’m available after 3 PM...</p>
+        <div>
+          <span class="eyebrow">INBOX</span>
+          <h2>Conversations</h2>
         </div>
+        <span class="inbox-count" id="inboxCount">3</span>
       </div>
 
-      <div class="conversation">
-        <div class="avatar">MR</div>
+      <input id="conversationSearch" class="conversation-search" type="text" placeholder="Search candidates..." />
 
-        <div class="conversation-info">
-          <div class="conversation-top">
-            <h3>Maya Robinson</h3>
-            <span>Yesterday</span>
-          </div>
-
-          <p>Thanks for reaching out about the welding role...</p>
-        </div>
-      </div>
-
-      <div class="conversation">
-        <div class="avatar">CS</div>
-
-        <div class="conversation-info">
-          <div class="conversation-top">
-            <h3>Chris Smith</h3>
-            <span>Mon</span>
-          </div>
-
-          <p>I’d be open to rotation work depending on...</p>
-        </div>
-      </div>
-
+      <div id="conversationList"></div>
     </aside>
 
     <section class="chat-panel">
-
       <div class="chat-header">
         <div class="chat-user">
-          <div class="avatar large">JT</div>
+          <div class="avatar large" id="chatAvatar">JT</div>
 
           <div>
-            <h2>Jordan Taylor</h2>
-            <p>Electrical Apprentice • Calgary, AB</p>
+            <span class="eyebrow">ACTIVE CONVERSATION</span>
+            <h2 id="chatName">Jordan Taylor</h2>
+            <p id="chatSubtitle">Electrical Apprentice • Calgary, AB</p>
           </div>
         </div>
 
-        <button type="button">View Profile</button>
+        <div class="chat-header-actions">
+          <button type="button" class="secondary-chat-btn">Follow Up</button>
+          <button type="button" id="viewProfileBtn">View Profile</button>
+        </div>
       </div>
 
-      <div class="chat-body">
+      <div class="chat-body" id="chatMessages"></div>
 
-        <div class="message received">
-          <p>Hi, I saw your company was hiring electrical apprentices. I’d be interested in learning more.</p>
-          <span>10:20 AM</span>
-        </div>
-
-        <div class="message sent">
-          <p>Thanks for reaching out, Jordan. We have a commercial project starting next week in Calgary.</p>
-          <span>10:29 AM</span>
-        </div>
-
-        <div class="message received">
-          <p>That sounds good. I’m available after 3 PM today if you want to chat.</p>
-          <span>10:42 AM</span>
-        </div>
-
-      </div>
-
-      <div class="chat-input">
-        <input type="text" placeholder="Write a message..." />
-        <button type="button">Send</button>
-      </div>
-
+      <form class="chat-input" id="messageForm">
+        <input id="messageInput" type="text" placeholder="Write a message..." autocomplete="off" />
+        <button type="submit">Send</button>
+      </form>
     </section>
+
+    <aside class="details-panel">
+      <span class="eyebrow">CONVERSATION DETAILS</span>
+      <h3 id="detailName">Jordan Taylor</h3>
+      <p id="detailRole">Electrical Apprentice</p>
+
+      <div class="next-step-card">
+        <span>RECOMMENDED NEXT STEP</span>
+        <strong id="nextStepTitle">Schedule a quick call</strong>
+        <p id="nextStepText">Confirm availability, wage expectations, and preferred start date.</p>
+      </div>
+
+      <div class="detail-list">
+        <div>
+          <span>Status</span>
+          <strong id="detailStatus">Active</strong>
+        </div>
+
+        <div>
+          <span>Source</span>
+          <strong id="detailSource">Saved Talent</strong>
+        </div>
+
+        <div>
+          <span>Response</span>
+          <strong id="detailResponse">Same day</strong>
+        </div>
+      </div>
+
+      <a href="saved-talent.html" class="outline-link">Review Saved Talent</a>
+    </aside>
 
   </section>
 
 </main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
+<script src="../emp-js/employer-messages.js"></script>
 
 </body>
 </html>

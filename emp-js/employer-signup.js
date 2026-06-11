@@ -61,5 +61,5 @@ form.addEventListener("submit", async function (e) {
   }
 
   alert("Employer account created successfully!");
-  window.location.href = "employer-dashboard.html";
+  window.location.href = "employer-setup.html";
 });
