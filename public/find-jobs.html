@@ -2,71 +2,89 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Find Jobs | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/find-jobs.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
 <header>
-  <div class="logo">PLACELY TALENT</div>
-
-  <div class="header-actions">
-    <a href="#" class="manage-btn employer-only">Manage Jobs</a>
-    <a href="#" class="post-btn employer-only">Post Job</a>
-    <a href="../candidates/candidate-dashboard.html" class="back-btn">Back to Dashboard</a>
+  <div class="logo-wrapper">
+    <a href="../index.html" class="logo">PLACELY TALENT</a>
+    <div class="logo-subtitle">Talent Platform</div>
   </div>
+
+  <nav>
+    <a href="../candidates/candidate-dashboard.html">Dashboard</a>
+    <a href="../public/find-jobs.html?role=candidate" class="active">Find Jobs</a>
+    <a href="../public/saved-jobs.html">Saved Jobs</a>
+    <a href="../candidates/candidate-applications.html">Applications</a>
+    <a href="../candidates/candidate-messages.html">Messages</a>
+    <a href="../candidates/candidate-profile.html">Profile</a>
+  </nav>
 </header>
 
-<div class="container">
+<main class="page-shell">
 
-  <div class="hero">
-    <h1>Find Jobs</h1>
-    <p>Browse jobs matched to your experience and trade.</p>
-
-    <div class="search-bar">
-      <input id="searchInput" type="text" placeholder="Search trades or keywords">
-
-      <select id="locationFilter">
-        <option value="">All Locations</option>
-        <option value="Calgary">Calgary</option>
-        <option value="Edmonton">Edmonton</option>
-        <option value="Vancouver">Vancouver</option>
-        <option value="Penticton">Penticton</option>
-      </select>
-
-      <select id="jobTypeFilter">
-        <option value="">All Job Types</option>
-        <option value="Full-Time">Full-Time</option>
-        <option value="Part-Time">Part-Time</option>
-        <option value="Contract">Contract</option>
-        <option value="Temporary">Temporary</option>
-        <option value="Rotation">Rotation</option>
-      </select>
-
-      <button class="search-btn" id="searchBtn">Search</button>
-    </div>
-  </div>
-
-  <div class="jobs-layout">
-
-    <div class="jobs-list" id="jobsGrid">
-      <div class="job-card">Loading jobs...</div>
+  <section class="hero-card">
+    <div>
+      <span class="eyebrow">Find Jobs</span>
+      <h1>Trades jobs matched to your profile.</h1>
+      <p>Search open roles posted by employers and apply directly through Placely Talent.</p>
     </div>
 
-    <div class="job-details-panel" id="jobDetailsPanel">
-      <div class="empty-details">
-        <h2>Select a job</h2>
-        <p>Click a job on the left to view the full details.</p>
+    <a href="../candidates/candidate-dashboard.html" class="secondary-btn">Back to Dashboard</a>
+  </section>
+
+  <section class="search-card">
+    <input id="keywordInput" type="text" placeholder="Search trade, company, keyword..." />
+
+    <select id="locationFilter">
+      <option value="">All locations</option>
+    </select>
+
+    <select id="typeFilter">
+      <option value="">All job types</option>
+      <option value="Full-time">Full-time</option>
+      <option value="Part-time">Part-time</option>
+      <option value="Contract">Contract</option>
+      <option value="Apprenticeship">Apprenticeship</option>
+    </select>
+
+    <button id="searchBtn" type="button">Search</button>
+  </section>
+
+  <section class="jobs-layout">
+
+    <aside class="jobs-list-panel">
+      <div class="panel-header">
+        <div>
+          <span class="small-label">Open Roles</span>
+          <h2>Available jobs</h2>
+        </div>
+        <strong id="jobCount">0</strong>
       </div>
-    </div>
 
-  </div>
+      <div id="jobsList" class="jobs-list"></div>
+    </aside>
 
-</div>
+    <section class="job-detail-panel">
+      <div id="jobDetails" class="job-details-empty">
+        <span class="small-label">Job Details</span>
+        <h2>Select a job</h2>
+        <p>Choose a role from the left to view company details, requirements, pay, and apply.</p>
+      </div>
+    </section>
+
+  </section>
+
+</main>
+
+<div id="toast" class="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/config.js"></script>

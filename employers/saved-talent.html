@@ -7,39 +7,172 @@
   <title>Saved Talent | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/saved-talent.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
 <header>
-  <a href="../index.html" class="logo">PLACELY TALENT</a>
-  <a href="employer-dashboard.html" class="back-btn">Back to Dashboard</a>
+  <div class="logo-wrapper">
+    <a href="../index.html" class="logo">PLACELY TALENT</a>
+    <div class="logo-subtitle">Employer Platform</div>
+  </div>
+
+  <nav>
+    <a href="manage-jobs.html">Jobs</a>
+    <a href="find-candidates.html">Candidates</a>
+    <a href="saved-talent.html" class="active">Saved Talent</a>
+    <a href="employer-messages.html">Messages</a>
+    <a href="company-profile.html">Company</a>
+    <button id="logoutBtn" class="logout-btn">Logout</button>
+  </nav>
 </header>
 
-<main class="page-container">
+<main class="page-shell">
 
-  <section class="page-header">
-    <h1>Saved Talent</h1>
-    <p>Review candidates you saved and keep track of potential hires.</p>
+  <section class="hero-card">
+    <div>
+      <span class="eyebrow">SAVED TALENT</span>
+      <h1>Your candidate shortlist</h1>
+      <p>Review saved candidates, filter your shortlist, and move the strongest matches into conversations.</p>
+    </div>
+
+    <div class="hero-actions">
+      <a href="find-candidates.html" class="primary-link">Find Candidates</a>
+      <a href="employer-dashboard.html" class="secondary-link">Dashboard</a>
+    </div>
   </section>
 
-  <section class="saved-actions">
-    <input type="text" placeholder="Search saved candidates..." />
+  <section class="stats-grid">
+    <div class="stat-card">
+      <span>Saved candidates</span>
+      <strong id="savedCount">0</strong>
+      <p>Total shortlisted talent</p>
+    </div>
 
-    <select>
-      <option>All Trades</option>
-      <option>Electrical</option>
-      <option>Welding</option>
-      <option>Plumbing</option>
-      <option>HVAC</option>
-      <option>Construction</option>
-    </select>
+    <div class="stat-card">
+      <span>Available now</span>
+      <strong id="readyCount">0</strong>
+      <p>Can start immediately</p>
+    </div>
+
+    <div class="stat-card">
+      <span>Trades covered</span>
+      <strong id="tradeCount">0</strong>
+      <p>Different skill areas</p>
+    </div>
+
+    <div class="stat-card">
+      <span>Newest save</span>
+      <strong id="newestSave">—</strong>
+      <p>Most recent shortlist add</p>
+    </div>
   </section>
 
-  <section class="talent-grid" id="savedTalentGrid"></section>
+  <section class="content-layout">
+
+    <section class="main-panel">
+
+      <div class="toolbar-card">
+        <div>
+          <span class="eyebrow">FILTER SHORTLIST</span>
+          <h2>Saved candidate search</h2>
+        </div>
+
+        <div class="toolbar-grid">
+          <input id="searchInput" type="text" placeholder="Search by name, trade, skill, city, or certification..." />
+
+          <select id="tradeFilter">
+            <option value="">All trades</option>
+            <option value="electrical">Electrical</option>
+            <option value="electrician">Electrician</option>
+            <option value="welding">Welding</option>
+            <option value="welder">Welder</option>
+            <option value="plumbing">Plumbing</option>
+            <option value="hvac">HVAC</option>
+            <option value="construction">Construction</option>
+            <option value="labour">Labour</option>
+          </select>
+
+          <select id="availabilityFilter">
+            <option value="">Any availability</option>
+            <option value="immediately">Available immediately</option>
+            <option value="1 week">Within 1 week</option>
+            <option value="2 weeks">Within 2 weeks</option>
+            <option value="1 month">Within 1 month</option>
+          </select>
+
+          <select id="sortFilter">
+            <option value="newest">Newest saved</option>
+            <option value="name">Name A-Z</option>
+            <option value="trade">Trade A-Z</option>
+            <option value="location">Location A-Z</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">SHORTLIST</span>
+          <h2>Saved candidates</h2>
+        </div>
+        <p id="resultsText">Loading saved talent...</p>
+      </div>
+
+      <section class="talent-grid" id="savedTalentGrid"></section>
+
+      <div class="empty-state hidden" id="emptyState">
+        <div class="empty-icon">PT</div>
+        <h3>No saved candidates yet</h3>
+        <p>Save candidates from the candidate network and they’ll appear here.</p>
+        <a href="find-candidates.html">Find Candidates</a>
+      </div>
+
+    </section>
+
+    <aside class="side-panel">
+      <div class="sidebar-card">
+        <span class="eyebrow">HIRING WORKFLOW</span>
+        <h3>Turn saved talent into hires</h3>
+        <p>Use this page as your employer shortlist. Keep strong candidates saved, compare availability, then message when a role is ready.</p>
+
+        <div class="workflow-list">
+          <div>
+            <strong>Review saved profiles</strong>
+            <span>Compare experience, location, and certifications.</span>
+          </div>
+
+          <div>
+            <strong>Prioritize fast starters</strong>
+            <span>Move available candidates into conversations first.</span>
+          </div>
+
+          <div>
+            <strong>Remove weak matches</strong>
+            <span>Keep your shortlist clean and useful.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-card compact">
+        <span class="eyebrow">SHORTCUTS</span>
+        <a href="find-candidates.html">Search candidate network</a>
+        <a href="post-job.html">Create job post</a>
+        <a href="employer-dashboard.html">Back to dashboard</a>
+      </div>
+    </aside>
+
+  </section>
 
 </main>
+
+<aside class="candidate-detail-panel" id="candidateDetailPanel">
+  <button class="close-panel-btn" id="closePanelBtn">×</button>
+  <div id="candidateDetailContent"></div>
+</aside>
+
+<div class="panel-overlay" id="panelOverlay"></div>
+<div id="toast" class="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/config.js"></script>

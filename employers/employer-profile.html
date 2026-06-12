@@ -4,146 +4,255 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Employer Profile | Placely Talent</title>
+  <title>Company Profile | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/employer-profile.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
 <header>
-  <a href="../index.html" class="logo">PLACELY TALENT</a>
-
-  <div class="header-actions">
-    <a href="employer-dashboard.html" class="back-btn">Back to Dashboard</a>
+  <div class="logo-wrapper">
+    <a href="../index.html" class="logo">PLACELY TALENT</a>
+    <div class="logo-subtitle">Employer Platform</div>
   </div>
+
+  <nav>
+    <a href="manage-jobs.html">Jobs</a>
+    <a href="find-candidates.html">Candidates</a>
+    <a href="saved-talent.html">Saved Talent</a>
+    <a href="employer-messages.html">Messages</a>
+    <a href="company-profile.html" class="active">Company</a>
+    <button id="logoutBtn" class="logout-btn" type="button">Logout</button>
+  </nav>
 </header>
 
-<form id="employerProfileForm" class="profile-container">
+<form id="employerProfileForm" class="page-shell">
 
-  <div class="profile-header">
-    <div class="company-photo">
-      <div class="photo-placeholder">LOGO</div>
+  <section class="page-hero">
+    <div>
+      <span class="eyebrow">Company Profile</span>
+      <h1>Build an employer profile candidates trust.</h1>
+      <p>Manage your company details, logo, hiring preferences, and candidate-facing information in one polished employer profile.</p>
     </div>
 
-    <div class="company-info">
-      <h1>Company Profile</h1>
-      <p>
-        Manage your company details, hiring preferences, branding,
-        and employer information visible to candidates.
-      </p>
+    <div class="hero-actions">
+      <a href="employer-dashboard.html" class="secondary-btn">Back to Dashboard</a>
+      <button type="submit" class="primary-btn">Save Changes</button>
     </div>
-  </div>
+  </section>
 
-  <div class="profile-card">
+  <section class="company-top-card">
 
-    <div class="section-title">
-      <h2>Company Information</h2>
-    </div>
-
-    <div class="form-grid">
-
-      <div class="form-group">
-        <label>Company Name</label>
-        <input id="company_name" type="text">
+    <aside class="logo-panel">
+      <div class="logo-frame">
+        <img id="company_logo_preview" src="https://placehold.co/220x220?text=PT" alt="Company logo" />
+        <div class="logo-initials" id="companyLogo">PT</div>
       </div>
 
-      <div class="form-group">
-        <label>Industry</label>
-        <input id="industry" type="text">
+      <input id="company_logo_file" type="file" accept="image/*" hidden />
+
+      <button id="uploadLogoBtn" type="button" class="primary-wide">Upload Logo</button>
+      <span class="visibility-chip">Visible to Candidates</span>
+    </aside>
+
+    <section class="company-main-fields">
+      <input id="company_name" type="text" placeholder="Company Name" class="company-name-input" />
+
+      <div class="field-grid">
+        <input id="industry" type="text" placeholder="Industry / Trade Focus" />
+        <input id="company_location" type="text" placeholder="Company Location" />
       </div>
 
-      <div class="form-group">
-        <label>Company Email</label>
-        <input id="company_email" type="text">
+      <textarea id="company_description" placeholder="Write a clear company description candidates will see when reviewing your company profile..."></textarea>
+    </section>
+
+    <aside class="strength-card">
+      <span class="small-label">Profile Strength</span>
+      <strong id="profileStrength">72%</strong>
+
+      <div class="score-track">
+        <div id="strengthBar"></div>
       </div>
 
-      <div class="form-group">
-        <label>Phone Number</label>
-        <input id="phone" type="text">
+      <p>Complete your logo, company description, hiring needs, pay range, and candidate qualities to improve trust with candidates.</p>
+
+      <div class="score-list">
+        <div><span>✓</span> Basic company info</div>
+        <div><span>•</span> Add hiring details</div>
+        <div><span>•</span> Add company branding</div>
       </div>
+    </aside>
 
-      <div class="form-group">
-        <label>Contact Name</label>
-        <input id="contact_name" type="text">
-      </div>
+  </section>
 
-      <div class="form-group">
-        <label>Company Website</label>
-        <input id="company_website" type="text">
-      </div>
+  <section class="content-layout">
 
-      <div class="form-group">
-        <label>Company Location</label>
-        <input id="company_location" type="text">
-      </div>
+    <aside class="sidebar-card">
+      <a href="#overview" class="active">Overview</a>
+      <a href="#company-info">Company Info</a>
+      <a href="#hiring-section">Hiring Preferences</a>
+      <a href="#candidate-section">Candidate Fit</a>
+      <a href="#contact-section">Contact</a>
+    </aside>
 
-      <div class="form-group full">
-        <label>Company Description</label>
-        <textarea id="company_description"></textarea>
-      </div>
+    <section class="profile-content">
 
-    </div>
+      <section class="panel" id="overview">
+        <div class="panel-header">
+          <div>
+            <span class="small-label">Public Company Preview</span>
+            <h2>How candidates will see you</h2>
+          </div>
+          <span class="mini-pill">Live Preview</span>
+        </div>
 
-  </div>
+        <div class="preview-card">
+          <div class="preview-avatar">
+            <img id="previewLogoImg" src="https://placehold.co/120x120?text=PT" alt="Company logo preview" />
+            <span id="previewLogo">PT</span>
+          </div>
 
-  <div class="profile-card">
+          <div class="preview-info">
+            <h3 id="previewCompanyName">Company Name</h3>
+            <p id="previewCompanyMeta">Industry · Location</p>
 
-    <div class="section-title">
-      <h2>Hiring Preferences</h2>
-    </div>
+            <div class="preview-tags">
+              <span id="previewEmployment">Employment Type</span>
+              <span id="previewPay">Pay Range</span>
+              <span id="previewTimeline">Hiring Timeline</span>
+            </div>
+          </div>
 
-    <div class="form-grid">
+          <button type="button" class="secondary-btn">Preview</button>
+        </div>
+      </section>
 
-      <div class="form-group">
-        <label>Main Hiring Industry</label>
-        <select id="main_hiring_industry">
-          <option>Electrical</option>
-          <option>Construction</option>
-          <option>HVAC</option>
-          <option>Plumbing</option>
-          <option>Oil & Gas</option>
-        </select>
-      </div>
+      <section class="panel" id="company-info">
+        <div class="panel-header">
+          <div>
+            <span class="small-label">Company Details</span>
+            <h2>Company information</h2>
+          </div>
+        </div>
 
-      <div class="form-group">
-        <label>Employment Type</label>
-        <select id="employment_type">
-          <option>Full-Time</option>
-          <option>Part-Time</option>
-          <option>Contract</option>
-        </select>
-      </div>
+        <div class="form-grid">
+          <div>
+            <label>Company Email</label>
+            <input id="company_email" type="email" placeholder="you@company.com" />
+          </div>
 
-      <div class="form-group">
-        <label>Typical Pay Range</label>
-        <input id="pay_range" type="text">
-      </div>
+          <div>
+            <label>Phone Number</label>
+            <input id="phone" type="text" placeholder="(250) 000-0000" />
+          </div>
 
-      <div class="form-group">
-        <label>Hiring Timeline</label>
-        <select id="hiring_timeline">
-          <option>Immediately</option>
-          <option>Within 2 Weeks</option>
-          <option>Ongoing Hiring</option>
-        </select>
-      </div>
+          <div>
+            <label>Contact Name</label>
+            <input id="contact_name" type="text" placeholder="Main contact name" />
+          </div>
 
-      <div class="form-group full">
-        <label>Preferred Candidate Qualities</label>
-        <textarea id="candidate_qualities"></textarea>
-      </div>
+          <div>
+            <label>Company Website</label>
+            <input id="company_website" type="text" placeholder="https://yourcompany.com" />
+          </div>
+        </div>
+      </section>
 
-    </div>
+      <section class="panel" id="hiring-section">
+        <div class="panel-header">
+          <div>
+            <span class="small-label">Hiring Setup</span>
+            <h2>Hiring preferences</h2>
+          </div>
+          <span class="mini-pill">Candidate Search Info</span>
+        </div>
 
-  </div>
+        <div class="form-grid">
+          <div>
+            <label>Main Hiring Industry</label>
+            <select id="main_hiring_industry">
+              <option value="">Select industry</option>
+              <option>Electrical</option>
+              <option>Construction</option>
+              <option>HVAC</option>
+              <option>Plumbing</option>
+              <option>Welding</option>
+              <option>Oil & Gas</option>
+              <option>General Labour</option>
+            </select>
+          </div>
 
-  <div class="save-row">
-  <button type="submit" class="save-btn">Save Profile Changes</button>
-</div>
+          <div>
+            <label>Employment Type</label>
+            <select id="employment_type">
+              <option value="">Select type</option>
+              <option>Full-Time</option>
+              <option>Part-Time</option>
+              <option>Contract</option>
+              <option>Rotation</option>
+              <option>Temporary</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Typical Pay Range</label>
+            <input id="pay_range" type="text" placeholder="$25 - $40/hr" />
+          </div>
+
+          <div>
+            <label>Hiring Timeline</label>
+            <select id="hiring_timeline">
+              <option value="">Select timeline</option>
+              <option>Immediately</option>
+              <option>Within 2 Weeks</option>
+              <option>Within 1 Month</option>
+              <option>Ongoing Hiring</option>
+            </select>
+          </div>
+        </div>
+
+        <label>Hiring Needs</label>
+        <textarea id="hiring_needs" placeholder="Example: apprentices, journeymen, welders, labourers, equipment operators..."></textarea>
+      </section>
+
+      <section class="panel" id="candidate-section">
+        <div class="panel-header">
+          <div>
+            <span class="small-label">Candidate Fit</span>
+            <h2>Preferred candidate qualities</h2>
+          </div>
+        </div>
+
+        <textarea id="candidate_qualities" placeholder="Example: reliable, safety-focused, own transportation, CSTS/WHMIS, commercial experience, strong communication..."></textarea>
+
+        <div class="tag-row">
+          <span>Reliable</span>
+          <span>Safety-focused</span>
+          <span>Certified</span>
+          <span>Experienced</span>
+          <span>Ready to work</span>
+        </div>
+      </section>
+
+      <section class="panel visibility-panel" id="contact-section">
+        <div>
+          <span class="small-label">Profile Actions</span>
+          <h2>Save employer profile</h2>
+          <p class="panel-text">Keep your company branding and hiring information updated so candidates understand your company clearly.</p>
+        </div>
+
+        <button class="primary-btn" type="submit">Save Profile</button>
+      </section>
+
+    </section>
+
+  </section>
 
 </form>
+
+<div id="toast" class="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/config.js"></script>
