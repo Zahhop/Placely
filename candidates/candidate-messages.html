@@ -14,7 +14,7 @@
 
 <header>
   <div class="logo-wrapper">
-    <a href="../index.html" class="logo">PLACELY TALENT</a>
+    <a href="candidate-dashboard.html" class="logo">PLACELY TALENT</a>
     <div class="logo-subtitle">Talent Platform</div>
   </div>
 
@@ -48,34 +48,10 @@
           <span class="small-label">Inbox</span>
           <h2>Conversations</h2>
         </div>
-        <span class="count-pill">3</span>
+        <span class="count-pill" id="conversationCount">0</span>
       </div>
 
-      <div class="conversation-list">
-        <button class="conversation active" type="button" data-company="Northwest Electric Ltd." data-role="Electrical Apprentice">
-          <div class="conversation-top">
-            <strong>Northwest Electric Ltd.</strong>
-            <span>Today</span>
-          </div>
-          <p>We'd like to schedule an interview...</p>
-        </button>
-
-        <button class="conversation" type="button" data-company="Prairie Industrial" data-role="General Labourer">
-          <div class="conversation-top">
-            <strong>Prairie Industrial</strong>
-            <span>Yesterday</span>
-          </div>
-          <p>Thanks for applying to our position.</p>
-        </button>
-
-        <button class="conversation" type="button" data-company="Summit Civil Group" data-role="Rotation Labourer">
-          <div class="conversation-top">
-            <strong>Summit Civil Group</strong>
-            <span>Mon</span>
-          </div>
-          <p>Are you available for rotation work?</p>
-        </button>
-      </div>
+     <div class="conversation-list" id="conversationList"></div>
     </aside>
 
     <section class="chat-panel">
@@ -83,40 +59,14 @@
       <div class="chat-header">
         <div>
           <span class="small-label">Active Conversation</span>
-          <h2 id="chatCompany">Northwest Electric Ltd.</h2>
-          <p id="chatRole">Electrical Apprentice opportunity</p>
+          <h2 id="chatCompany"></h2>
+          <p id="chatRole"></p>
         </div>
 
         <span class="status-chip">Employer</span>
       </div>
 
-      <div class="chat-messages" id="chatMessages">
-
-        <div class="message-row received">
-          <div class="message-bubble">
-            Hi Austin, thanks for applying to our Electrical Apprentice position.
-          </div>
-        </div>
-
-        <div class="message-row sent">
-          <div class="message-bubble">
-            Thanks for reaching out. I'm definitely interested in the opportunity.
-          </div>
-        </div>
-
-        <div class="message-row received">
-          <div class="message-bubble">
-            Great. We'd like to schedule a quick phone interview sometime this week.
-          </div>
-        </div>
-
-        <div class="message-row sent">
-          <div class="message-bubble">
-            Sounds good. I’m available anytime after 3 PM.
-          </div>
-        </div>
-
-      </div>
+      <div class="chat-messages" id="chatMessages"></div>
 
       <form class="chat-input-area" id="messageForm">
         <input id="messageInput" type="text" placeholder="Type your message..." autocomplete="off" />
@@ -127,8 +77,8 @@
 
     <aside class="context-panel">
       <span class="small-label">Conversation Details</span>
-      <h2 id="contextCompany">Northwest Electric Ltd.</h2>
-      <p id="contextRole">Electrical Apprentice</p>
+      <h2 id="contextCompany"></h2>
+      <p id="contextRole"></p>
 
       <div class="context-card">
         <span>Recommended next step</span>
@@ -158,6 +108,8 @@
 
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
 <script src="../js/candidate-messages.js"></script>
 
 </body>
