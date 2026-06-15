@@ -311,11 +311,11 @@ function renderPriorityActions() {
   `).join("");
 }
 
-function updateCounts() {
+function updateCounts(messageCount = 0) {
   setText("activeJobsCount", activeJobs.length);
   setText("savedCandidatesCount", savedCandidates.length);
   setText("applicationsCount", pipelineCandidates.length);
-  setText("messagesCount", "0");
+  setText("messagesCount", messageCount);
 
   setText("newApplicantsCount", pipelineCandidates.length);
   setText("reviewingCount", pipelineCandidates.length);
@@ -429,6 +429,19 @@ async function loadEmployerDashboard() {
     .eq("id", user.id)
     .single();
 
+const { count: unreadCount, error: unreadError } = await placelySupabase
+  .from("messages")
+  .select("*", { count: "exact", head: true })
+  .eq("employer_id", user.id)
+  .eq("sender_type", "candidate")
+  .eq("read_by_employer", false);
+
+  if (unreadError) {
+  console.error("Unread message count error:", unreadError);
+    }
+
+  console.log("Unread messages:", unreadCount);
+
   if (employerError || !employerData) {
     console.error("Employer profile error:", employerError);
 
@@ -465,6 +478,8 @@ async function loadEmployerDashboard() {
   setText("userEmail", email);
 
   renderDashboard();
+
+  setText("messagesCount", unreadCount || 0);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
