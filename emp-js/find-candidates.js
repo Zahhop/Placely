@@ -316,7 +316,7 @@ function openCandidatePanel(candidate) {
     </div>
 
     <div class="card-actions">
-      <button type="button" class="view-btn" onclick="window.location.href='employer-messages.html'">Message Candidate</button>
+      <button type="button" class="view-btn" id="messageCandidateBtn">Message Candidate</button>
       <button type="button" class="save-btn ${savedCandidates.has(String(candidate.id)) ? "saved" : ""}" id="detailSaveBtn">
         ${savedCandidates.has(String(candidate.id)) ? "Saved" : "Save Candidate"}
       </button>
@@ -326,6 +326,69 @@ function openCandidatePanel(candidate) {
   document.getElementById("detailSaveBtn").addEventListener("click", () => {
     toggleSaveCandidate(candidate);
   });
+
+// Message Button \/\/ //
+
+  document.getElementById("messageCandidateBtn").addEventListener("click", async () => {
+  const {
+    data: { user },
+    error: userError
+  } = await employerSupabase.auth.getUser();
+
+  if (userError || !user) {
+    window.location.href = "employer-login.html";
+    return;
+  }
+
+  const candidateId = candidate.id;
+
+  const { data: employerProfile } = await employerSupabase
+  .from("employer_profiles")
+  .select("company_name")
+  .eq("user_id", user.id)
+  .maybeSingle();
+
+  let { data: existingConversation, error: findError } = await employerSupabase
+    .from("conversations")
+    .select("*")
+    .eq("employer_id", user.id)
+    .eq("candidate_id", candidateId)
+    .maybeSingle();
+
+  if (findError) {
+    console.error("Find conversation error:", findError);
+    return;
+  }
+
+  if (!existingConversation) {
+    const { data: newConversation, error: createError } = await employerSupabase
+      .from("conversations")
+      .insert([
+        {
+          employer_id: user.id,
+          employer_name: employerProfile?.company_name || "Employer",
+          candidate_id: candidateId,
+          candidate_name: candidate.full_name || "Unnamed Candidate",
+          candidate_role: candidate.trade || "No trade added",
+          candidate_location: candidate.location || "Location not added",
+          candidate_initials: getInitials(candidate.full_name)
+        }
+      ])
+      .select()
+      .single();
+
+    if (createError) {
+      console.error("Create conversation error:", createError);
+      return;
+    }
+
+    existingConversation = newConversation;
+  }
+
+  window.location.href = `employer-messages.html?conversation=${existingConversation.id}`;
+});
+
+
 
   candidateDetailPanel.classList.add("open");
   panelOverlay.classList.add("open");
@@ -435,6 +498,16 @@ function escapeHTML(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function getInitials(name) {
+  return String(name || "PT")
+    .trim()
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 }
 
 function escapeAttribute(value) {
