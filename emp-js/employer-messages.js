@@ -8,6 +8,7 @@ const employerMessagesSupabase = window.supabase.createClient(
 
 
 async function loadConversations() {
+  console.log("loadConversations running");
   const params = new URLSearchParams(window.location.search);
   const requestedConversationId = params.get("conversation");
 
@@ -17,25 +18,41 @@ async function loadConversations() {
     .eq("employer_id", currentUser.id)
     .order("created_at", { ascending: false });
 
+    console.log("Raw conversations:", data);
+
   if (error) {
     console.error("Load conversations error:", error);
     return;
   }
 
-  conversationsData = (data || []).map((conversation) => ({
-    id: conversation.id,
-    candidateId: conversation.candidate_id,
-    name: conversation.candidate_name || "Unnamed Candidate",
-    initials: conversation.candidate_initials || getInitials(conversation.candidate_name),
-    role: conversation.candidate_role || "No trade added",
-    location: conversation.candidate_location || "Location not added",
-    time: "New",
-    source: conversation.source || "Candidate Profile",
-    status: conversation.status || "Active",
-    response: conversation.response || "New",
-    nextStep: "Send a first message",
-    nextText: "Start the conversation with this candidate."
-  }));
+ conversationsData = await Promise.all(
+  (data || []).map(async (conversation) => {
+    const { data: candidateProfile } = await employerMessagesSupabase
+      .from("candidate_profiles")
+      .select("profile_photo_url")
+      .eq("id", conversation.candidate_id)
+      .maybeSingle();
+
+      console.log("Conversation candidate_id:", conversation.candidate_id);
+      console.log("Candidate profile found:", candidateProfile);
+
+    return {
+      id: conversation.id,
+      candidateId: conversation.candidate_id,
+      name: conversation.candidate_name || "Unnamed Candidate",
+      initials: conversation.candidate_initials || getInitials(conversation.candidate_name),
+      role: conversation.candidate_role || "No trade added",
+      location: conversation.candidate_location || "Location not added",
+      photoUrl: candidateProfile?.profile_photo_url || "",
+      time: "New",
+      source: conversation.source || "Candidate Profile",
+      status: conversation.status || "Active",
+      response: conversation.response || "New",
+      nextStep: "Send a first message",
+      nextText: "Start the conversation with this candidate."
+    };
+  })
+);
 
   activeConversationId =
     requestedConversationId ||
@@ -183,7 +200,13 @@ async function renderConversationList(list) {
     }`;
 
     row.innerHTML = `
-      <div class="avatar">${escapeHTML(conversation.initials)}</div>
+      <div class="avatar">
+  ${
+    conversation.photoUrl
+      ? `<img src="${conversation.photoUrl}" class="message-avatar-img" alt="Candidate photo">`
+      : escapeHTML(conversation.initials)
+  }
+</div>
 
       <div class="conversation-info">
         <div class="conversation-top">
@@ -209,7 +232,9 @@ async function openConversation(id) {
   const conversation = conversationsData.find((item) => item.id === id);
   if (!conversation) return;
 
-  chatAvatar.textContent = conversation.initials;
+  chatAvatar.innerHTML = conversation.photoUrl
+  ? `<img src="${conversation.photoUrl}" class="message-avatar-img" alt="Candidate photo">`
+  : escapeHTML(conversation.initials);
   chatName.textContent = conversation.name;
   chatSubtitle.textContent = `${conversation.role} • ${conversation.location}`;
 
@@ -232,6 +257,16 @@ async function openConversation(id) {
     chatMessages.innerHTML = `<div class="empty-message">Could not load messages.</div>`;
     return;
   }
+
+const { data: updatedRows, error: updateError } = await employerMessagesSupabase
+  .from("messages")
+  .update({ read_by_employer: true })
+  .eq("candidate_id", conversation.candidateId)
+  .eq("employer_id", currentUser.id)
+  .select();
+
+console.log("Updated rows:", updatedRows);
+console.log("Update error:", updateError);
 
   chatMessages.innerHTML = "";
 
