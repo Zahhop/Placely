@@ -119,6 +119,17 @@ async function openConversation(id) {
     return;
   }
 
+   const { data: updatedRows, error: updateError } = await candidateMessagesSupabase
+  .from("messages")
+  .update({ read_by_candidate: true })
+  .eq("candidate_id", currentUser.id)
+  .eq("sender_type", "employer")
+  .select();
+
+  console.log("Candidate marked read rows:", updatedRows);
+  console.log("Candidate mark read error:", updateError);
+
+
   chatMessages.innerHTML = "";
 
   data.forEach((message) => {

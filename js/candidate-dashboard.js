@@ -454,6 +454,21 @@ async function loadUser() {
     return;
   }
 
+  const { count: unreadCandidateMessages, error: unreadCandidateError } =
+  await candidateSupabase
+    .from("messages")
+    .select("*", { count: "exact", head: true })
+    .eq("candidate_id", user.id)
+    .eq("sender_type", "employer")
+    .eq("read_by_candidate", false);
+
+if (unreadCandidateError) {
+  console.error("Candidate unread message count error:", unreadCandidateError);
+} else {
+  document.getElementById("candidateMessagesCount").textContent =
+    unreadCandidateMessages || 0;
+}
+
   const { data: profile, error } = await candidateSupabase
     .from("candidate_profiles")
     .select("*")
