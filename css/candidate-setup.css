@@ -252,18 +252,37 @@ main {
 /* FORM */
 
 .form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
+  margin-bottom: 18px;
 }
 
 .form-group.full {
   grid-column: span 2;
+}
+
+.form-group input[type="text"] {
+    width: 100%;
+    height: 54px;
+    padding: 0 16px;
+    border: 1px solid #d7dfea;
+    border-radius: 12px;
+    background: #fff;
+    font-size: 15px;
+    font-weight: 500;
+    transition: 0.2s ease;
+    outline: none;
+}
+
+.form-group input[type="text"]:focus {
+    border-color: #2f66e8;
+    box-shadow: 0 0 0 4px rgba(47,102,232,0.12);
 }
 
 label {

@@ -273,6 +273,7 @@ nav a:hover {
   color: #2563eb;
   font-size: 12px;
   font-weight: 800;
+  gap: 12px; 
 }
 
 .status-pill {
@@ -364,4 +365,23 @@ nav a:hover {
   .stats-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.follow-up-btn {
+  background: #2f66e8;
+  color: white;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+  margin-bottom: 10px;
+}
+
+.follow-up-btn:hover {
+  background: #2558d6;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(47, 102, 232, 0.25);
 }

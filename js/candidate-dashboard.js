@@ -412,7 +412,12 @@ function handleApplyJob(index) {
   const exists = applications.some(app => app.id === job.id);
 
   if (!exists) {
-    applications.push(job);
+    const application = {
+      ...job,
+      conversation_id: job.conversation_id || null
+    };
+
+    applications.push(application);
     showToast("Application submitted.");
   } else {
     showToast("You already applied to this role.");

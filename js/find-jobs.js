@@ -321,19 +321,45 @@ async function saveSelectedJob() {
   showToast("Job saved.");
 }
 
-function applyToSelectedJob() {
-  if (!selectedJob) return;
+async function applyToSelectedJob() {
+  if (!selectedJob || !currentUser) return;
 
-  const applications = JSON.parse(localStorage.getItem("placely_applications")) || [];
-  const alreadyApplied = applications.some(job => String(job.id) === String(selectedJob.id));
+  const { data: existingApplication, error: existingError } = await jobsSupabase
+    .from("applications")
+    .select("id")
+    .eq("candidate_id", currentUser.id)
+    .eq("job_id", selectedJob.id)
+    .maybeSingle();
 
-  if (alreadyApplied) {
+  if (existingError) {
+    console.error("Application check error:", existingError);
+    showToast("Could not check application.");
+    return;
+  }
+
+  if (existingApplication) {
     showToast("You already applied to this job.");
     return;
   }
 
-  applications.push(selectedJob);
-  localStorage.setItem("placely_applications", JSON.stringify(applications));
+  const { error } = await jobsSupabase
+    .from("applications")
+    .insert({
+      candidate_id: currentUser.id,
+      job_id: selectedJob.id,
+      job_title: selectedJob.title,
+      company_name: selectedJob.company,
+      location: selectedJob.location,
+      employment_type: selectedJob.type,
+      pay_range: selectedJob.pay,
+      status: "Submitted"
+    });
+
+  if (error) {
+    console.error("Application submit error:", error);
+    showToast("Could not submit application.");
+    return;
+  }
 
   showToast("Application submitted.");
 }
