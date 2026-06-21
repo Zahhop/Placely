@@ -21,9 +21,10 @@ const logoFrame = document.querySelector(".logo-frame");
 const previewLogoImg = document.getElementById("previewLogoImg");
 const previewLogoBox = document.querySelector(".preview-avatar");
 
-const PHOTO_BUCKET = "photos";
+const PHOTO_BUCKET = "employer-logos";
 
 let currentLogoUrl = "";
+let isLogoUploading = false;
 
 document.addEventListener("DOMContentLoaded", () => {
   loadEmployerProfile();
@@ -88,67 +89,59 @@ async function loadEmployerProfile() {
   updateStrength();
 }
 
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
+if (form) {
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
 
-  const {
-    data: { user },
-    error: userError
-  } = await employerSupabase.auth.getUser();
-
-  if (userError || !user) {
-    window.location.href = "employer-login.html";
-    return;
-  }
-
-  let logoUrl = currentLogoUrl;
-
-  if (logoFileInput.files.length) {
-    try {
-      showToast("Uploading company logo...");
-      logoUrl = await uploadCompanyLogo(user.id);
-      currentLogoUrl = logoUrl;
-      setLogoImage(logoUrl);
-    } catch (error) {
-      console.error("Logo upload error:", error);
-      showToast("Logo upload failed. Check your photos bucket policies.");
+    if (isLogoUploading) {
+      showToast("Logo is still uploading. Please wait a second.");
       return;
     }
-  }
 
-  const updates = {
-    id: user.id,
-    company_name: getValue("company_name"),
-    industry: getValue("industry"),
-    main_hiring_industry: getValue("main_hiring_industry"),
-    company_email: getValue("company_email"),
-    contact_name: getValue("contact_name"),
-    phone: getValue("phone"),
-    company_website: getValue("company_website"),
-    company_location: getValue("company_location"),
-    company_description: getValue("company_description"),
-    employment_type: getValue("employment_type"),
-    pay_range: getValue("pay_range"),
-    hiring_timeline: getValue("hiring_timeline"),
-    candidate_qualities: getValue("candidate_qualities"),
-    hiring_needs: getValue("hiring_needs"),
-    company_logo_url: logoUrl
-  };
+    const {
+      data: { user },
+      error: userError
+    } = await employerSupabase.auth.getUser();
 
-  const { error } = await employerSupabase
-    .from("employer_profiles")
-    .upsert(updates, { onConflict: "id" });
+    if (userError || !user) {
+      window.location.href = "employer-login.html";
+      return;
+    }
 
-  if (error) {
-    console.error("Save error:", error);
-    showToast("Error saving profile.");
-    return;
-  }
+    const updates = {
+      id: user.id,
+      company_name: getValue("company_name"),
+      industry: getValue("industry"),
+      main_hiring_industry: getValue("main_hiring_industry"),
+      company_email: getValue("company_email"),
+      contact_name: getValue("contact_name"),
+      phone: getValue("phone"),
+      company_website: getValue("company_website"),
+      company_location: getValue("company_location"),
+      company_description: getValue("company_description"),
+      employment_type: getValue("employment_type"),
+      pay_range: getValue("pay_range"),
+      hiring_timeline: getValue("hiring_timeline"),
+      candidate_qualities: getValue("candidate_qualities"),
+      hiring_needs: getValue("hiring_needs"),
+      company_logo_url: currentLogoUrl
+    };
 
-  showToast("Company profile saved.");
-  updatePreview();
-  updateStrength();
-});
+    const { error } = await employerSupabase
+      .from("employer_profiles")
+      .upsert(updates, { onConflict: "id" });
+
+    if (error) {
+      console.error("Save error:", error);
+      showToast("Error saving profile.");
+      return;
+    }
+
+    showToast("Company profile saved.");
+    updatePreview();
+    updateStrength();
+  });
+}
 
 function setupLogoUpload() {
   if (!uploadLogoBtn || !logoFileInput) return;
@@ -157,7 +150,7 @@ function setupLogoUpload() {
     logoFileInput.click();
   });
 
-  logoFileInput.addEventListener("change", () => {
+  logoFileInput.addEventListener("change", async () => {
     const file = logoFileInput.files[0];
 
     if (!file) return;
@@ -168,41 +161,96 @@ function setupLogoUpload() {
       return;
     }
 
-    const previewUrl = URL.createObjectURL(file);
-    setLogoImage(previewUrl);
-    updateStrength();
+    const {
+      data: { user },
+      error: userError
+    } = await employerSupabase.auth.getUser();
+
+    if (userError || !user) {
+      window.location.href = "employer-login.html";
+      return;
+    }
+
+    try {
+      isLogoUploading = true;
+
+      const previewUrl = URL.createObjectURL(file);
+      setLogoImage(previewUrl);
+      updateStrength();
+
+      showToast("Uploading company logo...");
+
+      const logoUrl = await uploadCompanyLogo(user.id, file);
+
+      currentLogoUrl = logoUrl;
+      setLogoImage(logoUrl);
+      updateStrength();
+
+      showToast("Logo uploaded. Click Save Changes to finish.");
+    } catch (error) {
+      console.error("Logo upload failed:", error);
+      alert(error?.message || "Logo upload failed.");
+      showToast(error?.message || "Logo upload failed.");
+
+      if (currentLogoUrl) {
+        setLogoImage(currentLogoUrl);
+      } else {
+        clearLogoImage();
+      }
+    } finally {
+      isLogoUploading = false;
+      logoFileInput.value = "";
+    }
   });
 }
 
-async function uploadCompanyLogo(userId) {
-  const file = logoFileInput.files[0];
+async function uploadCompanyLogo(userId, file) {
+  if (!file) {
+    throw new Error("No logo file selected.");
+  }
 
-  if (!file) return currentLogoUrl;
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Please upload an image file.");
+  }
 
-  const fileExt = file.name.split(".").pop().toLowerCase();
-  const safeExt = fileExt || "png";
-  const filePath = `employer-logos/${userId}/${Date.now()}.${safeExt}`;
+  const safeName = file.name
+    .toLowerCase()
+    .replace(/[^a-z0-9.\-_]/g, "-")
+    .replace(/-+/g, "-");
 
-  const { error: uploadError } = await employerSupabase.storage
+  const filePath = `${userId}/${Date.now()}-${safeName}`;
+
+  console.log("Uploading logo:", {
+    bucket: PHOTO_BUCKET,
+    path: filePath,
+    fileType: file.type,
+    fileSize: file.size
+  });
+
+  const { data: uploadData, error: uploadError } = await employerSupabase.storage
     .from(PHOTO_BUCKET)
     .upload(filePath, file, {
-      upsert: true,
+      cacheControl: "3600",
+      upsert: false,
       contentType: file.type
     });
 
+  console.log("Upload data:", uploadData);
+  console.log("Upload error:", uploadError);
+
   if (uploadError) {
-    throw uploadError;
+    throw new Error(uploadError.message || "Storage upload failed.");
   }
 
-  const { data } = employerSupabase.storage
+  const { data: publicData } = employerSupabase.storage
     .from(PHOTO_BUCKET)
     .getPublicUrl(filePath);
 
-  if (!data || !data.publicUrl) {
+  if (!publicData || !publicData.publicUrl) {
     throw new Error("Could not get public logo URL.");
   }
 
-  return data.publicUrl;
+  return publicData.publicUrl;
 }
 
 function setLogoImage(url) {
@@ -211,32 +259,37 @@ function setLogoImage(url) {
     return;
   }
 
-  logoPreview.onload = () => {
-    logoFrame.classList.add("has-image");
-  };
+  if (logoPreview && logoFrame) {
+    logoPreview.onload = () => {
+      logoFrame.classList.add("has-image");
+    };
 
-  previewLogoImg.onload = () => {
-    previewLogoBox.classList.add("has-image");
-  };
+    logoPreview.onerror = () => {
+      clearLogoImage();
+    };
 
-  logoPreview.onerror = () => {
-    clearLogoImage();
-  };
+    logoPreview.src = url;
+  }
 
-  previewLogoImg.onerror = () => {
-    previewLogoBox.classList.remove("has-image");
-  };
+  if (previewLogoImg && previewLogoBox) {
+    previewLogoImg.onload = () => {
+      previewLogoBox.classList.add("has-image");
+    };
 
-  logoPreview.src = url;
-  previewLogoImg.src = url;
+    previewLogoImg.onerror = () => {
+      previewLogoBox.classList.remove("has-image");
+    };
+
+    previewLogoImg.src = url;
+  }
 }
 
 function clearLogoImage() {
-  logoPreview.removeAttribute("src");
-  previewLogoImg.removeAttribute("src");
+  if (logoPreview) logoPreview.removeAttribute("src");
+  if (previewLogoImg) previewLogoImg.removeAttribute("src");
 
-  logoFrame.classList.remove("has-image");
-  previewLogoBox.classList.remove("has-image");
+  if (logoFrame) logoFrame.classList.remove("has-image");
+  if (previewLogoBox) previewLogoBox.classList.remove("has-image");
 }
 
 function setupLivePreview() {
@@ -265,16 +318,16 @@ function updatePreview() {
   const industry = getValue("industry") || "Industry";
   const location = getValue("company_location") || "Location";
 
-  document.getElementById("previewCompanyName").textContent = company;
-  document.getElementById("previewCompanyMeta").textContent = `${industry} · ${location}`;
-  document.getElementById("previewEmployment").textContent = getValue("employment_type") || "Employment Type";
-  document.getElementById("previewPay").textContent = getValue("pay_range") || "Pay Range";
-  document.getElementById("previewTimeline").textContent = getValue("hiring_timeline") || "Hiring Timeline";
+  setText("previewCompanyName", company);
+  setText("previewCompanyMeta", `${industry} · ${location}`);
+  setText("previewEmployment", getValue("employment_type") || "Employment Type");
+  setText("previewPay", getValue("pay_range") || "Pay Range");
+  setText("previewTimeline", getValue("hiring_timeline") || "Hiring Timeline");
 
   const initials = getInitials(company);
 
-  document.getElementById("companyLogo").textContent = initials;
-  document.getElementById("previewLogo").textContent = initials;
+  setText("companyLogo", initials);
+  setText("previewLogo", initials);
 }
 
 function updateStrength() {
@@ -296,13 +349,18 @@ function updateStrength() {
   ];
 
   const filled = fields.filter((id) => getValue(id)).length;
-  const hasLogo = Boolean(currentLogoUrl) || Boolean(logoFileInput.files.length);
+  const hasLogo = Boolean(currentLogoUrl) || isLogoUploading;
+
   const total = fields.length + 1;
   const completed = filled + (hasLogo ? 1 : 0);
   const percent = Math.round((completed / total) * 100);
 
-  document.getElementById("profileStrength").textContent = `${percent}%`;
-  document.getElementById("strengthBar").style.width = `${percent}%`;
+  setText("profileStrength", `${percent}%`);
+
+  const strengthBar = document.getElementById("strengthBar");
+  if (strengthBar) {
+    strengthBar.style.width = `${percent}%`;
+  }
 }
 
 function setupLogout() {
@@ -328,9 +386,19 @@ function getValue(id) {
   return element ? element.value.trim() : "";
 }
 
+function setText(id, value) {
+  const element = document.getElementById(id);
+
+  if (element) {
+    element.textContent = value || "";
+  }
+}
+
 function getInitials(value) {
   return String(value || "PT")
+    .trim()
     .split(" ")
+    .filter(Boolean)
     .map((word) => word[0])
     .join("")
     .slice(0, 2)

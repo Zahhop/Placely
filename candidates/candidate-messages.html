@@ -33,14 +33,17 @@
   <section class="hero-card">
     <div>
       <span class="eyebrow">Candidate Messages</span>
-      <h1>Stay connected with employers.</h1>
-      <p>Manage employer conversations, interview follow-ups, job questions, and opportunity updates in one place.</p>
+      <h1>Employer conversations, organized.</h1>
+      <p>Manage employer conversations, interview follow-ups, job questions, and opportunity updates in one clean inbox.</p>
     </div>
 
-    <a href="candidate-dashboard.html" class="secondary-btn">Back to Dashboard</a>
+    <div class="hero-actions">
+      <a href="../public/find-jobs.html?role=candidate" class="primary-link">Find Jobs</a>
+      <a href="candidate-dashboard.html" class="secondary-btn">Dashboard</a>
+    </div>
   </section>
 
-  <section class="messages-layout">
+  <section class="messages-layout" id="messagesLayout">
 
     <aside class="conversations-panel">
       <div class="panel-header">
@@ -51,19 +54,30 @@
         <span class="count-pill" id="conversationCount">0</span>
       </div>
 
-     <div class="conversation-list" id="conversationList"></div>
+      <div class="search-wrap">
+        <input id="conversationSearch" class="conversation-search" type="text" placeholder="Search employers..." />
+      </div>
+
+      <div class="conversation-list" id="conversationList"></div>
     </aside>
 
     <section class="chat-panel">
 
       <div class="chat-header">
-        <div>
-          <span class="small-label">Active Conversation</span>
-          <h2 id="chatCompany"></h2>
-          <p id="chatRole"></p>
+        <div class="chat-user">
+          <div class="avatar large" id="chatAvatar"></div>
+
+          <div>
+            <span class="small-label">Active Conversation</span>
+            <h2 id="chatCompany">No conversation selected</h2>
+            <p id="chatRole">Select an employer conversation to view messages.</p>
+          </div>
         </div>
 
-        <span class="status-chip">Employer</span>
+        <div class="chat-actions" id="chatActions">
+          <button type="button" class="light-btn" id="replyHelpBtn">Reply Help</button>
+          <a href="candidate-applications.html" class="primary-mini-btn">Applications</a>
+        </div>
       </div>
 
       <div class="chat-messages" id="chatMessages"></div>
@@ -75,29 +89,29 @@
 
     </section>
 
-    <aside class="context-panel">
+    <aside class="context-panel" id="contextPanel">
       <span class="small-label">Conversation Details</span>
-      <h2 id="contextCompany"></h2>
+      <h2 id="contextCompany">No employer selected</h2>
       <p id="contextRole"></p>
 
       <div class="context-card">
         <span>Recommended next step</span>
-        <strong>Confirm interview availability</strong>
-        <p>Reply with a clear time window and your preferred contact method.</p>
+        <strong id="nextStepTitle">Reply professionally</strong>
+        <p id="nextStepText">Keep your reply clear, confirm availability, and ask any job-specific questions.</p>
       </div>
 
       <div class="context-list">
         <div>
           <span>Status</span>
-          <strong>Active</strong>
+          <strong id="detailStatus">—</strong>
         </div>
         <div>
           <span>Response time</span>
-          <strong>Same day</strong>
+          <strong id="detailResponse">—</strong>
         </div>
         <div>
           <span>Source</span>
-          <strong>Application</strong>
+          <strong id="detailSource">—</strong>
         </div>
       </div>
 

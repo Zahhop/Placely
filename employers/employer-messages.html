@@ -30,90 +30,92 @@
 
 <main class="page-shell">
 
-  <section class="messages-hero">
+  <section class="hero-card">
     <div>
-      <span class="eyebrow">EMPLOYER MESSAGES</span>
-      <h1>Manage candidate conversations.</h1>
-      <p>Follow up with applicants, saved talent, and active candidates from one clean employer inbox.</p>
+      <span class="eyebrow">Employer Messages</span>
+      <h1>Candidate conversations, organized.</h1>
+      <p>Message applicants, saved talent, and active candidates from one clean employer inbox.</p>
     </div>
 
     <div class="hero-actions">
       <a href="find-candidates.html" class="primary-link">Find Candidates</a>
-      <a href="employer-dashboard.html" class="secondary-link">Dashboard</a>
+      <a href="employer-dashboard.html" class="secondary-btn">Dashboard</a>
     </div>
   </section>
 
-  <section class="messages-layout">
+  <section class="messages-layout" id="messagesLayout">
 
-    <aside class="conversation-list">
-      <div class="conversation-header">
+    <aside class="conversations-panel">
+      <div class="panel-header">
         <div>
-          <span class="eyebrow">INBOX</span>
+          <span class="small-label">Inbox</span>
           <h2>Conversations</h2>
         </div>
-        <span class="inbox-count" id="inboxCount">3</span>
+        <span class="count-pill" id="inboxCount">0</span>
       </div>
 
-      <input id="conversationSearch" class="conversation-search" type="text" placeholder="Search candidates..." />
+      <div class="search-wrap">
+        <input id="conversationSearch" class="conversation-search" type="text" placeholder="Search candidates..." />
+      </div>
 
-      <div id="conversationList"></div>
+      <div class="conversation-list" id="conversationList"></div>
     </aside>
 
     <section class="chat-panel">
+
       <div class="chat-header">
         <div class="chat-user">
-          <div class="avatar large" id="chatAvatar">JT</div>
+          <div class="avatar large" id="chatAvatar"></div>
 
           <div>
-            <span class="eyebrow">ACTIVE CONVERSATION</span>
-            <h2 id="chatName">Jordan Taylor</h2>
-            <p id="chatSubtitle">Electrical Apprentice • Calgary, AB</p>
+            <span class="small-label">Active Conversation</span>
+            <h2 id="chatName">No conversation selected</h2>
+            <p id="chatSubtitle">Select a candidate conversation to view messages.</p>
           </div>
         </div>
 
-        <div class="chat-header-actions">
-          <button type="button" class="secondary-chat-btn">Follow Up</button>
-          <button type="button" id="viewProfileBtn">View Profile</button>
+        <div class="chat-actions" id="chatActions">
+          <button type="button" class="light-btn" id="followUpBtn">Follow Up</button>
+          <button type="button" class="primary-mini-btn" id="viewProfileBtn">View Profile</button>
         </div>
       </div>
 
-      <div class="chat-body" id="chatMessages"></div>
+      <div class="chat-messages" id="chatMessages"></div>
 
-      <form class="chat-input" id="messageForm">
-        <input id="messageInput" type="text" placeholder="Write a message..." autocomplete="off" />
-        <button type="submit">Send</button>
+      <form class="chat-input-area" id="messageForm">
+        <input id="messageInput" type="text" placeholder="Type your message..." autocomplete="off" />
+        <button class="primary-btn" type="submit">Send</button>
       </form>
+
     </section>
 
-    <aside class="details-panel">
-      <span class="eyebrow">CONVERSATION DETAILS</span>
-      <h3 id="detailName">Jordan Taylor</h3>
-      <p id="detailRole">Electrical Apprentice</p>
+    <aside class="context-panel" id="contextPanel">
+      <span class="small-label">Conversation Details</span>
+      <h2 id="detailName">No candidate selected</h2>
+      <p id="detailRole"></p>
 
-      <div class="next-step-card">
-        <span>RECOMMENDED NEXT STEP</span>
-        <strong id="nextStepTitle">Schedule a quick call</strong>
-        <p id="nextStepText">Confirm availability, wage expectations, and preferred start date.</p>
+      <div class="context-card">
+        <span>Recommended next step</span>
+        <strong id="nextStepTitle">Start a conversation</strong>
+        <p id="nextStepText">Select a candidate from your inbox or message someone from Saved Talent.</p>
       </div>
 
-      <div class="detail-list">
+      <div class="context-list">
         <div>
           <span>Status</span>
-          <strong id="detailStatus">Active</strong>
+          <strong id="detailStatus">—</strong>
         </div>
-
         <div>
           <span>Source</span>
-          <strong id="detailSource">Saved Talent</strong>
+          <strong id="detailSource">—</strong>
         </div>
-
         <div>
           <span>Response</span>
-          <strong id="detailResponse">Same day</strong>
+          <strong id="detailResponse">—</strong>
         </div>
       </div>
 
-      <a href="saved-talent.html" class="outline-link">Review Saved Talent</a>
+      <a href="saved-talent.html" class="secondary-btn wide-btn">Review Saved Talent</a>
     </aside>
 
   </section>

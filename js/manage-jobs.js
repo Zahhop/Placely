@@ -35,10 +35,10 @@ async function initManageJobs() {
 function setupHeaderButtons() {
   const routes = {
     Jobs: "manage-jobs.html",
-    Candidates: "employer-candidates.html",
+    Candidates: "find-candidates.html",
     "Saved Talent": "saved-talent.html",
     Messages: "employer-messages.html",
-    Company: "company-profile.html"
+    Company: "employer-profile.html"
   };
 
   document.querySelectorAll("nav a").forEach((link) => {

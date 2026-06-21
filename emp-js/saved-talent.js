@@ -86,10 +86,6 @@ async function requireEmployerLogin() {
 async function loadSavedTalent() {
   resultsText.textContent = "Loading saved candidates...";
 
-  /*
-    This works with the saved candidates from the Find Candidates page I sent you.
-    That page saves IDs into localStorage under "placelySavedCandidates".
-  */
   const savedIds = getLocalSavedCandidateIds();
 
   if (!savedIds.length) {
@@ -143,8 +139,13 @@ function applyFilters() {
     ].join(" "));
 
     const matchesKeyword = !keyword || searchable.includes(keyword);
-    const matchesTrade = !trade || clean(candidate.trade).includes(trade) || clean(candidate.skills).includes(trade);
-    const matchesAvailability = !availability || clean(candidate.availability).includes(availability);
+    const matchesTrade =
+      !trade ||
+      clean(candidate.trade).includes(trade) ||
+      clean(candidate.skills).includes(trade);
+
+    const matchesAvailability =
+      !availability || clean(candidate.availability).includes(availability);
 
     return matchesKeyword && matchesTrade && matchesAvailability;
   });
@@ -229,7 +230,7 @@ function createTalentCard(candidate) {
 
     <div class="card-actions">
       <button type="button" class="primary-btn" data-action="view" data-id="${escapeAttribute(id)}">View Profile</button>
-      <a class="secondary-btn" href="employer-messages.html">Message</a>
+      <button type="button" class="secondary-btn" data-action="message" data-id="${escapeAttribute(id)}">Message</button>
       <button type="button" class="remove-btn" data-action="remove" data-id="${escapeAttribute(id)}">Remove</button>
     </div>
   `;
@@ -240,6 +241,12 @@ function createTalentCard(candidate) {
     if (action === "remove") {
       event.stopPropagation();
       removeSavedCandidate(id);
+      return;
+    }
+
+    if (action === "message") {
+      event.stopPropagation();
+      startMessageWithCandidate(candidate);
       return;
     }
 
@@ -301,10 +308,14 @@ function openCandidatePanel(candidate) {
     </div>
 
     <div class="card-actions">
-      <a class="primary-btn" href="employer-messages.html">Message</a>
+      <button type="button" class="primary-btn" id="detailMessageBtn">Message</button>
       <button type="button" class="remove-btn" id="detailRemoveBtn">Remove</button>
     </div>
   `;
+
+  document.getElementById("detailMessageBtn").addEventListener("click", () => {
+    startMessageWithCandidate(candidate);
+  });
 
   document.getElementById("detailRemoveBtn").addEventListener("click", () => {
     removeSavedCandidate(candidate.id);
@@ -313,6 +324,23 @@ function openCandidatePanel(candidate) {
 
   candidateDetailPanel.classList.add("open");
   panelOverlay.classList.add("open");
+}
+
+function startMessageWithCandidate(candidate) {
+  const messageCandidate = {
+    id: candidate.id,
+    name: candidate.full_name || "Unnamed Candidate",
+    trade: candidate.trade || "No trade added",
+    location: candidate.location || "Location not added",
+    photo: candidate.profile_photo_url || ""
+  };
+
+  localStorage.setItem(
+    "placelyMessageCandidate",
+    JSON.stringify(messageCandidate)
+  );
+
+  window.location.href = "employer-messages.html";
 }
 
 function closeCandidatePanel() {
