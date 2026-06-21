@@ -112,6 +112,7 @@ async function saveCandidateProfile() {
 
     const profileData = {
       id: user.id,
+      email: user.email,
 
       trade: document.getElementById("trade").value,
       experience: document.getElementById("experience").value,
