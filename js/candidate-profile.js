@@ -114,6 +114,9 @@ async function loadCandidateProfile() {
     currentProfile = profile;
   }
 
+  console.log("Loaded candidate profile:", currentProfile);
+  console.log("Loaded availability:", currentProfile.availability);
+
   getEl("profile_photo_preview").src =
     currentProfile.profile_photo_url || "https://placehold.co/180x180";
 
@@ -131,7 +134,7 @@ async function loadCandidateProfile() {
   getEl("experience").value = currentProfile.experience || "";
   getEl("skills").value = currentProfile.skills || "";
   getEl("certifications").value = currentProfile.certifications || "";
-  getEl("availability").value = currentProfile.availability || "Available Immediately";
+  getEl("availability").value = currentProfile.availability || "";
   getEl("email").value = currentProfile.email || user.email || "";
   getEl("phone").value = currentProfile.phone || "";
   getEl("contact_method").value = currentProfile.contact_method || "Email";

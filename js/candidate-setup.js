@@ -133,6 +133,8 @@ async function saveCandidateProfile() {
       profileData.profile_photo_url = profilePhotoUrl;
     }
 
+    console.log("Profile data being saved:", profileData);
+
     const { error } = await placelySupabase
       .from("candidate_profiles")
       .upsert(profileData);
