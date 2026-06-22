@@ -178,7 +178,7 @@ function createJobCard(job) {
     </div>
 
     <div class="job-actions">
-      <a class="primary" href="edit-job.html?id=${job.id}">Edit Job</a>
+      <a class="primary" href="edit-jobs.html?id=${job.id}">Edit Job</a>
       <a class="secondary" href="job-applicants.html?id=${job.id}">Applicants</a>
       ${
         status === "paused"
