@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Applicants | Placely Talent</title>
+
+  <link rel="stylesheet" href="../css/employer-applicants.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<header>
+  <div class="logo-wrapper">
+    <a href="employer-dashboard.html" class="logo">PLACELY TALENT</a>
+    <div class="logo-subtitle">Employer Platform</div>
+  </div>
+
+  <nav>
+    <a href="manage-jobs.html">Jobs</a>
+    <a href="employer-applicants.html" class="active">Applicants</a>
+    <a href="find-candidates.html">Candidates</a>
+    <a href="saved-talent.html">Saved Talent</a>
+    <a href="employer-messages.html">Messages</a>
+    <a href="employer-profile.html">Company</a>
+    <button id="logoutBtn" class="logout-btn">Logout</button>
+  </nav>
+</header>
+
+<main class="page-shell">
+
+  <section class="hero-card">
+    <div>
+      <span class="eyebrow">APPLICANT TRACKING</span>
+      <h1>Review and manage every applicant.</h1>
+      <p>See every candidate who applied, filter by job or hiring stage, review profiles, message applicants, and move them through your hiring pipeline.</p>
+    </div>
+
+    <div class="hero-actions">
+      <a href="manage-jobs.html" class="secondary-link">Manage Jobs</a>
+      <a href="find-candidates.html" class="primary-link">Find Candidates</a>
+    </div>
+  </section>
+
+  <section class="overview-grid">
+    <div class="overview-card">
+      <span>Total applicants</span>
+      <strong id="totalApplicants">0</strong>
+      <p>All candidate responses</p>
+    </div>
+
+    <div class="overview-card">
+      <span>Needs review</span>
+      <strong id="newApplicants">0</strong>
+      <p>New applications</p>
+    </div>
+
+    <div class="overview-card">
+      <span>Interviewing</span>
+      <strong id="interviewApplicants">0</strong>
+      <p>Active interview stage</p>
+    </div>
+
+    <div class="overview-card">
+      <span>Offers</span>
+      <strong id="offerApplicants">0</strong>
+      <p>Offer stage candidates</p>
+    </div>
+  </section>
+
+  <section class="ats-layout">
+
+    <section class="applicants-panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">CANDIDATE REVIEW</span>
+          <h2>Applicant queue</h2>
+          <p>Filter applicants, open profiles, and update hiring status.</p>
+        </div>
+
+        <button type="button" id="refreshBtn" class="secondary-link button-link">Refresh</button>
+      </div>
+
+      <div class="filter-bar">
+        <input id="searchInput" type="text" placeholder="Search name, trade, city, skill..." />
+
+        <select id="jobFilter">
+          <option value="all">All jobs</option>
+        </select>
+
+        <select id="statusFilter">
+          <option value="all">All statuses</option>
+          <option value="submitted">Submitted</option>
+          <option value="reviewing">Reviewing</option>
+          <option value="interview">Interview</option>
+          <option value="offer">Offer</option>
+          <option value="hired">Hired</option>
+          <option value="rejected">Rejected</option>
+        </select>
+
+        <select id="sortFilter">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="candidate">Candidate A-Z</option>
+        </select>
+      </div>
+
+      <div id="applicantsList" class="applicants-list"></div>
+    </section>
+
+    <aside class="detail-panel">
+      <div class="panel-heading compact-heading">
+        <div>
+          <span class="eyebrow">SELECTED APPLICANT</span>
+          <h2>Candidate details</h2>
+        </div>
+      </div>
+
+      <div id="applicantDetail" class="applicant-detail">
+        <div class="empty-state compact-empty">
+          <div class="empty-icon">PT</div>
+          <h3>Select an applicant</h3>
+          <p>Profile details, resume, contact information, job applied for, and hiring actions will appear here.</p>
+        </div>
+      </div>
+    </aside>
+
+  </section>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
+<script src="../emp-js/employer-applicants.js"></script>
+
+</body>
+</html>
