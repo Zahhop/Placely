@@ -16,23 +16,26 @@ jobForm.addEventListener("submit", async (e) => {
     return;
   }
 
-  const { error } = await placelySupabase
-    .from("jobs")
-    .insert([
-      {
-        employer_id: user.id,
-        job_title: document.getElementById("jobTitle").value,
-        company_name: document.getElementById("companyName").value,
-        location: document.getElementById("location").value,
-        employment_type: document.getElementById("employmentType").value,
-        pay_range: document.getElementById("payRange").value,
-        experience_level: document.getElementById("experienceLevel").value,
-        job_description: document.getElementById("jobDescription").value,
-        required_skills: document.getElementById("requiredSkills").value,
-        benefits: document.getElementById("benefits").value,
-        status: "active"
-      }
-    ]);
+  const {
+    data: { user }
+} = await supabase.auth.getUser();
+
+await supabase
+.from("jobs")
+.insert({
+    employer_id: user.id,
+
+    job_title,
+    company_name,
+    location,
+    employment_type,
+    pay_range,
+    job_description,
+    required_skills,
+    benefits,
+
+    status: "active"
+});
 
   if (error) {
     console.error(error);

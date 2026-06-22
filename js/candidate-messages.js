@@ -4,7 +4,6 @@ const candidateMessagesSupabase = window.supabase.createClient(
 );
 
 const messagesLayout = document.getElementById("messagesLayout");
-
 const conversationList = document.getElementById("conversationList");
 const conversationSearch = document.getElementById("conversationSearch");
 const conversationCount = document.getElementById("conversationCount");
@@ -13,7 +12,6 @@ const chatAvatar = document.getElementById("chatAvatar");
 const chatCompany = document.getElementById("chatCompany");
 const chatRole = document.getElementById("chatRole");
 const chatMessages = document.getElementById("chatMessages");
-
 const chatActions = document.getElementById("chatActions");
 const replyHelpBtn = document.getElementById("replyHelpBtn");
 
@@ -36,10 +34,7 @@ let activeRealtimeChannel = null;
 document.addEventListener("DOMContentLoaded", initMessages);
 
 async function initMessages() {
-  const {
-    data: { user },
-    error
-  } = await candidateMessagesSupabase.auth.getUser();
+  const { data: { user }, error } = await candidateMessagesSupabase.auth.getUser();
 
   if (error || !user) {
     window.location.href = "candidate-login.html";
@@ -48,16 +43,15 @@ async function initMessages() {
 
   currentUser = user;
 
+  setupEvents();
   await loadConversations();
-  renderConversationList(conversationsData);
+  await renderConversationList(conversationsData);
 
   if (activeConversationId) {
     await openConversation(activeConversationId);
   } else {
     showNoConversationState();
   }
-
-  setupEvents();
 }
 
 async function loadConversations() {
@@ -77,16 +71,24 @@ async function loadConversations() {
   conversationsData = await Promise.all(
     (data || []).map(async (conversation) => {
       const employerProfile = await getEmployerProfile(conversation.employer_id);
+      console.log("Conversation row:", conversation);
+console.log("Employer ID being searched:", conversation.employer_id);
+console.log("Employer profile found:", employerProfile);
 
       const employerName =
         employerProfile?.company_name ||
+        employerProfile?.contact_name ||
         conversation.employer_name ||
+        conversation.company_name ||
         "Employer";
 
-      const companyLogo =
+      const logoUrl =
         employerProfile?.company_logo_url ||
         employerProfile?.logo_url ||
         employerProfile?.company_logo ||
+        employerProfile?.company_logo_preview ||
+        conversation.company_logo_url ||
+        conversation.logo_url ||
         "";
 
       return {
@@ -94,19 +96,18 @@ async function loadConversations() {
         employerId: conversation.employer_id,
         employerName,
         initials: getInitials(employerName),
-        logoUrl: companyLogo,
-        role:
-          conversation.candidate_role ||
-          conversation.job_title ||
-          "Opportunity",
+        logoUrl,
+        role: conversation.candidate_role || conversation.job_title || "Opportunity",
         source: conversation.source || "Application",
         status: conversation.status || "Active",
-        response: conversation.response || "Same day"
+        response: conversation.response || "New"
       };
     })
   );
 
-  activeConversationId = conversationsData[0]?.id || null;
+  if (!activeConversationId) {
+    activeConversationId = conversationsData[0]?.id || null;
+  }
 }
 
 async function getEmployerProfile(employerId) {
@@ -128,11 +129,11 @@ async function getEmployerProfile(employerId) {
 
 function setupEvents() {
   if (conversationSearch) {
-    conversationSearch.addEventListener("input", () => {
+    conversationSearch.addEventListener("input", async () => {
       const query = conversationSearch.value.toLowerCase().trim();
 
-      const filtered = conversationsData.filter((conversation) => {
-        return [
+      const filtered = conversationsData.filter((conversation) =>
+        [
           conversation.employerName,
           conversation.role,
           conversation.source,
@@ -140,10 +141,10 @@ function setupEvents() {
         ]
           .join(" ")
           .toLowerCase()
-          .includes(query);
-      });
+          .includes(query)
+      );
 
-      renderConversationList(filtered);
+      await renderConversationList(filtered);
 
       if (filtered.length === 0 && conversationsData.length > 0) {
         showSearchEmptyState();
@@ -173,11 +174,7 @@ function setupEvents() {
       if (!text || !activeConversationId) return;
 
       const conversation = getActiveConversation();
-
-      if (!conversation) {
-        showNoConversationState();
-        return;
-      }
+      if (!conversation) return;
 
       const { error } = await candidateMessagesSupabase
         .from("messages")
@@ -201,7 +198,8 @@ function setupEvents() {
 
       input.value = "";
 
-      renderConversationList(conversationsData);
+      await loadConversations();
+      await renderConversationList(conversationsData);
       await openConversation(activeConversationId);
     });
   }
@@ -232,17 +230,11 @@ async function renderConversationList(list) {
     const latestMessage = await getLatestMessage(conversation.id);
 
     const row = document.createElement("div");
-    row.className = `conversation ${
-      conversation.id === activeConversationId ? "active" : ""
-    }`;
+    row.className = `conversation ${conversation.id === activeConversationId ? "active" : ""}`;
 
     row.innerHTML = `
       <div class="avatar">
-        ${
-          conversation.logoUrl
-            ? `<img src="${escapeHTML(conversation.logoUrl)}" class="message-avatar-img" alt="Company logo">`
-            : escapeHTML(conversation.initials)
-        }
+        ${renderAvatar(conversation.logoUrl, conversation.initials, "Company logo")}
       </div>
 
       <div class="conversation-info">
@@ -257,7 +249,7 @@ async function renderConversationList(list) {
 
     row.addEventListener("click", async () => {
       activeConversationId = conversation.id;
-      renderConversationList(conversationsData);
+      await renderConversationList(conversationsData);
       await openConversation(conversation.id);
     });
 
@@ -276,9 +268,11 @@ async function openConversation(id) {
   setConversationMode();
 
   if (chatAvatar) {
-    chatAvatar.innerHTML = conversation.logoUrl
-      ? `<img src="${escapeHTML(conversation.logoUrl)}" class="message-avatar-img" alt="Company logo">`
-      : escapeHTML(conversation.initials);
+    chatAvatar.innerHTML = renderAvatar(
+      conversation.logoUrl,
+      conversation.initials,
+      "Company logo"
+    );
   }
 
   if (chatCompany) chatCompany.textContent = conversation.employerName;
@@ -316,16 +310,12 @@ async function openConversation(id) {
     return;
   }
 
-  const { error: updateError } = await candidateMessagesSupabase
+  await candidateMessagesSupabase
     .from("messages")
     .update({ read_by_candidate: true })
+    .eq("conversation_id", id)
     .eq("candidate_id", currentUser.id)
-    .eq("sender_type", "employer")
-    .select();
-
-  if (updateError) {
-    console.error("Candidate mark read error:", updateError);
-  }
+    .eq("sender_type", "employer");
 
   chatMessages.innerHTML = "";
 
@@ -342,10 +332,7 @@ async function openConversation(id) {
   } else {
     data.forEach((message) => {
       const bubble = document.createElement("div");
-
-      bubble.className = `message ${
-        message.sender_type === "candidate" ? "sent" : "received"
-      }`;
+      bubble.className = `message ${message.sender_type === "candidate" ? "sent" : "received"}`;
 
       bubble.innerHTML = `
         ${escapeHTML(message.message)}
@@ -357,7 +344,6 @@ async function openConversation(id) {
   }
 
   chatMessages.scrollTop = chatMessages.scrollHeight;
-
   subscribeToMessages(id);
 }
 
@@ -371,11 +357,7 @@ function showNoConversationState() {
 
   setEmptyMode();
 
-  if (chatAvatar) {
-    chatAvatar.innerHTML = "";
-    chatAvatar.textContent = "";
-  }
-
+  if (chatAvatar) chatAvatar.innerHTML = "";
   if (chatCompany) chatCompany.textContent = "No conversation selected";
   if (chatRole) chatRole.textContent = "Employer messages will appear here.";
 
@@ -454,7 +436,7 @@ function subscribeToMessages(conversationId) {
       },
       async () => {
         await loadConversations();
-        renderConversationList(conversationsData);
+        await renderConversationList(conversationsData);
         await openConversation(conversationId);
       }
     )
@@ -478,6 +460,14 @@ async function getLatestMessage(conversationId) {
   return data;
 }
 
+function renderAvatar(url, initials, altText) {
+  if (url) {
+    return `<img src="${escapeHTML(url)}" class="message-avatar-img" alt="${escapeHTML(altText || "Avatar")}">`;
+  }
+
+  return `<span>${escapeHTML(initials || "PT")}</span>`;
+}
+
 function getActiveConversation() {
   return conversationsData.find((item) => item.id === activeConversationId);
 }
@@ -496,7 +486,6 @@ function formatConversationTime(value, fallback) {
 
   const date = new Date(value);
   const now = new Date();
-
   const isToday = date.toDateString() === now.toDateString();
 
   if (isToday) {

@@ -34,7 +34,7 @@
     <div>
       <span class="eyebrow">Application Tracker</span>
       <h1>Track every opportunity in one place.</h1>
-      <p>Stay organized with your submitted applications, interviews, follow-ups, and offers.</p>
+      <p>Review your submitted applications, follow up with employers, and keep your job search moving without losing track of important opportunities.</p>
     </div>
 
     <a href="../public/find-jobs.html?role=candidate" class="primary-btn">Find More Jobs</a>
@@ -42,13 +42,19 @@
 
   <section class="stats-grid">
     <div class="stat-card">
-      <span>Applied</span>
+      <span>Total Applications</span>
       <strong id="applied_count">0</strong>
-      <p>Submitted applications</p>
+      <p>Submitted opportunities</p>
     </div>
 
     <div class="stat-card">
-      <span>Interviewing</span>
+      <span>In Review</span>
+      <strong id="reviewing_count">0</strong>
+      <p>Applications being reviewed</p>
+    </div>
+
+    <div class="stat-card">
+      <span>Interviews</span>
       <strong id="interviewing_count">0</strong>
       <p>Active interview stages</p>
     </div>
@@ -58,12 +64,6 @@
       <strong id="offers_count">0</strong>
       <p>Received job offers</p>
     </div>
-
-    <div class="stat-card">
-      <span>Follow Ups</span>
-      <strong id="followups_count">0</strong>
-      <p>Recommended next steps</p>
-    </div>
   </section>
 
   <section class="content-grid">
@@ -72,10 +72,22 @@
       <div class="panel-header">
         <div>
           <span class="small-label">Your Applications</span>
-          <h2>Application pipeline</h2>
+          <h2>Application activity</h2>
+          <p>Jobs you applied to are listed by most recent activity.</p>
         </div>
 
-        <a href="../public/find-jobs.html?role=candidate" class="secondary-btn">Browse Jobs</a>
+        <div class="panel-tools">
+          <input id="applicationSearch" type="text" placeholder="Search applications..." />
+          <select id="applicationFilter">
+            <option value="all">All statuses</option>
+            <option value="submitted">Submitted</option>
+            <option value="reviewing">Reviewing</option>
+            <option value="interview">Interview</option>
+            <option value="offer">Offer</option>
+            <option value="rejected">Rejected</option>
+            <option value="withdrawn">Withdrawn</option>
+          </select>
+        </div>
       </div>
 
       <div id="applications_list" class="applications-list"></div>
@@ -85,20 +97,25 @@
       <span class="small-label">Next Steps</span>
       <h2>Keep momentum</h2>
 
+      <div id="nextActionCard" class="next-action-card">
+        <strong>Stay active</strong>
+        <p>Apply to strong matches, keep your profile updated, and respond quickly when employers reach out.</p>
+      </div>
+
       <div class="tip-list">
         <div class="tip-card">
-          <strong>Apply to quality matches</strong>
-          <p>Focus on roles that match your trade, location, availability, and experience.</p>
+          <strong>Follow up at the right time</strong>
+          <p>If you have not heard back after a few days, send a short professional message.</p>
         </div>
 
         <div class="tip-card">
-          <strong>Keep your profile fresh</strong>
-          <p>Update your resume, certifications, and contact preferences regularly.</p>
+          <strong>Keep your profile current</strong>
+          <p>Update your skills, certifications, resume, phone number, and availability.</p>
         </div>
 
         <div class="tip-card">
-          <strong>Respond quickly</strong>
-          <p>Fast replies help employers move you forward before roles fill.</p>
+          <strong>Prepare before interviews</strong>
+          <p>Review the job details, location, pay range, and your recent work experience.</p>
         </div>
       </div>
     </aside>
