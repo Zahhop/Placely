@@ -10,7 +10,7 @@ const ROUTES = {
 };
 
 let employerProfile = {};
-let activeJobs = JSON.parse(localStorage.getItem("placely_employer_jobs")) || [];
+let activeJobs = [];
 let savedCandidates = JSON.parse(localStorage.getItem("placely_saved_candidates")) || [];
 let pipelineCandidates = JSON.parse(localStorage.getItem("placely_employer_pipeline")) || [];
 
@@ -66,7 +66,6 @@ function showToast(message) {
 }
 
 function saveState() {
-  localStorage.setItem("placely_employer_jobs", JSON.stringify(activeJobs));
   localStorage.setItem("placely_saved_candidates", JSON.stringify(savedCandidates));
   localStorage.setItem("placely_employer_pipeline", JSON.stringify(pipelineCandidates));
 }
@@ -134,7 +133,6 @@ function renderActiveJobs() {
 
       <div class="job-actions">
         <button type="button" class="job-btn secondary" onclick="handlePauseJob('${job.id}')">Pause</button>
-        <button type="button" class="job-btn" onclick="handleFindMatches()">Find Matches</button>
       </div>
     </article>
   `).join("");
@@ -334,6 +332,32 @@ function updateCounts(messageCount = 0) {
   updateHeroSummary();
 }
 
+
+async function loadEmployerJobs(userId) {
+  const { data, error } = await placelySupabase
+    .from("jobs")
+    .select("*")
+    .eq("employer_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Load employer jobs error:", error);
+    activeJobs = [];
+    return;
+  }
+
+  activeJobs = (data || []).map(job => ({
+    id: job.id,
+    title: job.job_title || "Untitled Job",
+    location: job.location || "Location not listed",
+    pay: job.pay_range || "Pay not listed",
+    type: job.employment_type || "Full-time",
+    description: job.job_description || "",
+    status: job.status || "active",
+    createdAt: job.created_at
+  }));
+}
+
 function renderDashboard() {
   renderActiveJobs();
   renderSavedCandidates();
@@ -343,7 +367,7 @@ function renderDashboard() {
   saveState();
 }
 
-function handleJobPost(event) {
+async function handleJobPost(event) {
   event.preventDefault();
 
   const title = document.getElementById("jobTitle")?.value.trim();
@@ -357,19 +381,37 @@ function handleJobPost(event) {
     return;
   }
 
-  activeJobs.unshift({
-    id: `job-${Date.now()}`,
-    title,
-    location,
-    pay,
-    type,
-    description,
-    status: "Active",
-    createdAt: new Date().toISOString()
-  });
+  const { data: { user }, error: userError } = await placelySupabase.auth.getUser();
+
+  if (userError || !user) {
+    window.location.href = ROUTES.login;
+    return;
+  }
+
+  const { error } = await placelySupabase
+    .from("jobs")
+    .insert({
+      employer_id: user.id,
+      job_title: title,
+      company_name: employerProfile.company_name || "Employer",
+      location,
+      pay_range: pay,
+      employment_type: type,
+      job_description: description,
+      status: "active"
+    });
+
+  if (error) {
+    console.error("Post job error:", error);
+    showToast("Could not post job.");
+    return;
+  }
 
   event.target.reset();
+
+  await loadEmployerJobs(user.id);
   renderDashboard();
+
   showToast("Job post created.");
 }
 
@@ -379,27 +421,12 @@ function handlePauseJob(jobId) {
   showToast("Job post paused.");
 }
 
-function handleFindMatches() {
-  const candidate = demoCandidates.find(person =>
-    !pipelineCandidates.some(existing => existing.id === person.id)
-  );
-
-  if (candidate) {
-    pipelineCandidates.unshift(candidate);
-    renderDashboard();
-    showToast(`${candidate.name} moved into review.`);
-  } else {
-    showToast("All preview candidates are already in review.");
-  }
-}
-
 async function handleLogout() {
   await placelySupabase.auth.signOut();
   window.location.href = ROUTES.mainLogin;
 }
 
 window.handlePauseJob = handlePauseJob;
-window.handleFindMatches = handleFindMatches;
 window.handleSavePreviewCandidate = handleSavePreviewCandidate;
 window.handleLogout = handleLogout;
 
@@ -411,13 +438,13 @@ async function loadEmployerDashboard() {
     return;
   }
 
-  const { data: profile, error: profileError } = await placelySupabase
+  const { data: roleProfile, error: roleError } = await placelySupabase
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .single();
 
-  if (profileError || !profile || profile.role !== "employer") {
+  if (roleError || !roleProfile || roleProfile.role !== "employer") {
     await placelySupabase.auth.signOut();
     window.location.href = ROUTES.login;
     return;
@@ -425,22 +452,20 @@ async function loadEmployerDashboard() {
 
   const { data: employerData, error: employerError } = await placelySupabase
     .from("employer_profiles")
-    .select("company_name, company_email, contact_name, phone, industry, hiring_needs")
+    .select("*")
     .eq("id", user.id)
     .single();
 
-const { count: unreadCount, error: unreadError } = await placelySupabase
-  .from("messages")
-  .select("*", { count: "exact", head: true })
-  .eq("employer_id", user.id)
-  .eq("sender_type", "candidate")
-  .eq("read_by_employer", false);
+  const { count: unreadCount, error: unreadError } = await placelySupabase
+    .from("messages")
+    .select("*", { count: "exact", head: true })
+    .eq("employer_id", user.id)
+    .eq("sender_type", "candidate")
+    .eq("read_by_employer", false);
 
   if (unreadError) {
-  console.error("Unread message count error:", unreadError);
-    }
-
-  console.log("Unread messages:", unreadCount);
+    console.error("Unread message count error:", unreadError);
+  }
 
   if (employerError || !employerData) {
     console.error("Employer profile error:", employerError);
@@ -451,7 +476,8 @@ const { count: unreadCount, error: unreadError } = await placelySupabase
       contact_name: "Not completed",
       phone: "Not completed",
       industry: "Not completed",
-      hiring_needs: "No hiring needs added yet."
+      hiring_needs: "No hiring needs added yet.",
+      company_logo_url: ""
     };
 
     showToast("Employer profile not completed yet.");
@@ -469,13 +495,28 @@ const { count: unreadCount, error: unreadError } = await placelySupabase
   setText("companyNameSidebar", companyName);
   setText("industrySidebar", industry);
   setText("emailSidebar", email);
-  setText("companyInitials", getInitials(companyName));
+
+  const logoBox = document.getElementById("companyInitials");
+
+  if (logoBox && employerProfile.company_logo_url) {
+    logoBox.innerHTML = `
+      <img 
+        src="${employerProfile.company_logo_url}" 
+        class="dashboard-company-logo" 
+        alt="Company logo"
+      />
+    `;
+  } else if (logoBox) {
+    logoBox.textContent = getInitials(companyName);
+  }
 
   setText("companyName", companyName);
   setText("contactName", contactName);
   setText("industry", industry);
   setText("phone", phone);
   setText("userEmail", email);
+
+  await loadEmployerJobs(user.id);
 
   renderDashboard();
 
