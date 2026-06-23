@@ -4,9 +4,25 @@ const placelySupabase = window.supabase.createClient(
 );
 
 const form = document.getElementById("candidateLoginForm");
+const errorMessage = document.getElementById("errorMessage");
+
+function showError(message) {
+  if (!errorMessage) {
+    alert(message);
+    return;
+  }
+
+  errorMessage.textContent = message;
+  errorMessage.style.display = "block";
+}
 
 form.addEventListener("submit", async function (e) {
   e.preventDefault();
+
+  if (errorMessage) {
+    errorMessage.textContent = "";
+    errorMessage.style.display = "none";
+  }
 
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
@@ -17,7 +33,7 @@ form.addEventListener("submit", async function (e) {
   });
 
   if (error) {
-    alert(error.message);
+    showError(error.message);
     return;
   }
 
@@ -29,15 +45,14 @@ form.addEventListener("submit", async function (e) {
     .eq("id", userId)
     .single();
 
-  if (profileError) {
-    console.error(profileError);
-    alert("Login worked, but your profile role could not be checked.");
+  if (profileError || !profile) {
+    showError("Profile not found.");
     return;
   }
 
   if (profile.role !== "candidate") {
     await placelySupabase.auth.signOut();
-    alert("This login is for candidate accounts only.");
+    showError("This login is for candidate accounts only.");
     return;
   }
 

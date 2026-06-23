@@ -101,7 +101,7 @@ function updateHeroSummary() {
 
   setText(
     "heroSummary",
-    `${jobs} active job${jobs === 1 ? "" : "s"} • ${saved} saved candidate${saved === 1 ? "" : "s"} • ${pipeline} candidate${pipeline === 1 ? "" : "s"} in review • Candidate preview enabled`
+    `${jobs} active job${jobs === 1 ? "" : "s"} • ${pipeline} applicant${pipeline === 1 ? "" : "s"} needing review • ${saved} saved candidate${saved === 1 ? "" : "s"} • Candidate network preview enabled`
   );
 }
 
@@ -113,14 +113,14 @@ function renderActiveJobs() {
     renderEmpty(
       "activeJobsList",
       "No active job posts yet",
-      "Create your first job posting to begin receiving applications.",
+      "Use your Manage Jobs page to create a detailed job post with the full posting form.",
       "Create Job Post",
-      "#post-job"
+      "manage-jobs.html"
     );
     return;
   }
 
-  container.innerHTML = activeJobs.map(job => `
+  container.innerHTML = activeJobs.slice(0, 3).map(job => `
     <article class="job-card">
       <div>
         <h3>${job.title}</h3>
@@ -132,7 +132,7 @@ function renderActiveJobs() {
       </div>
 
       <div class="job-actions">
-        <button type="button" class="job-btn secondary" onclick="handlePauseJob('${job.id}')">Pause</button>
+        <a href="manage-jobs.html" class="job-btn secondary">Manage</a>
       </div>
     </article>
   `).join("");
@@ -147,8 +147,8 @@ function renderSavedCandidates() {
       "savedCandidatesList",
       "No saved candidates yet",
       "Preview candidate matches and save strong profiles for later review.",
-      "Preview Candidates",
-      "#candidate-access"
+      "Find Candidates",
+      "find-candidates.html"
     );
     return;
   }
@@ -174,15 +174,15 @@ function renderPipeline() {
   if (!pipelineCandidates.length) {
     renderEmpty(
       "pipelineList",
-      "No candidates in review yet",
-      "Applicants and candidates you move into review will appear here.",
-      "Preview Candidates",
-      "#candidate-access"
+      "No applicants in review yet",
+      "Applicants will appear here when candidates apply or when you move saved candidates into review.",
+      "Open Applicants",
+      "employer-applicants.html"
     );
     return;
   }
 
-  container.innerHTML = pipelineCandidates.map(candidate => `
+  container.innerHTML = pipelineCandidates.slice(0, 4).map(candidate => `
     <article class="activity-card">
       <h3>${candidate.name}</h3>
       <p>${candidate.trade} · ${candidate.location} · Status: Reviewing</p>
@@ -276,28 +276,28 @@ function renderPriorityActions() {
 
   const actions = [
     {
-      title: activeJobs.length ? "Job posts are active" : "Create your first job post",
+      title: activeJobs.length ? "Jobs are live" : "Create your first job post",
       text: activeJobs.length
         ? `${activeJobs.length} active role${activeJobs.length === 1 ? "" : "s"} currently listed.`
-        : "Create a job post so candidates can review and apply.",
-      href: "#post-job",
+        : "Use Manage Jobs to publish a full job post.",
+      href: "manage-jobs.html",
       done: activeJobs.length > 0
     },
     {
-      title: savedCandidates.length ? "Review saved talent" : "Build a saved talent list",
-      text: savedCandidates.length
-        ? `${savedCandidates.length} candidate${savedCandidates.length === 1 ? "" : "s"} saved for review.`
-        : "Preview matches and save candidates worth reviewing later.",
-      href: "#candidate-access",
-      done: savedCandidates.length > 0
-    },
-    {
-      title: pipelineCandidates.length ? "Review candidate pipeline" : "Check applicant pipeline",
+      title: pipelineCandidates.length ? "Review applicants" : "Watch applicant activity",
       text: pipelineCandidates.length
         ? `${pipelineCandidates.length} candidate${pipelineCandidates.length === 1 ? "" : "s"} currently in review.`
-        : "Applicants and moved candidates will appear in your review pipeline.",
-      href: "#pipeline",
+        : "New applicants will appear in your applicant queue.",
+      href: "employer-applicants.html",
       done: pipelineCandidates.length > 0
+    },
+    {
+      title: savedCandidates.length ? "Review saved talent" : "Build saved talent",
+      text: savedCandidates.length
+        ? `${savedCandidates.length} candidate${savedCandidates.length === 1 ? "" : "s"} saved for review.`
+        : "Preview and save candidates for future outreach.",
+      href: "saved-talent.html",
+      done: savedCandidates.length > 0
     }
   ];
 
@@ -309,29 +309,21 @@ function renderPriorityActions() {
   `).join("");
 }
 
-function updateCounts(messageCount = 0) {
+function updateCounts(messageCount = null) {
   setText("activeJobsCount", activeJobs.length);
   setText("savedCandidatesCount", savedCandidates.length);
   setText("applicationsCount", pipelineCandidates.length);
-  setText("messagesCount", messageCount);
+
+  if (messageCount !== null) {
+    setText("messagesCount", messageCount);
+  }
 
   setText("newApplicantsCount", pipelineCandidates.length);
   setText("reviewingCount", pipelineCandidates.length);
   setText("interviewCount", "0");
 
-  setText("activityJobs", activeJobs.length);
-  setText("activitySaved", savedCandidates.length);
-  setText("activityPipeline", pipelineCandidates.length);
-
-  if (activeJobs.length || savedCandidates.length || pipelineCandidates.length) {
-    setText("activityTip", "Your workspace is active. Continue reviewing candidates and keeping job posts current.");
-  } else {
-    setText("activityTip", "Create a job post and save candidates to start building your hiring workspace.");
-  }
-
   updateHeroSummary();
 }
-
 
 async function loadEmployerJobs(userId) {
   const { data, error } = await placelySupabase
@@ -367,66 +359,11 @@ function renderDashboard() {
   saveState();
 }
 
-async function handleJobPost(event) {
-  event.preventDefault();
-
-  const title = document.getElementById("jobTitle")?.value.trim();
-  const location = document.getElementById("jobLocation")?.value.trim();
-  const pay = document.getElementById("jobPay")?.value.trim();
-  const type = document.getElementById("jobType")?.value || "Full-time";
-  const description = document.getElementById("jobDescription")?.value.trim();
-
-  if (!title || !location) {
-    showToast("Add a job title and location first.");
-    return;
-  }
-
-  const { data: { user }, error: userError } = await placelySupabase.auth.getUser();
-
-  if (userError || !user) {
-    window.location.href = ROUTES.login;
-    return;
-  }
-
-  const { error } = await placelySupabase
-    .from("jobs")
-    .insert({
-      employer_id: user.id,
-      job_title: title,
-      company_name: employerProfile.company_name || "Employer",
-      location,
-      pay_range: pay,
-      employment_type: type,
-      job_description: description,
-      status: "active"
-    });
-
-  if (error) {
-    console.error("Post job error:", error);
-    showToast("Could not post job.");
-    return;
-  }
-
-  event.target.reset();
-
-  await loadEmployerJobs(user.id);
-  renderDashboard();
-
-  showToast("Job post created.");
-}
-
-function handlePauseJob(jobId) {
-  activeJobs = activeJobs.filter(job => job.id !== jobId);
-  renderDashboard();
-  showToast("Job post paused.");
-}
-
 async function handleLogout() {
   await placelySupabase.auth.signOut();
   window.location.href = ROUTES.mainLogin;
 }
 
-window.handlePauseJob = handlePauseJob;
 window.handleSavePreviewCandidate = handleSavePreviewCandidate;
 window.handleLogout = handleLogout;
 
@@ -487,9 +424,7 @@ async function loadEmployerDashboard() {
 
   const companyName = employerProfile.company_name || "Employer";
   const email = employerProfile.company_email || user.email || "Not available";
-  const contactName = employerProfile.contact_name || "Not completed";
   const industry = employerProfile.industry || "Not completed";
-  const phone = employerProfile.phone || "Not completed";
 
   setText("companyNameTitle", companyName);
   setText("companyNameSidebar", companyName);
@@ -510,17 +445,10 @@ async function loadEmployerDashboard() {
     logoBox.textContent = getInitials(companyName);
   }
 
-  setText("companyName", companyName);
-  setText("contactName", contactName);
-  setText("industry", industry);
-  setText("phone", phone);
-  setText("userEmail", email);
-
   await loadEmployerJobs(user.id);
 
   renderDashboard();
-
-  setText("messagesCount", unreadCount || 0);
+  updateCounts(unreadCount || 0);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -528,9 +456,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const logoutBtn = document.getElementById("logoutBtn");
   if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
-
-  const jobPostForm = document.getElementById("jobPostForm");
-  if (jobPostForm) jobPostForm.addEventListener("submit", handleJobPost);
 
   const candidateSearchForm = document.getElementById("candidateSearchForm");
   if (candidateSearchForm) candidateSearchForm.addEventListener("submit", handleCandidateSearch);

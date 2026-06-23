@@ -14,14 +14,12 @@
 
 <header>
   <div class="logo-wrapper">
-    <a href="../index.html" class="logo">
-      PLACELY TALENT
-    </a>
+    <a href="../index.html" class="logo">PLACELY TALENT</a>
     <div class="logo-subtitle">Talent Platform</div>
   </div>
 
-  <a href="candidates.html" class="nav-btn">Back to Candidate Page</a>
-</header>>
+  <a href="../public/login.html" class="nav-btn">Back to Login</a>
+</header>
 
 <main>
 
@@ -30,26 +28,26 @@
     <div class="login-copy">
       <div class="eyebrow">Candidate Login</div>
 
-      <h1>Access your candidate account.</h1>
+      <h1>Access your candidate account and manage your next opportunity.</h1>
 
       <p>
-        Manage your profile, upload documents, view job opportunities, save roles, and keep your information ready for better trades opportunities.
+        Log in to update your profile, review job opportunities, manage applications, and keep your information ready for employers on Placely Talent.
       </p>
 
       <div class="feature-list">
         <div>
-          <strong>Manage your profile</strong>
-          <span>Keep your trade, experience, certifications, and resume updated.</span>
+          <strong>Manage your candidate profile</strong>
+          <span>Keep your trade, experience, certifications, resume, and contact details up to date.</span>
         </div>
 
         <div>
-          <strong>Explore better roles</strong>
-          <span>View opportunities from employers looking for skilled trades candidates.</span>
+          <strong>Review better job opportunities</strong>
+          <span>Explore roles from employers looking for skilled trades candidates like you.</span>
         </div>
 
         <div>
-          <strong>Stay ready</strong>
-          <span>Keep your candidate profile polished when the right opportunity appears.</span>
+          <strong>Stay ready for hiring</strong>
+          <span>Keep your applications, saved jobs, and employer messages organized from one simple dashboard.</span>
         </div>
       </div>
     </div>
@@ -57,26 +55,44 @@
     <div class="login-card">
       <div class="card-top">
         <div>
-          <span class="small-label">Placely Candidate Account</span>
-          <h2>Log in</h2>
+          <span class="small-label">Placely Candidate Portal</span>
+          <h2>Login</h2>
         </div>
 
         <span class="secure-pill">Secure Access</span>
       </div>
 
+      <p class="card-copy">
+        Enter your candidate account details to continue to your dashboard.
+      </p>
+
       <form id="candidateLoginForm">
-        <label for="email">Email Address</label>
-        <input type="email" id="email" placeholder="you@example.com" required />
 
-        <label for="password">Password</label>
-        <input type="password" id="password" placeholder="Enter your password" required />
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" placeholder="you@example.com" required>
+        </div>
 
-        <button type="submit">Log in to Account</button>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="Enter your password" required>
+        </div>
+
+        <div class="forgot-row">
+          <a href="../public/forgot-password.html" class="forgot-link">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="login-btn">
+          Login to Candidate Account
+        </button>
+
+        <p class="error-message" id="errorMessage"></p>
+
       </form>
 
-      <div class="form-links">
-        <p>Don’t have an account? <a href="candidate-signup.html">Create one here</a></p>
-        <a href="forgot-password.html">Forgot password?</a>
+      <div class="signup-note">
+        Don’t have a candidate account?
+        <a href="candidate-signup.html">Create one here</a>
       </div>
     </div>
 
