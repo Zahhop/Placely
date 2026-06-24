@@ -14,10 +14,15 @@ const applicationsCount = document.getElementById("applicationsCount");
 const reviewCount = document.getElementById("reviewCount");
 
 const filterButtons = document.querySelectorAll(".filter-btn");
+const jobSearchInput = document.getElementById("jobSearchInput");
+const jobSortSelect = document.getElementById("jobSortSelect");
 const logoutBtn = document.getElementById("logoutBtn");
 
 let allJobs = [];
+let applicationCountsByJob = {};
+let reviewCountsByJob = {};
 let currentFilter = "all";
+let currentUserId = null;
 
 document.addEventListener("DOMContentLoaded", initManageJobs);
 
@@ -25,16 +30,19 @@ async function initManageJobs() {
   setupHeaderButtons();
   setupLogout();
   setupFilters();
+  setupSearchAndSort();
 
   const user = await requireEmployerLogin();
   if (!user) return;
 
+  currentUserId = user.id;
   await loadEmployerJobs(user.id);
 }
 
 function setupHeaderButtons() {
   const routes = {
     Jobs: "manage-jobs.html",
+    Applicants: "employer-applicants.html",
     Candidates: "find-candidates.html",
     "Saved Talent": "saved-talent.html",
     Messages: "employer-messages.html",
@@ -47,22 +55,6 @@ function setupHeaderButtons() {
     if (routes[label]) {
       link.href = routes[label];
     }
-
-    link.addEventListener("click", (event) => {
-      event.preventDefault();
-      window.location.href = link.href;
-    });
-  });
-
-  document.querySelectorAll("a").forEach((link) => {
-    const href = link.getAttribute("href");
-
-    if (!href || href === "#") return;
-
-    link.addEventListener("click", (event) => {
-      event.preventDefault();
-      window.location.href = href;
-    });
   });
 }
 
@@ -112,20 +104,77 @@ async function loadEmployerJobs(userId) {
   }
 
   allJobs = data || [];
+  await loadApplicationCounts(userId);
 
   renderJobs();
   updateStats();
 }
 
+async function loadApplicationCounts(userId) {
+  const { data, error } = await supabaseClient
+    .from("applications")
+    .select("job_id, status")
+    .eq("employer_id", userId);
+
+  if (error) {
+    console.warn("Could not load job application counts:", error);
+    applicationCountsByJob = {};
+    reviewCountsByJob = {};
+    return;
+  }
+
+  applicationCountsByJob = {};
+  reviewCountsByJob = {};
+
+  (data || []).forEach((application) => {
+    const jobId = String(application.job_id || "");
+    if (!jobId) return;
+
+    applicationCountsByJob[jobId] = (applicationCountsByJob[jobId] || 0) + 1;
+
+    if (["new", "submitted", "applied"].includes(String(application.status || "submitted").toLowerCase())) {
+      reviewCountsByJob[jobId] = (reviewCountsByJob[jobId] || 0) + 1;
+    }
+  });
+}
+
 function renderJobs() {
+  if (!jobsGrid) return;
+
   jobsGrid.innerHTML = "";
 
-  const visibleJobs = allJobs.filter((job) => {
-    const status = normalizeStatus(job.status);
+  const search = jobSearchInput?.value?.toLowerCase().trim() || "";
+  const sort = jobSortSelect?.value || "newest";
 
-    if (currentFilter === "all") return true;
-    return status === currentFilter;
-  });
+  const visibleJobs = allJobs
+    .filter((job) => {
+      const status = normalizeStatus(job.status);
+      const matchesFilter = currentFilter === "all" || status === currentFilter;
+      const matchesSearch =
+        !search ||
+        [
+          job.job_title,
+          job.company_name,
+          job.location,
+          job.employment_type,
+          job.pay_range,
+          job.experience_level,
+          job.job_description,
+          job.required_skills
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(search);
+
+      return matchesFilter && matchesSearch;
+    })
+    .sort((a, b) => {
+      if (sort === "oldest") {
+        return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+      }
+
+      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    });
 
   if (!visibleJobs.length) {
     emptyState.classList.remove("hidden");
@@ -140,7 +189,7 @@ function renderJobs() {
 }
 
 function createJobCard(job) {
-  const card = document.createElement("div");
+  const card = document.createElement("article");
   card.className = "job-card";
 
   const title = job.job_title || "Untitled job";
@@ -153,37 +202,44 @@ function createJobCard(job) {
   const skills = parseSkills(job.required_skills);
   const status = normalizeStatus(job.status);
   const posted = formatDate(job.created_at);
+  const applicationCount = applicationCountsByJob[String(job.id)] || 0;
 
   card.innerHTML = `
     <div class="job-top">
       <div>
         <h3>${escapeHTML(title)}</h3>
-        <p>${escapeHTML(company)} • ${escapeHTML(location)}</p>
+        <p>${escapeHTML(company)} &middot; ${escapeHTML(location)}</p>
       </div>
 
-      <span class="status ${status}">${capitalize(status)}</span>
+      <div class="job-meta">
+        <span>${escapeHTML(type)}</span>
+        <span>${escapeHTML(pay)}</span>
+        <span>${escapeHTML(experience)}</span>
+      </div>
     </div>
 
-    <div class="job-meta">
-      <span>${escapeHTML(pay)}</span>
-      <span>${escapeHTML(type)}</span>
-      <span>${escapeHTML(experience)}</span>
-      <span>${escapeHTML(posted)}</span>
+    <div>
+      <p class="job-description">${escapeHTML(truncateText(description, 170))}</p>
+      <div class="tag-row">
+        ${skills.map((skill) => `<span>${escapeHTML(skill)}</span>`).join("")}
+      </div>
     </div>
 
-    <p class="job-description">${escapeHTML(description)}</p>
-
-    <div class="tag-row">
-      ${skills.map((skill) => `<span>${escapeHTML(skill)}</span>`).join("")}
+    <div>
+      <span class="status ${status}">${escapeHTML(capitalize(status))}</span>
+      <p class="posted-date">${escapeHTML(posted)}</p>
+      <div class="job-meta">
+        <span>${applicationCount} applicant${applicationCount === 1 ? "" : "s"}</span>
+      </div>
     </div>
 
     <div class="job-actions">
-      <a class="primary" href="edit-jobs.html?id=${job.id}">Edit Job</a>
-      <a class="secondary" href="job-applicants.html?id=${job.id}">Applicants</a>
+      <a class="primary" href="edit-jobs.html?id=${encodeURIComponent(job.id)}">Edit</a>
+      <a class="secondary" href="employer-applicants.html?job=${encodeURIComponent(job.id)}">Applicants</a>
       ${
         status === "paused"
-          ? `<button class="success" data-id="${job.id}" data-status="active">Reactivate</button>`
-          : `<button class="danger" data-id="${job.id}" data-status="paused">Pause</button>`
+          ? `<button class="success" data-id="${escapeHTML(job.id)}" data-status="active">Activate</button>`
+          : `<button class="danger" data-id="${escapeHTML(job.id)}" data-status="paused">Pause</button>`
       }
     </div>
   `;
@@ -203,7 +259,8 @@ async function updateJobStatus(jobId, newStatus) {
   const { error } = await supabaseClient
     .from(JOBS_TABLE)
     .update({ status: newStatus })
-    .eq("id", jobId);
+    .eq("id", jobId)
+    .eq("employer_id", currentUserId);
 
   if (error) {
     console.error("Error updating job status:", error);
@@ -212,7 +269,7 @@ async function updateJobStatus(jobId, newStatus) {
   }
 
   allJobs = allJobs.map((job) => {
-    if (job.id === jobId) {
+    if (String(job.id) === String(jobId)) {
       return { ...job, status: newStatus };
     }
 
@@ -230,12 +287,11 @@ function updateStats() {
   activeJobsCount.textContent = activeJobs.length;
   pausedJobsCount.textContent = pausedJobs.length;
 
-  /*
-    You do not currently have an applications table connected here,
-    so these stay at 0 until we build that table/page.
-  */
-  applicationsCount.textContent = "0";
-  reviewCount.textContent = "0";
+  applicationsCount.textContent = Object.values(applicationCountsByJob)
+    .reduce((sum, count) => sum + count, 0);
+
+  reviewCount.textContent = Object.values(reviewCountsByJob)
+    .reduce((sum, count) => sum + count, 0);
 }
 
 function setupFilters() {
@@ -248,6 +304,16 @@ function setupFilters() {
       renderJobs();
     });
   });
+}
+
+function setupSearchAndSort() {
+  if (jobSearchInput) {
+    jobSearchInput.addEventListener("input", renderJobs);
+  }
+
+  if (jobSortSelect) {
+    jobSortSelect.addEventListener("change", renderJobs);
+  }
 }
 
 function setupLogout() {
@@ -267,25 +333,23 @@ function setupLogout() {
 }
 
 function parseSkills(skills) {
-  if (!skills) return ["Trades", "Hiring"];
+  if (!skills) return ["Trades"];
 
   if (Array.isArray(skills)) {
-    return skills.slice(0, 5);
+    return skills.slice(0, 4);
   }
 
   return String(skills)
     .split(",")
     .map((skill) => skill.trim())
     .filter(Boolean)
-    .slice(0, 5);
+    .slice(0, 4);
 }
 
 function normalizeStatus(status) {
-  if (!status) return "active";
+  const clean = String(status || "active").toLowerCase().trim();
 
-  const clean = String(status).toLowerCase().trim();
-
-  if (clean === "paused" || clean === "inactive" || clean === "closed") {
+  if (["paused", "inactive", "closed"].includes(clean)) {
     return "paused";
   }
 
@@ -315,8 +379,14 @@ function capitalize(value) {
   return String(value).charAt(0).toUpperCase() + String(value).slice(1);
 }
 
+function truncateText(value, limit) {
+  const text = String(value || "");
+  if (text.length <= limit) return text;
+  return `${text.slice(0, limit).trim()}...`;
+}
+
 function escapeHTML(value) {
-  return String(value)
+  return String(value || "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")

@@ -82,7 +82,9 @@ function renderApplications() {
         app.location,
         app.employment_type,
         app.pay_range,
-        app.status
+        app.status,
+        app.cover_letter,
+        app.additional_notes
       ]
         .join(" ")
         .toLowerCase()
@@ -242,7 +244,8 @@ function updateNextAction() {
 function normalizeStatus(status) {
   const value = String(status || "submitted").toLowerCase().trim();
 
-  if (["applied", "submitted", "new"].includes(value)) return "submitted";
+  if (["new"].includes(value)) return "new";
+  if (["applied", "submitted"].includes(value)) return "submitted";
   if (["review", "reviewing", "viewed", "in review"].includes(value)) return "reviewing";
   if (["interview", "interviewing", "interview requested"].includes(value)) return "interview";
   if (["offer", "offered"].includes(value)) return "offer";
@@ -256,6 +259,7 @@ function normalizeStatus(status) {
 function getStatusLabel(status) {
   const labels = {
     submitted: "Submitted",
+    new: "New",
     reviewing: "Reviewing",
     interview: "Interview",
     offer: "Offer",

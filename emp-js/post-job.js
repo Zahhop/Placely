@@ -4,90 +4,99 @@ const placelySupabase = window.supabase.createClient(
 );
 
 const jobForm = document.getElementById("jobForm");
+const formMessage = document.getElementById("formMessage");
+const logoutBtn = document.getElementById("logoutBtn");
 
-function clean(value) {
-  return value ? value.trim() : "";
+function value(id) {
+  return document.getElementById(id)?.value?.trim() || "";
+}
+
+function setMessage(message, type = "error") {
+  if (!formMessage) {
+    if (message) alert(message);
+    return;
+  }
+
+  formMessage.textContent = message;
+  formMessage.classList.toggle("success", type === "success");
 }
 
 function getFormFields() {
-  const controls = Array.from(jobForm.querySelectorAll("input, select, textarea"));
-
   return {
-    job_title: clean(controls[0]?.value),
-    company_name: clean(controls[1]?.value),
-    location: clean(controls[2]?.value),
-    employment_type: clean(controls[3]?.value),
-    pay_range: clean(controls[4]?.value),
-    experience_level: clean(controls[5]?.value),
-    job_description: clean(controls[6]?.value),
-    required_skills: clean(controls[7]?.value),
-    benefits: clean(controls[8]?.value)
+    job_title: value("jobTitle"),
+    company_name: value("companyName"),
+    location: value("location"),
+    employment_type: value("employmentType"),
+    pay_range: value("payRange"),
+    experience_level: value("experienceLevel"),
+    job_description: value("jobDescription"),
+    required_skills: value("requiredSkills"),
+    benefits: value("benefits"),
+    status: value("jobStatus") || "active"
   };
 }
 
-jobForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
+jobForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  setMessage("");
 
   const { data: { user }, error: userError } =
     await placelySupabase.auth.getUser();
 
   if (userError || !user) {
-    alert("Please log in first.");
+    setMessage("Please log in before posting a job.");
     return;
   }
 
-  const {
-    job_title,
-    company_name,
-    location,
-    employment_type,
-    pay_range,
-    experience_level,
-    job_description,
-    required_skills,
-    benefits
-  } = getFormFields();
+  const payload = getFormFields();
 
-  console.log("Posting job with:", {
-    job_title,
-    company_name,
-    location,
-    employment_type,
-    pay_range,
-    experience_level,
-    job_description,
-    required_skills,
-    benefits
-  });
-
-  if (!job_title || !location || !job_description) {
-    alert("Please fill out the job title, location, and job description.");
+  if (!payload.job_title || !payload.location || !payload.job_description) {
+    setMessage("Please fill out the job title, location, and job description.");
     return;
+  }
+
+  const submitBtn = jobForm.querySelector(".submit-btn");
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Posting...";
   }
 
   const { error } = await placelySupabase
     .from("jobs")
     .insert({
       employer_id: user.id,
-      job_title,
-      company_name,
-      location,
-      employment_type,
-      pay_range,
-      experience_level,
-      job_description,
-      required_skills,
-      benefits,
-      status: "active"
+      ...payload
     });
 
   if (error) {
-    console.error("Job posting error:", error);
-    alert("Error posting job: " + error.message);
+    console.error("Job posting error:", {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code
+    });
+
+    setMessage("Could not post job. Check required fields and Supabase permissions.");
+
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Post Job";
+    }
+
     return;
   }
 
-  alert("Job posted successfully!");
+  setMessage("Job posted successfully. Opening Manage Jobs...", "success");
   jobForm.reset();
-  window.location.href = "employer-dashboard.html";
+
+  setTimeout(() => {
+    window.location.href = "manage-jobs.html";
+  }, 700);
 });
+
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", async () => {
+    await placelySupabase.auth.signOut();
+    window.location.href = "employer-login.html";
+  });
+}

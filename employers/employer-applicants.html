@@ -44,78 +44,92 @@
     </div>
   </section>
 
-  <section class="overview-grid">
-    <div class="overview-card">
-      <span>Total applicants</span>
+  <section class="pipeline-summary" aria-label="Applicant pipeline">
+    <button type="button" class="pipeline-chip active" data-status="all">
+      <span>All</span>
       <strong id="totalApplicants">0</strong>
-      <p>All candidate responses</p>
-    </div>
+    </button>
 
-    <div class="overview-card">
-      <span>Needs review</span>
+    <button type="button" class="pipeline-chip" data-status="new">
+      <span>New</span>
       <strong id="newApplicants">0</strong>
-      <p>New applications</p>
-    </div>
+    </button>
 
-    <div class="overview-card">
-      <span>Interviewing</span>
+    <button type="button" class="pipeline-chip" data-status="reviewing">
+      <span>Reviewing</span>
+      <strong id="reviewingApplicants">0</strong>
+    </button>
+
+    <button type="button" class="pipeline-chip" data-status="interview">
+      <span>Interview</span>
       <strong id="interviewApplicants">0</strong>
-      <p>Active interview stage</p>
-    </div>
+    </button>
 
-    <div class="overview-card">
-      <span>Offers</span>
+    <button type="button" class="pipeline-chip" data-status="offer">
+      <span>Offer</span>
       <strong id="offerApplicants">0</strong>
-      <p>Offer stage candidates</p>
-    </div>
+    </button>
+
+    <button type="button" class="pipeline-chip" data-status="hired">
+      <span>Hired</span>
+      <strong id="hiredApplicants">0</strong>
+    </button>
+
+    <button type="button" class="pipeline-chip" data-status="rejected">
+      <span>Rejected</span>
+      <strong id="rejectedApplicants">0</strong>
+    </button>
   </section>
 
-  <section class="ats-layout">
-
-    <section class="applicants-panel">
-      <div class="panel-heading">
-        <div>
-          <span class="eyebrow">CANDIDATE REVIEW</span>
-          <h2>Applicant queue</h2>
-          <p>Filter applicants, open profiles, and update hiring status.</p>
-        </div>
-
-        <button type="button" id="refreshBtn" class="secondary-link button-link">Refresh</button>
+  <section class="applicants-panel">
+    <div class="panel-heading">
+      <div>
+        <span class="eyebrow">CANDIDATE REVIEW</span>
+        <h2>Applicant queue</h2>
+        <p>Filter applicants, open profiles, and update hiring status.</p>
       </div>
 
-      <div class="filter-bar">
-        <input id="searchInput" type="text" placeholder="Search name, trade, city, skill..." />
+      <button type="button" id="refreshBtn" class="secondary-link button-link">Refresh</button>
+    </div>
 
-        <select id="jobFilter">
-          <option value="all">All jobs</option>
-        </select>
+    <div class="filter-bar">
+      <input id="searchInput" type="text" placeholder="Search name, trade, city, skill, job..." />
 
-        <select id="statusFilter">
-          <option value="all">All statuses</option>
-          <option value="submitted">Submitted</option>
-          <option value="reviewing">Reviewing</option>
-          <option value="interview">Interview</option>
-          <option value="offer">Offer</option>
-          <option value="hired">Hired</option>
-          <option value="rejected">Rejected</option>
-        </select>
+      <select id="jobFilter">
+        <option value="all">All jobs</option>
+      </select>
 
-        <select id="sortFilter">
-          <option value="newest">Newest first</option>
-          <option value="oldest">Oldest first</option>
-          <option value="candidate">Candidate A-Z</option>
-        </select>
-      </div>
+      <select id="statusFilter">
+        <option value="all">All statuses</option>
+        <option value="new">New</option>
+        <option value="submitted">Submitted</option>
+        <option value="reviewing">Reviewing</option>
+        <option value="interview">Interview</option>
+        <option value="offer">Offer</option>
+        <option value="hired">Hired</option>
+        <option value="rejected">Rejected</option>
+      </select>
 
-      <div id="applicantsList" class="applicants-list"></div>
-    </section>
+      <select id="sortFilter">
+        <option value="newest">Newest first</option>
+        <option value="oldest">Oldest first</option>
+        <option value="candidate">Candidate A-Z</option>
+      </select>
+    </div>
 
-    <aside class="detail-panel">
-      <div class="panel-heading compact-heading">
+    <div id="applicantsList" class="applicants-list"></div>
+  </section>
+
+  <div id="applicantModal" class="applicant-modal" aria-hidden="true">
+    <div id="modalOverlay" class="modal-overlay"></div>
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
         <div>
-          <span class="eyebrow">SELECTED APPLICANT</span>
-          <h2>Candidate details</h2>
+          <span class="eyebrow">Applicant Details</span>
+          <h2 id="modalTitle">Candidate profile</h2>
         </div>
+
+        <button type="button" id="closeModalBtn" class="close-modal" aria-label="Close applicant details">Close</button>
       </div>
 
       <div id="applicantDetail" class="applicant-detail">
@@ -125,9 +139,8 @@
           <p>Profile details, resume, contact information, job applied for, and hiring actions will appear here.</p>
         </div>
       </div>
-    </aside>
-
-  </section>
+    </section>
+  </div>
 
 </main>
 

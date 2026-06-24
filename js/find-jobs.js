@@ -10,10 +10,14 @@ let filteredJobs = [];
 let selectedJob = null;
 let currentUser = null;
 let savedJobIds = [];
+let employerLogos = {};
 
 const jobsList = document.getElementById("jobsList");
 const jobDetails = document.getElementById("jobDetails");
 const jobCount = document.getElementById("jobCount");
+const jobDetailsModal = document.getElementById("jobDetailsModal");
+const jobModalOverlay = document.getElementById("jobModalOverlay");
+const closeJobModalBtn = document.getElementById("closeJobModalBtn");
 
 const keywordInput = document.getElementById("keywordInput");
 const locationFilter = document.getElementById("locationFilter");
@@ -91,6 +95,37 @@ async function loadSavedJobIds() {
   savedJobIds = (data || []).map((row) => String(row.job_id));
 }
 
+async function loadEmployerLogos(jobs) {
+  const employerIds = [...new Set(jobs.map((job) => job.employer_id).filter(Boolean))];
+
+  if (!employerIds.length) {
+    employerLogos = {};
+    return;
+  }
+
+  const { data, error } = await jobsSupabase
+    .from("employer_profiles")
+    .select("*")
+    .in("id", employerIds);
+
+  if (error) {
+    console.warn("Could not load employer logos:", error);
+    employerLogos = {};
+    return;
+  }
+
+  employerLogos = {};
+
+  (data || []).forEach((profile) => {
+    employerLogos[String(profile.id)] =
+      profile.company_logo_url ||
+      profile.logo_url ||
+      profile.company_logo ||
+      profile.company_logo_preview ||
+      "";
+  });
+}
+
 async function loadJobs() {
   const user = await loadCurrentUser();
   if (!user) return;
@@ -115,6 +150,7 @@ async function loadJobs() {
   }
 
   allJobs = (data || []).map(normalizeJob);
+  await loadEmployerLogos(allJobs);
   filteredJobs = [...allJobs];
 
   populateLocations();
@@ -127,9 +163,7 @@ async function loadJobs() {
     jobIdFromUrl &&
     filteredJobs.some((job) => String(job.id) === String(jobIdFromUrl))
   ) {
-    selectJob(jobIdFromUrl);
-  } else if (filteredJobs.length) {
-    selectJob(filteredJobs[0].id);
+    openJobDetails(jobIdFromUrl);
   }
 }
 
@@ -157,53 +191,104 @@ function renderJobs() {
         No jobs found. Try changing your search filters.
       </div>
     `;
-
-    jobDetails.innerHTML = `
-      <div class="job-details-empty">
-        <span class="small-label">Job Details</span>
-        <h2>No job selected</h2>
-        <p>Once jobs match your search, select one to view details.</p>
-      </div>
-    `;
+    renderEmptyDetails();
     return;
   }
 
-  jobsList.innerHTML = filteredJobs
-    .map(
-      (job) => `
-        <article class="job-card ${
-          selectedJob && String(selectedJob.id) === String(job.id)
-            ? "active"
-            : ""
-        }" data-job-id="${escapeHTML(job.id)}">
-          <h3>${escapeHTML(job.title)}</h3>
-          <p>${escapeHTML(job.company)} · ${escapeHTML(job.location)}</p>
+  jobsList.innerHTML = filteredJobs.map(renderJobCard).join("");
 
-          <div class="job-tags">
-            <span>${escapeHTML(job.type)}</span>
-            <span>${escapeHTML(job.pay)}</span>
-          </div>
-        </article>
-      `
-    )
-    .join("");
+  document.querySelectorAll(".job-card").forEach((card) => {
+    card.addEventListener("click", () => openJobDetails(card.dataset.jobId));
+  });
+
+  document.querySelectorAll(".save-job-btn").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      saveJob(button.dataset.jobId);
+    });
+  });
+
+  document.querySelectorAll(".view-job-btn").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      openJobDetails(button.dataset.jobId);
+    });
+  });
+
+  document.querySelectorAll(".apply-job-btn").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      applyToJob(button.dataset.jobId);
+    });
+  });
 }
 
-function selectJob(jobId) {
-  selectedJob = filteredJobs.find((job) => String(job.id) === String(jobId));
+function renderJobCard(job) {
+  const alreadySaved = savedJobIds.includes(String(job.id));
+
+  return `
+    <article class="job-card" data-job-id="${escapeHTML(job.id)}">
+      <div class="job-card-top">
+        ${renderCompanyAvatar(job)}
+
+        <div>
+          <h3>${escapeHTML(job.title)}</h3>
+          <p>${escapeHTML(job.company)} &middot; ${escapeHTML(job.location)}</p>
+        </div>
+      </div>
+
+      <div class="job-tags">
+        <span>${escapeHTML(job.pay)}</span>
+        <span>${escapeHTML(job.type)}</span>
+        <span>${escapeHTML(job.trade)}</span>
+      </div>
+
+      <p class="job-preview">${escapeHTML(truncateText(job.description, 120))}</p>
+
+      <div class="job-card-actions">
+        <button class="save-btn save-job-btn" type="button" data-job-id="${escapeHTML(job.id)}">
+          ${alreadySaved ? "Saved" : "Save"}
+        </button>
+        <button class="view-btn view-job-btn" type="button" data-job-id="${escapeHTML(job.id)}">
+          View Details
+        </button>
+        <button class="view-btn apply-job-btn" type="button" data-job-id="${escapeHTML(job.id)}">
+          Apply
+        </button>
+      </div>
+    </article>
+  `;
+}
+
+function openJobDetails(jobId) {
+  selectedJob = filteredJobs.find((job) => String(job.id) === String(jobId)) ||
+    allJobs.find((job) => String(job.id) === String(jobId));
+
   if (!selectedJob) return;
 
-  renderJobs();
+  renderJobDetails();
+  openModal();
+}
+
+function renderJobDetails() {
+  if (!selectedJob) {
+    renderEmptyDetails();
+    return;
+  }
 
   const alreadySaved = savedJobIds.includes(String(selectedJob.id));
 
   jobDetails.innerHTML = `
     <div class="job-detail-content">
       <div class="job-detail-top">
-        <div>
-          <span class="small-label">Selected Role</span>
-          <h2>${escapeHTML(selectedJob.title)}</h2>
-          <p>${escapeHTML(selectedJob.company)} · ${escapeHTML(selectedJob.location)}</p>
+        <div class="job-title-row">
+          ${renderCompanyAvatar(selectedJob, true)}
+
+          <div>
+            <span class="small-label">Selected Role</span>
+            <h2>${escapeHTML(selectedJob.title)}</h2>
+            <p>${escapeHTML(selectedJob.company)} &middot; ${escapeHTML(selectedJob.location)}</p>
+          </div>
         </div>
 
         <div class="job-detail-actions">
@@ -239,7 +324,7 @@ function selectJob(jobId) {
         </div>
 
         <div>
-          <span>Trade</span>
+          <span>Experience</span>
           <strong>${escapeHTML(clean(selectedJob.trade))}</strong>
         </div>
 
@@ -272,8 +357,32 @@ function selectJob(jobId) {
     </div>
   `;
 
-  document.getElementById("saveJobBtn").addEventListener("click", saveSelectedJob);
+  document.getElementById("saveJobBtn").addEventListener("click", () => saveJob(selectedJob.id));
   document.getElementById("applyBtn").addEventListener("click", applyToSelectedJob);
+}
+
+function renderEmptyDetails() {
+  jobDetails.innerHTML = `
+    <div class="job-details-empty">
+      <span class="small-label">Job Details</span>
+      <h2>Select a job</h2>
+      <p>Choose a role to view company details, requirements, pay, and apply.</p>
+    </div>
+  `;
+}
+
+function openModal() {
+  if (!jobDetailsModal) return;
+
+  jobDetailsModal.classList.add("open");
+  jobDetailsModal.setAttribute("aria-hidden", "false");
+}
+
+function closeModal() {
+  if (!jobDetailsModal) return;
+
+  jobDetailsModal.classList.remove("open");
+  jobDetailsModal.setAttribute("aria-hidden", "true");
 }
 
 function filterJobs() {
@@ -297,16 +406,13 @@ function filterJobs() {
 
   selectedJob = null;
   renderJobs();
-
-  if (filteredJobs.length) {
-    selectJob(filteredJobs[0].id);
-  }
 }
 
-async function saveSelectedJob() {
-  if (!selectedJob || !currentUser) return;
+async function saveJob(jobId) {
+  const job = allJobs.find((item) => String(item.id) === String(jobId));
+  if (!job || !currentUser) return;
 
-  const alreadySaved = savedJobIds.includes(String(selectedJob.id));
+  const alreadySaved = savedJobIds.includes(String(job.id));
 
   if (alreadySaved) {
     showToast("Job already saved.");
@@ -317,13 +423,14 @@ async function saveSelectedJob() {
     .from("saved_jobs")
     .insert({
       candidate_id: currentUser.id,
-      job_id: selectedJob.id
+      job_id: job.id
     });
 
   if (error) {
     if (error.code === "23505") {
-      savedJobIds.push(String(selectedJob.id));
-      selectJob(selectedJob.id);
+      savedJobIds.push(String(job.id));
+      renderJobs();
+      if (selectedJob && String(selectedJob.id) === String(job.id)) renderJobDetails();
       showToast("Job already saved.");
       return;
     }
@@ -333,12 +440,13 @@ async function saveSelectedJob() {
     return;
   }
 
-  savedJobIds.push(String(selectedJob.id));
-  selectJob(selectedJob.id);
+  savedJobIds.push(String(job.id));
+  renderJobs();
+  if (selectedJob && String(selectedJob.id) === String(job.id)) renderJobDetails();
   showToast("Job saved.");
 }
 
-async function applyToSelectedJob() {
+function applyToSelectedJob() {
   if (!selectedJob || !currentUser) return;
 
   if (!selectedJob.employer_id) {
@@ -347,67 +455,65 @@ async function applyToSelectedJob() {
     return;
   }
 
-  const { data: existingApplication, error: existingError } = await jobsSupabase
-    .from("applications")
-    .select("id")
-    .eq("candidate_id", currentUser.id)
-    .eq("job_id", selectedJob.id)
-    .maybeSingle();
-
-  if (existingError) {
-    console.error("Application check error:", existingError);
-    showToast("Could not check application.");
-    return;
-  }
-
-  if (existingApplication) {
-    showToast("You already applied to this job.");
-    return;
-  }
-
-  const { error } = await jobsSupabase
-    .from("applications")
-    .insert({
-      candidate_id: currentUser.id,
-      employer_id: selectedJob.employer_id,
-      job_id: selectedJob.id,
-
-      job_title: selectedJob.title,
-      company_name: selectedJob.company,
-      location: selectedJob.location,
-      employment_type: selectedJob.type,
-      pay_range: selectedJob.pay,
-
-      status: "submitted",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    });
-
-  if (error) {
-    if (error.code === "23505") {
-      showToast("You already applied to this job.");
-      return;
-    }
-
-    console.error("Application submit error:", error);
-    showToast("Could not submit application.");
-    return;
-  }
-
-  showToast("Application submitted.");
+  window.location.href = `../candidates/apply-job.html?job_id=${encodeURIComponent(selectedJob.id)}`;
 }
 
-jobsList.addEventListener("click", (e) => {
-  const card = e.target.closest(".job-card");
-  if (!card) return;
+function applyToJob(jobId) {
+  const job = allJobs.find((item) => String(item.id) === String(jobId));
+  if (!job || !currentUser) return;
 
-  selectJob(card.dataset.jobId);
-});
+  if (!job.employer_id) {
+    console.error("Selected job is missing employer_id:", job);
+    showToast("This job is missing employer information.");
+    return;
+  }
+
+  window.location.href = `../candidates/apply-job.html?job_id=${encodeURIComponent(job.id)}`;
+}
+
+function renderCompanyAvatar(job, large = false) {
+  const logoUrl = employerLogos[String(job.employer_id)] || "";
+  const classes = `company-avatar${large ? " large" : ""}`;
+
+  if (logoUrl) {
+    return `
+      <div class="${classes}">
+        <img src="${escapeHTML(logoUrl)}" alt="${escapeHTML(job.company)} logo">
+      </div>
+    `;
+  }
+
+  return `<div class="${classes}">${escapeHTML(getInitials(job.company))}</div>`;
+}
+
+function getInitials(name) {
+  return String(name || "PT")
+    .trim()
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
+function truncateText(value, limit) {
+  const text = String(value || "");
+  if (text.length <= limit) return text;
+  return `${text.slice(0, limit).trim()}...`;
+}
 
 searchBtn.addEventListener("click", filterJobs);
 
-keywordInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") filterJobs();
+keywordInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") filterJobs();
+});
+
+if (jobModalOverlay) jobModalOverlay.addEventListener("click", closeModal);
+if (closeJobModalBtn) closeJobModalBtn.addEventListener("click", closeModal);
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeModal();
 });
 
 function escapeHTML(value) {

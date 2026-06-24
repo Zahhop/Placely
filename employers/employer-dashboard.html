@@ -31,10 +31,10 @@
 
 <main class="employer-shell">
 
-  <section class="hero-card">
+  <section class="hero-card" aria-labelledby="dashboardTitle">
     <div>
       <span class="eyebrow">EMPLOYER DASHBOARD</span>
-      <h1>Welcome back, <span id="companyNameTitle">Employer</span></h1>
+      <h1 id="dashboardTitle">Welcome back, <span id="companyNameTitle">Employer</span></h1>
       <p id="heroSummary">Loading your hiring workspace...</p>
     </div>
 
@@ -70,16 +70,16 @@
     </a>
   </section>
 
-  <section class="dashboard-layout">
+  <section class="dashboard-layout" aria-label="Employer dashboard workspace">
 
     <section class="main-stack">
 
       <section class="panel" id="pipeline">
         <div class="panel-heading">
           <div>
-            <span class="eyebrow">APPLICANT PIPELINE</span>
-            <h2>Candidate review</h2>
-            <p>Review new applicants, track active candidates, and keep hiring decisions moving.</p>
+            <span class="eyebrow">APPLICANT REVIEW</span>
+            <h2>Hiring pipeline</h2>
+            <p>Prioritize new applications, interviews, and next decisions from one focused queue.</p>
           </div>
 
           <a href="employer-applicants.html" class="panel-link">Open Applicants</a>
@@ -102,27 +102,27 @@
           </div>
         </div>
 
-        <div id="pipelineList" class="stack-list"></div>
+        <div id="pipelineList" class="stack-list pipeline-list"></div>
       </section>
 
       <section class="panel" id="active-jobs">
         <div class="panel-heading">
           <div>
-            <span class="eyebrow">JOB POSTS</span>
+            <span class="eyebrow">ACTIVE JOBS</span>
             <h2>Active jobs</h2>
-            <p>Live roles currently visible to candidates.</p>
+            <p>Live roles currently visible to candidates, with quick access to manage each post.</p>
           </div>
 
           <a href="manage-jobs.html" class="panel-link">Manage Jobs</a>
         </div>
 
-        <div id="activeJobsList" class="stack-list"></div>
+        <div id="activeJobsList" class="stack-list job-list"></div>
       </section>
 
       <section class="panel recruiter-panel" id="candidate-access">
         <div class="panel-heading recruiter-heading">
           <div>
-            <span class="eyebrow">RECRUITER FEATURES</span>
+            <span class="eyebrow">CANDIDATE NETWORK</span>
             <h2>Candidate network</h2>
             <p>Preview skilled trades candidates, save strong matches, and unlock contact access when your team is ready.</p>
           </div>
@@ -162,7 +162,7 @@
             </div>
           </form>
 
-          <div id="candidatePreviewResults" class="candidate-preview-results">
+          <div id="candidatePreviewResults" class="candidate-preview-results" aria-live="polite">
             <strong>Candidate preview</strong>
             <p>Search to preview matching candidates and save strong profiles.</p>
           </div>
@@ -173,7 +173,7 @@
 
     <aside class="side-stack">
 
-      <section class="company-card">
+      <section class="company-card" aria-label="Company account">
         <div class="company-top">
           <div class="company-mark" id="companyInitials">PT</div>
 
@@ -191,6 +191,7 @@
       <section class="panel quick-actions-panel">
         <span class="eyebrow">EMPLOYER TOOLS</span>
         <h2>Quick actions</h2>
+        <p class="side-copy">Jump into the hiring tasks employers use most.</p>
 
         <div class="quick-action-list">
           <a href="manage-jobs.html">
@@ -225,7 +226,7 @@
           <a href="saved-talent.html" class="panel-link">Open</a>
         </div>
 
-        <div id="savedCandidatesList" class="stack-list"></div>
+        <div id="savedCandidatesList" class="stack-list shortlist-list"></div>
       </section>
 
     </aside>
