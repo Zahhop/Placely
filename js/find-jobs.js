@@ -43,6 +43,7 @@ function clean(value, fallback = "Not listed") {
 function normalizeJob(job) {
   return {
     id: job.id,
+    employer_id: job.employer_id,
     title: job.job_title || "Untitled Job",
     company: job.company_name || "Employer",
     location: job.location || "Location not listed",
@@ -59,7 +60,10 @@ function normalizeJob(job) {
 }
 
 async function loadCurrentUser() {
-  const { data: { user }, error } = await jobsSupabase.auth.getUser();
+  const {
+    data: { user },
+    error
+  } = await jobsSupabase.auth.getUser();
 
   if (error || !user) {
     window.location.href = "../candidates/candidate-login.html";
@@ -84,7 +88,7 @@ async function loadSavedJobIds() {
     return;
   }
 
-  savedJobIds = (data || []).map(row => String(row.job_id));
+  savedJobIds = (data || []).map((row) => String(row.job_id));
 }
 
 async function loadJobs() {
@@ -119,7 +123,10 @@ async function loadJobs() {
   const params = new URLSearchParams(window.location.search);
   const jobIdFromUrl = params.get("job");
 
-  if (jobIdFromUrl && filteredJobs.some(job => String(job.id) === String(jobIdFromUrl))) {
+  if (
+    jobIdFromUrl &&
+    filteredJobs.some((job) => String(job.id) === String(jobIdFromUrl))
+  ) {
     selectJob(jobIdFromUrl);
   } else if (filteredJobs.length) {
     selectJob(filteredJobs[0].id);
@@ -127,11 +134,13 @@ async function loadJobs() {
 }
 
 function populateLocations() {
-  const locations = [...new Set(allJobs.map(job => job.location).filter(Boolean))];
+  const locations = [
+    ...new Set(allJobs.map((job) => job.location).filter(Boolean))
+  ];
 
   locationFilter.innerHTML = `<option value="">All locations</option>`;
 
-  locations.forEach(location => {
+  locations.forEach((location) => {
     const option = document.createElement("option");
     option.value = location;
     option.textContent = location;
@@ -159,21 +168,29 @@ function renderJobs() {
     return;
   }
 
-  jobsList.innerHTML = filteredJobs.map(job => `
-    <article class="job-card ${selectedJob && String(selectedJob.id) === String(job.id) ? "active" : ""}" data-job-id="${job.id}">
-      <h3>${job.title}</h3>
-      <p>${job.company} · ${job.location}</p>
+  jobsList.innerHTML = filteredJobs
+    .map(
+      (job) => `
+        <article class="job-card ${
+          selectedJob && String(selectedJob.id) === String(job.id)
+            ? "active"
+            : ""
+        }" data-job-id="${escapeHTML(job.id)}">
+          <h3>${escapeHTML(job.title)}</h3>
+          <p>${escapeHTML(job.company)} · ${escapeHTML(job.location)}</p>
 
-      <div class="job-tags">
-        <span>${job.type}</span>
-        <span>${job.pay}</span>
-      </div>
-    </article>
-  `).join("");
+          <div class="job-tags">
+            <span>${escapeHTML(job.type)}</span>
+            <span>${escapeHTML(job.pay)}</span>
+          </div>
+        </article>
+      `
+    )
+    .join("");
 }
 
 function selectJob(jobId) {
-  selectedJob = filteredJobs.find(job => String(job.id) === String(jobId));
+  selectedJob = filteredJobs.find((job) => String(job.id) === String(jobId));
   if (!selectedJob) return;
 
   renderJobs();
@@ -185,8 +202,8 @@ function selectJob(jobId) {
       <div class="job-detail-top">
         <div>
           <span class="small-label">Selected Role</span>
-          <h2>${selectedJob.title}</h2>
-          <p>${selectedJob.company} · ${selectedJob.location}</p>
+          <h2>${escapeHTML(selectedJob.title)}</h2>
+          <p>${escapeHTML(selectedJob.company)} · ${escapeHTML(selectedJob.location)}</p>
         </div>
 
         <div class="job-detail-actions">
@@ -203,43 +220,43 @@ function selectJob(jobId) {
       <div class="detail-grid">
         <div>
           <span>Company</span>
-          <strong>${clean(selectedJob.company)}</strong>
+          <strong>${escapeHTML(clean(selectedJob.company))}</strong>
         </div>
 
         <div>
           <span>Location</span>
-          <strong>${clean(selectedJob.location)}</strong>
+          <strong>${escapeHTML(clean(selectedJob.location))}</strong>
         </div>
 
         <div>
           <span>Job Type</span>
-          <strong>${clean(selectedJob.type)}</strong>
+          <strong>${escapeHTML(clean(selectedJob.type))}</strong>
         </div>
 
         <div>
           <span>Pay</span>
-          <strong>${clean(selectedJob.pay)}</strong>
+          <strong>${escapeHTML(clean(selectedJob.pay))}</strong>
         </div>
 
         <div>
           <span>Trade</span>
-          <strong>${clean(selectedJob.trade)}</strong>
+          <strong>${escapeHTML(clean(selectedJob.trade))}</strong>
         </div>
 
         <div>
           <span>Status</span>
-          <strong>${selectedJob.status === "active" ? "Open" : selectedJob.status}</strong>
+          <strong>${escapeHTML(selectedJob.status === "active" ? "Open" : selectedJob.status)}</strong>
         </div>
       </div>
 
       <div class="description-box">
         <span class="small-label">Description</span>
-        <p>${selectedJob.description}</p>
+        <p>${escapeHTML(selectedJob.description)}</p>
       </div>
 
       <div class="description-box">
         <span class="small-label">Requirements</span>
-        <p>${selectedJob.requirements}</p>
+        <p>${escapeHTML(selectedJob.requirements)}</p>
       </div>
 
       ${
@@ -247,7 +264,7 @@ function selectJob(jobId) {
           ? `
             <div class="description-box">
               <span class="small-label">Benefits</span>
-              <p>${selectedJob.benefits}</p>
+              <p>${escapeHTML(selectedJob.benefits)}</p>
             </div>
           `
           : ""
@@ -264,7 +281,7 @@ function filterJobs() {
   const location = locationFilter.value;
   const type = typeFilter.value;
 
-  filteredJobs = allJobs.filter(job => {
+  filteredJobs = allJobs.filter((job) => {
     const matchesKeyword =
       !keyword ||
       job.title.toLowerCase().includes(keyword) ||
@@ -324,6 +341,12 @@ async function saveSelectedJob() {
 async function applyToSelectedJob() {
   if (!selectedJob || !currentUser) return;
 
+  if (!selectedJob.employer_id) {
+    console.error("Selected job is missing employer_id:", selectedJob);
+    showToast("This job is missing employer information.");
+    return;
+  }
+
   const { data: existingApplication, error: existingError } = await jobsSupabase
     .from("applications")
     .select("id")
@@ -346,16 +369,26 @@ async function applyToSelectedJob() {
     .from("applications")
     .insert({
       candidate_id: currentUser.id,
+      employer_id: selectedJob.employer_id,
       job_id: selectedJob.id,
+
       job_title: selectedJob.title,
       company_name: selectedJob.company,
       location: selectedJob.location,
       employment_type: selectedJob.type,
       pay_range: selectedJob.pay,
-      status: "Submitted"
+
+      status: "submitted",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     });
 
   if (error) {
+    if (error.code === "23505") {
+      showToast("You already applied to this job.");
+      return;
+    }
+
     console.error("Application submit error:", error);
     showToast("Could not submit application.");
     return;
@@ -376,5 +409,14 @@ searchBtn.addEventListener("click", filterJobs);
 keywordInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") filterJobs();
 });
+
+function escapeHTML(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
 
 document.addEventListener("DOMContentLoaded", loadJobs);

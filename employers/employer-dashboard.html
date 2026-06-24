@@ -31,125 +31,125 @@
 
 <main class="employer-shell">
 
-  <section class="hero">
-    <div class="hero-copy">
+  <section class="hero-card">
+    <div>
       <span class="eyebrow">EMPLOYER DASHBOARD</span>
       <h1>Welcome back, <span id="companyNameTitle">Employer</span></h1>
-      <p id="heroSummary">
-        Manage job posts, review applicants, save candidate matches, and unlock Placely’s candidate network when your company is ready to contact qualified tradespeople.
-      </p>
+      <p id="heroSummary">Loading your hiring workspace...</p>
     </div>
 
     <div class="hero-actions">
-      <a href="#post-job" class="primary-btn">Create Job Post</a>
-      <a href="#candidate-access" class="secondary-btn">Candidate Network</a>
+      <a href="employer-applicants.html" class="primary-btn">Review Applicants</a>
+      <a href="manage-jobs.html" class="secondary-btn">Manage Jobs</a>
     </div>
   </section>
 
-  <section class="top-grid">
-    <article class="company-panel">
-      <div class="company-mark" id="companyInitials">PT</div>
-
-      <div class="company-info">
-        <span>Company Account</span>
-        <h2 id="companyNameSidebar">Company</h2>
-        <p id="industrySidebar">Industry not completed</p>
-        <small id="emailSidebar">Loading...</small>
-      </div>
-
-      <a href="employer-profile.html">Edit company</a>
-    </article>
-
-    <a href="#active-jobs" class="metric-card">
+  <section class="metric-grid">
+    <a href="manage-jobs.html" class="metric-card">
       <span>Active Jobs</span>
       <strong id="activeJobsCount">0</strong>
       <p>Open postings</p>
     </a>
 
-    <a href="#candidate-access" class="metric-card">
+    <a href="employer-applicants.html" class="metric-card">
+      <span>Applicants</span>
+      <strong id="applicationsCount">0</strong>
+      <p>Needs review</p>
+    </a>
+
+    <a href="saved-talent.html" class="metric-card">
       <span>Saved Talent</span>
       <strong id="savedCandidatesCount">0</strong>
       <p>Shortlisted candidates</p>
     </a>
 
-    <a href="#pipeline" class="metric-card">
-      <span>Applicants</span>
-      <strong id="applicationsCount">0</strong>
-      <p>In review</p>
-    </a>
-
     <a href="employer-messages.html" class="metric-card">
       <span>Messages</span>
       <strong id="messagesCount">0</strong>
-      <p>Unread</p>
+      <p>Unread messages</p>
     </a>
   </section>
 
-  <section class="workspace-grid">
+  <section class="dashboard-layout">
 
-    <section class="main-workspace">
+    <section class="main-stack">
 
-      <section class="tool-panel" id="post-job">
+      <section class="panel" id="pipeline">
         <div class="panel-heading">
           <div>
-            <span class="eyebrow">JOB POSTING</span>
-            <h2>Create a job post</h2>
-            <p>Publish a clear role so qualified trades candidates can understand the opportunity and apply.</p>
+            <span class="eyebrow">APPLICANT PIPELINE</span>
+            <h2>Candidate review</h2>
+            <p>Review new applicants, track active candidates, and keep hiring decisions moving.</p>
           </div>
-          <a href="manage-jobs.html">Manage jobs</a>
+
+          <a href="employer-applicants.html" class="panel-link">Open Applicants</a>
         </div>
 
-        <form class="job-form" id="jobPostForm">
-          <div class="form-grid">
-            <input type="text" id="jobTitle" placeholder="Job title" required>
-            <input type="text" id="jobLocation" placeholder="Location" required>
-            <input type="text" id="jobPay" placeholder="Pay range">
-            <select id="jobType">
-              <option value="Full-time">Full-time</option>
-              <option value="Part-time">Part-time</option>
-              <option value="Contract">Contract</option>
-              <option value="Seasonal">Seasonal</option>
-            </select>
+        <div class="pipeline-row">
+          <div>
+            <strong id="newApplicantsCount">0</strong>
+            <span>New</span>
           </div>
 
-          <textarea id="jobDescription" placeholder="Describe the work, schedule, requirements, certifications, and ideal candidate."></textarea>
-
-          <div class="form-footer">
-            <p>Job posts appear in your dashboard and can be managed anytime.</p>
-            <button type="submit" class="primary-btn post-submit">Post Job</button>
+          <div>
+            <strong id="reviewingCount">0</strong>
+            <span>Reviewing</span>
           </div>
-        </form>
+
+          <div>
+            <strong id="interviewCount">0</strong>
+            <span>Interview</span>
+          </div>
+        </div>
+
+        <div id="pipelineList" class="stack-list"></div>
       </section>
 
-      <section class="tool-panel candidate-access-panel" id="candidate-access">
+      <section class="panel" id="active-jobs">
         <div class="panel-heading">
           <div>
-            <span class="eyebrow">CANDIDATE NETWORK</span>
-            <h2>Preview and save candidate matches</h2>
-            <p>Search candidate profiles in preview mode. Employer access unlocks contact details when your company is ready to reach out.</p>
+            <span class="eyebrow">JOB POSTS</span>
+            <h2>Active jobs</h2>
+            <p>Live roles currently visible to candidates.</p>
           </div>
-          <a href="hiring-requests.html">Unlock access</a>
+
+          <a href="manage-jobs.html" class="panel-link">Manage Jobs</a>
         </div>
 
-        <div class="access-layout">
-          <div class="access-copy">
-            <strong>Employer Access</strong>
-            <p>
-              Review candidate profiles, save strong matches, unlock contact information, and request sourcing support for hard-to-fill roles.
-            </p>
+        <div id="activeJobsList" class="stack-list"></div>
+      </section>
 
-            <div class="access-points">
-              <div><span></span> Candidate profile preview</div>
-              <div><span></span> Saved talent lists</div>
-              <div><span></span> Contact detail unlocks</div>
-              <div><span></span> Sourcing support</div>
-            </div>
+      <section class="panel recruiter-panel" id="candidate-access">
+        <div class="panel-heading recruiter-heading">
+          <div>
+            <span class="eyebrow">RECRUITER FEATURES</span>
+            <h2>Candidate network</h2>
+            <p>Preview skilled trades candidates, save strong matches, and unlock contact access when your team is ready.</p>
           </div>
 
-          <div class="candidate-preview-box">
-            <form class="candidate-search-form" id="candidateSearchForm">
-              <input type="text" id="candidateKeyword" placeholder="Trade, skill, or certification">
-              <input type="text" id="candidateLocation" placeholder="City or province">
+          <a href="hiring-requests.html" class="primary-btn recruiter-btn">Unlock Employer Access</a>
+        </div>
+
+        <div class="network-grid">
+          <div class="network-status">
+            <div>
+              <span>Preview mode</span>
+              <strong>Enabled</strong>
+            </div>
+
+            <div>
+              <span>Contact details</span>
+              <strong class="locked-text">Locked</strong>
+            </div>
+
+            <a href="find-candidates.html" class="secondary-btn full">Open Full Search</a>
+          </div>
+
+          <form class="candidate-search-form" id="candidateSearchForm">
+            <input type="text" id="candidateKeyword" placeholder="Trade, skill, certification">
+            <input type="text" id="candidateLocation" placeholder="City or province">
+
+            <div class="search-bottom-row">
               <select id="candidateExperience">
                 <option value="">Any experience</option>
                 <option value="entry">Entry level</option>
@@ -157,96 +157,72 @@
                 <option value="journeyman">Journeyman</option>
                 <option value="senior">Senior</option>
               </select>
-              <button type="submit">Preview Matches</button>
-            </form>
 
-            <div id="candidatePreviewResults" class="candidate-preview-results">
-              <strong>Candidate preview</strong>
-              <p>Search to preview matching candidates. Save strong profiles to your shortlist before unlocking contact access.</p>
+              <button type="submit">Preview Matches</button>
             </div>
+          </form>
+
+          <div id="candidatePreviewResults" class="candidate-preview-results">
+            <strong>Candidate preview</strong>
+            <p>Search to preview matching candidates and save strong profiles.</p>
           </div>
         </div>
-      </section>
-
-      <section class="two-column-row">
-        <section class="tool-panel" id="active-jobs">
-          <div class="panel-heading">
-            <div>
-              <span class="eyebrow">JOB BOARD</span>
-              <h2>Active job posts</h2>
-            </div>
-            <a href="manage-jobs.html">View all</a>
-          </div>
-
-          <div id="activeJobsList" class="stack-list"></div>
-        </section>
-
-        <section class="tool-panel" id="pipeline">
-          <div class="panel-heading">
-            <div>
-              <span class="eyebrow">APPLICANT PIPELINE</span>
-              <h2>Candidate review</h2>
-            </div>
-            <a href="employer-messages.html">Messages</a>
-          </div>
-
-          <div class="pipeline-row">
-            <div><strong id="newApplicantsCount">0</strong><span>New</span></div>
-            <div><strong id="reviewingCount">0</strong><span>Reviewing</span></div>
-            <div><strong id="interviewCount">0</strong><span>Interview</span></div>
-          </div>
-
-          <div id="pipelineList" class="stack-list"></div>
-        </section>
       </section>
 
     </section>
 
-    <aside class="right-rail">
+    <aside class="side-stack">
 
-      <section class="rail-panel access-status-panel">
-        <span class="eyebrow">ACCESS STATUS</span>
-        <h2>Candidate network</h2>
-        <p class="rail-intro">
-          Preview mode is active. Unlock access when your company is ready to contact candidates directly.
-        </p>
+      <section class="company-card">
+        <div class="company-top">
+          <div class="company-mark" id="companyInitials">PT</div>
 
-        <div class="status-list">
-          <div>
-            <span>Profile preview</span>
-            <strong>Enabled</strong>
-          </div>
-          <div>
-            <span>Save candidates</span>
-            <strong>Enabled</strong>
-          </div>
-          <div>
-            <span>Contact details</span>
-            <strong class="locked-text">Locked</strong>
-          </div>
-          <div>
-            <span>Sourcing support</span>
-            <strong class="locked-text">Access plan</strong>
+          <div class="company-info">
+            <span>Company Account</span>
+            <h2 id="companyNameSidebar">Company</h2>
+            <p id="industrySidebar">Industry not completed</p>
+            <small id="emailSidebar">Loading...</small>
           </div>
         </div>
 
-        <a href="hiring-requests.html" class="primary-btn full access-btn">Unlock Employer Access</a>
+        <a href="employer-profile.html" class="secondary-btn full">Edit Company Profile</a>
       </section>
 
-      <section class="rail-panel">
-        <span class="eyebrow">TODAY</span>
-        <h2>Hiring priorities</h2>
-        <p class="rail-intro">These update based on your job posts, saved talent, and candidate pipeline.</p>
-        <div id="priorityActions" class="action-list"></div>
+      <section class="panel quick-actions-panel">
+        <span class="eyebrow">EMPLOYER TOOLS</span>
+        <h2>Quick actions</h2>
+
+        <div class="quick-action-list">
+          <a href="manage-jobs.html">
+            <strong>Manage job posts</strong>
+            <span>Create, edit, pause, and review active roles.</span>
+          </a>
+
+          <a href="employer-applicants.html">
+            <strong>Review applicants</strong>
+            <span>Open your applicant queue and hiring stages.</span>
+          </a>
+
+          <a href="find-candidates.html">
+            <strong>Find candidates</strong>
+            <span>Search skilled trades profiles.</span>
+          </a>
+
+          <a href="employer-messages.html">
+            <strong>Open messages</strong>
+            <span>Reply to candidate conversations.</span>
+          </a>
+        </div>
       </section>
 
-      <section class="rail-panel">
-        <div class="panel-heading tight">
+      <section class="panel side-panel">
+        <div class="panel-heading compact">
           <div>
             <span class="eyebrow">SAVED TALENT</span>
             <h2>Shortlist</h2>
           </div>
-          <a href="saved-talent.html">Open</a>
+
+          <a href="saved-talent.html" class="panel-link">Open</a>
         </div>
 
         <div id="savedCandidatesList" class="stack-list"></div>
@@ -254,43 +230,6 @@
 
     </aside>
 
-  </section>
-
-  <section class="account-panel" id="account">
-    <div class="panel-heading">
-      <div>
-        <span class="eyebrow">COMPANY PROFILE</span>
-        <h2>Employer account snapshot</h2>
-      </div>
-      <a href="employer-profile.html">Edit details</a>
-    </div>
-
-    <div class="snapshot-grid">
-      <div>
-        <span>Company</span>
-        <strong id="companyName">Loading...</strong>
-      </div>
-      <div>
-        <span>Contact</span>
-        <strong id="contactName">Loading...</strong>
-      </div>
-      <div>
-        <span>Email</span>
-        <strong id="userEmail">Loading...</strong>
-      </div>
-      <div>
-        <span>Industry</span>
-        <strong id="industry">Loading...</strong>
-      </div>
-      <div>
-        <span>Phone</span>
-        <strong id="phone">Loading...</strong>
-      </div>
-      <div>
-        <span>Status</span>
-        <strong class="green">Live</strong>
-      </div>
-    </div>
   </section>
 
 </main>
