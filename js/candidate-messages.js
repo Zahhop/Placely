@@ -30,6 +30,7 @@ let currentUser = null;
 let conversationsData = [];
 let activeConversationId = null;
 let activeRealtimeChannel = null;
+let refreshTimer = null;
 
 document.addEventListener("DOMContentLoaded", initMessages);
 
@@ -52,6 +53,8 @@ async function initMessages() {
   } else {
     showNoConversationState();
   }
+
+  startConversationPolling();
 }
 
 async function loadConversations() {
@@ -71,10 +74,6 @@ async function loadConversations() {
   conversationsData = await Promise.all(
     (data || []).map(async (conversation) => {
       const employerProfile = await getEmployerProfile(conversation.employer_id);
-      console.log("Conversation row:", conversation);
-console.log("Employer ID being searched:", conversation.employer_id);
-console.log("Employer profile found:", employerProfile);
-
       const employerName =
         employerProfile?.company_name ||
         employerProfile?.contact_name ||
@@ -91,6 +90,8 @@ console.log("Employer profile found:", employerProfile);
         conversation.logo_url ||
         "";
 
+      const latest = await getLatestMessage(conversation.id);
+
       return {
         id: conversation.id,
         employerId: conversation.employer_id,
@@ -100,10 +101,14 @@ console.log("Employer profile found:", employerProfile);
         role: conversation.candidate_role || conversation.job_title || "Opportunity",
         source: conversation.source || "Application",
         status: conversation.status || "Active",
-        response: conversation.response || "New"
+        response: conversation.response || "New",
+        latestMessage: latest?.message || "",
+        latestAt: latest?.created_at || conversation.created_at
       };
     })
   );
+
+  conversationsData.sort(sortByLatestActivity);
 
   if (!activeConversationId) {
     activeConversationId = conversationsData[0]?.id || null;
@@ -176,7 +181,16 @@ function setupEvents() {
       const conversation = getActiveConversation();
       if (!conversation) return;
 
-      const { error } = await candidateMessagesSupabase
+      const optimisticMessage = {
+        sender_type: "candidate",
+        message: text,
+        created_at: new Date().toISOString()
+      };
+
+      appendMessageBubble(optimisticMessage);
+      input.value = "";
+
+      const { data: sentMessage, error } = await candidateMessagesSupabase
         .from("messages")
         .insert([
           {
@@ -188,19 +202,22 @@ function setupEvents() {
             candidate_name: currentUser.email,
             candidate_role: conversation.role
           }
-        ]);
+        ])
+        .select()
+        .single();
 
       if (error) {
         console.error("Send message error:", error);
         alert("Message failed to send. Check console.");
+        await openConversation(activeConversationId);
         return;
       }
 
-      input.value = "";
-
-      await loadConversations();
+      conversation.latestMessage = sentMessage?.message || text;
+      conversation.latestAt = sentMessage?.created_at || optimisticMessage.created_at;
+      conversationsData.sort(sortByLatestActivity);
       await renderConversationList(conversationsData);
-      await openConversation(activeConversationId);
+      await refreshActiveConversation();
     });
   }
 }
@@ -227,8 +244,6 @@ async function renderConversationList(list) {
   }
 
   for (const conversation of list) {
-    const latestMessage = await getLatestMessage(conversation.id);
-
     const row = document.createElement("div");
     row.className = `conversation ${conversation.id === activeConversationId ? "active" : ""}`;
 
@@ -240,10 +255,10 @@ async function renderConversationList(list) {
       <div class="conversation-info">
         <div class="conversation-top">
           <h3>${escapeHTML(conversation.employerName)}</h3>
-          <span>${escapeHTML(formatConversationTime(latestMessage?.created_at, "New"))}</span>
+          <span>${escapeHTML(formatConversationTime(conversation.latestAt, "New"))}</span>
         </div>
 
-        <p>${escapeHTML(latestMessage?.message || `${conversation.role} opportunity`)}</p>
+        <p>${escapeHTML(conversation.latestMessage || `${conversation.role} opportunity`)}</p>
       </div>
     `;
 
@@ -347,6 +362,30 @@ async function openConversation(id) {
   subscribeToMessages(id);
 }
 
+function appendMessageBubble(message) {
+  if (!chatMessages) return;
+
+  const emptyMessage = chatMessages.querySelector(".empty-message");
+  if (emptyMessage) chatMessages.innerHTML = "";
+
+  const bubble = document.createElement("div");
+  bubble.className = `message ${message.sender_type === "candidate" ? "sent" : "received"}`;
+  bubble.innerHTML = `
+    ${escapeHTML(message.message)}
+    <span>${formatMessageTime(message.created_at)}</span>
+  `;
+
+  chatMessages.appendChild(bubble);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+async function refreshActiveConversation() {
+  const currentId = activeConversationId;
+  await loadConversations();
+  await renderConversationList(conversationsData);
+  if (currentId) await openConversation(currentId);
+}
+
 function showNoConversationState() {
   activeConversationId = null;
 
@@ -435,9 +474,7 @@ function subscribeToMessages(conversationId) {
         filter: `conversation_id=eq.${conversationId}`
       },
       async () => {
-        await loadConversations();
-        await renderConversationList(conversationsData);
-        await openConversation(conversationId);
+        await refreshActiveConversation();
       }
     )
     .subscribe();
@@ -519,4 +556,16 @@ function escapeHTML(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function sortByLatestActivity(a, b) {
+  return new Date(b.latestAt || 0) - new Date(a.latestAt || 0);
+}
+
+function startConversationPolling() {
+  if (refreshTimer) clearInterval(refreshTimer);
+  // Realtime can be unavailable depending on Supabase project settings, so polling keeps snippets fresh.
+  refreshTimer = setInterval(() => {
+    if (!document.hidden) refreshActiveConversation();
+  }, 15000);
 }

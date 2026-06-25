@@ -26,6 +26,7 @@ const logoutBtn = document.getElementById("logoutBtn");
 let currentUser = null;
 let allSavedCandidates = [];
 let filteredSavedCandidates = [];
+let hasCandidateAccess = false;
 
 document.addEventListener("DOMContentLoaded", initSavedTalent);
 
@@ -36,6 +37,7 @@ async function initSavedTalent() {
   if (!user) return;
 
   currentUser = user;
+  hasCandidateAccess = await loadEmployerCandidateAccess(user.id);
   await loadSavedTalent();
 }
 
@@ -96,9 +98,13 @@ async function loadSavedTalent() {
     return;
   }
 
+  const columns = hasCandidateAccess
+    ? "*"
+    : "id, full_name, trade, location, experience, availability, skills, certifications, profile_photo_url, created_at, profile_visible";
+
   const { data, error } = await savedSupabase
     .from("candidate_profiles")
-    .select("*")
+    .select(columns)
     .in("id", savedIds)
     .eq("profile_visible", true);
 
@@ -191,12 +197,11 @@ function createTalentCard(candidate) {
   card.className = "talent-card";
 
   const id = String(candidate.id);
-  const name = candidate.full_name || "Unnamed Candidate";
-  const trade = candidate.trade || "No trade added";
-  const location = candidate.location || "Location not added";
-  const experience = candidate.experience || "Experience not added";
-  const availability = candidate.availability || "Availability not added";
-  const bio = candidate.bio || "No bio added yet.";
+  const name = candidate.full_name || "Candidate";
+  const trade = candidate.trade || "Trade not listed";
+  const location = candidate.location || "Location not listed";
+  const experience = candidate.experience || "Experience not listed";
+  const availability = candidate.availability || "Availability not listed";
   const tags = getCandidateTags(candidate);
 
   card.innerHTML = `
@@ -221,8 +226,6 @@ function createTalentCard(candidate) {
       <span>${escapeHTML(availability)}</span>
       <span>Saved ${formatDate(candidate.saved_at)}</span>
     </div>
-
-    <p class="talent-bio">${escapeHTML(truncateText(bio, 130))}</p>
 
     <div class="tag-row">
       ${tags.map((tag) => `<span>${escapeHTML(tag)}</span>`).join("")}
@@ -262,12 +265,13 @@ function createTalentCard(candidate) {
 
 function openCandidatePanel(candidate) {
   const tags = getCandidateTags(candidate);
+  const contactLocked = !hasCandidateAccess;
 
   candidateDetailContent.innerHTML = `
     <img src="${escapeAttribute(candidate.profile_photo_url || "https://placehold.co/160x160?text=PT")}" class="detail-photo" alt="Candidate photo" />
 
-    <h2 class="detail-name">${escapeHTML(candidate.full_name || "Unnamed Candidate")}</h2>
-    <div class="detail-trade">${escapeHTML(candidate.trade || "No trade added")}</div>
+    <h2 class="detail-name">${escapeHTML(candidate.full_name || "Candidate")}</h2>
+    <div class="detail-trade">${escapeHTML(candidate.trade || "Trade not listed")}</div>
 
     <p class="detail-bio">${escapeHTML(candidate.bio || "No bio added yet.")}</p>
 
@@ -286,20 +290,22 @@ function openCandidatePanel(candidate) {
         <span>Availability</span>
         <strong>${escapeHTML(candidate.availability || "Not added")}</strong>
       </div>
+    </div>
 
+    <div class="detail-info-grid contact-grid">
       <div class="detail-item">
         <span>Preferred Contact</span>
-        <strong>${escapeHTML(candidate.contact_method || "Not added")}</strong>
+        <strong>${escapeHTML(contactLocked ? "Upgrade required" : candidate.contact_method || "Not added")}</strong>
       </div>
 
       <div class="detail-item">
         <span>Email</span>
-        <strong>${escapeHTML(candidate.email || "Locked / not added")}</strong>
+          <strong>${escapeHTML(contactLocked ? "Upgrade required" : candidate.email || "Email not listed")}</strong>
       </div>
 
       <div class="detail-item">
         <span>Phone</span>
-        <strong>${escapeHTML(candidate.phone || "Locked / not added")}</strong>
+          <strong>${escapeHTML(contactLocked ? "Upgrade required" : candidate.phone || "Phone not listed")}</strong>
       </div>
     </div>
 
@@ -327,11 +333,16 @@ function openCandidatePanel(candidate) {
 }
 
 function startMessageWithCandidate(candidate) {
+  if (!hasCandidateAccess) {
+    showToast("Upgrade Candidate Network access to message saved talent.");
+    return;
+  }
+
   const messageCandidate = {
     id: candidate.id,
-    name: candidate.full_name || "Unnamed Candidate",
-    trade: candidate.trade || "No trade added",
-    location: candidate.location || "Location not added",
+    name: candidate.full_name || "Candidate",
+    trade: candidate.trade || "Trade not listed",
+    location: candidate.location || "Location not listed",
     photo: candidate.profile_photo_url || ""
   };
 
@@ -404,7 +415,7 @@ function updateStats() {
   tradeCount.textContent = trades.size;
 
   if (!allSavedCandidates.length) {
-    newestSave.textContent = "—";
+    newestSave.textContent = "-";
     return;
   }
 
@@ -421,7 +432,7 @@ function getCandidateTags(candidate) {
   if (candidate.certifications) tags.push(...String(candidate.certifications).split(","));
   if (candidate.skills) tags.push(...String(candidate.skills).split(","));
 
-  return tags.map((tag) => tag.trim()).filter(Boolean).slice(0, 5);
+  return tags.map((tag) => tag.trim()).filter(Boolean).slice(0, 3);
 }
 
 function getInitials(name) {
@@ -454,11 +465,11 @@ function clean(value) {
 }
 
 function formatDate(value) {
-  if (!value) return "—";
+  if (!value) return "-";
 
   const date = new Date(value);
 
-  if (Number.isNaN(date.getTime())) return "—";
+  if (Number.isNaN(date.getTime())) return "-";
 
   return date.toLocaleDateString("en-CA", {
     month: "short",
@@ -494,4 +505,25 @@ function escapeHTML(value) {
 
 function escapeAttribute(value) {
   return escapeHTML(value).replaceAll("`", "&#096;");
+}
+
+async function loadEmployerCandidateAccess(userId) {
+  try {
+    const { data, error } = await savedSupabase
+      .from("employer_profiles")
+      .select("candidate_access, subscription_status")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return isTruthy(data?.candidate_access) || clean(data?.subscription_status) === "active";
+  } catch (error) {
+    console.warn("Saved talent candidate access fields unavailable; defaulting to locked.", error);
+    return false;
+  }
+}
+
+function isTruthy(value) {
+  if (value === true) return true;
+  return ["true", "1", "yes", "active"].includes(clean(value));
 }

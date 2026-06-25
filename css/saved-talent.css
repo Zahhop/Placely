@@ -8,9 +8,8 @@
 body {
   min-height: 100vh;
   background:
-    radial-gradient(circle at 88% 8%, rgba(37, 99, 235, 0.16), transparent 28%),
-    radial-gradient(circle at 8% 44%, rgba(59, 130, 246, 0.08), transparent 28%),
-    linear-gradient(180deg, #ffffff 0%, #f8fafc 45%, #f8fafc 100%);
+    linear-gradient(135deg, rgba(239, 246, 255, 0.95) 0%, rgba(255, 255, 255, 0.92) 42%, rgba(248, 250, 252, 0.96) 100%),
+    #f8fafc;
   color: #0f172a;
 }
 
@@ -150,44 +149,53 @@ nav a:hover {
 }
 
 .stats-grid {
-  margin-top: 22px;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #dbe3ef;
+  border-radius: 18px;
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.045);
 }
 
 .stat-card {
-  border-radius: 20px;
-  padding: 24px;
+  border-radius: 999px;
+  padding: 9px 12px;
+  box-shadow: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
 }
 
 .stat-card span {
-  color: #64748b;
+  color: #334155;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 900;
 }
 
 .stat-card strong {
-  display: block;
-  margin: 8px 0 6px;
+  margin: 0;
+  min-width: 26px;
+  height: 24px;
+  border-radius: 999px;
+  background: #eff6ff;
   color: #2563eb;
-  font-size: 34px;
-  line-height: 1;
-  letter-spacing: -0.04em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 900;
 }
 
 .stat-card p {
-  color: #64748b;
-  font-size: 13px;
-  font-weight: 700;
+  display: none;
 }
 
 .content-layout {
-  margin-top: 22px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  gap: 22px;
-  align-items: start;
+  margin-top: 18px;
+  display: block;
 }
 
 .main-panel {
@@ -251,18 +259,20 @@ select:focus {
 
 .talent-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18px;
+  grid-template-columns: 1fr;
+  gap: 10px;
 }
 
 .talent-card {
   background: #ffffff;
   border: 1px solid #dbe3ef;
-  border-radius: 22px;
-  padding: 24px;
-  min-height: 340px;
-  display: flex;
-  flex-direction: column;
+  border-radius: 18px;
+  padding: 16px;
+  min-height: 92px;
+  display: grid;
+  grid-template-columns: minmax(260px, 1.35fr) minmax(210px, 0.8fr) minmax(180px, 0.7fr) minmax(240px, auto);
+  gap: 16px;
+  align-items: center;
   transition: 0.2s ease;
 }
 
@@ -275,7 +285,7 @@ select:focus {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin-bottom: 16px;
+  margin-bottom: 0;
 }
 
 .avatar {
@@ -311,8 +321,8 @@ select:focus {
 
 .talent-details {
   display: grid;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 4px;
+  margin-bottom: 0;
 }
 
 .talent-details span {
@@ -322,19 +332,15 @@ select:focus {
 }
 
 .talent-bio {
-  color: #475569;
-  line-height: 1.6;
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 18px;
+  display: none;
 }
 
 .tag-row {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: auto;
-  margin-bottom: 18px;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .tag-row span {
@@ -347,8 +353,8 @@ select:focus {
 }
 
 .card-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  display: flex;
+  justify-content: flex-end;
   gap: 10px;
 }
 
@@ -477,22 +483,22 @@ select:focus {
 
 .candidate-detail-panel {
   position: fixed;
-  top: 0;
-  right: -520px;
-  width: 500px;
-  max-width: 92vw;
-  height: 100vh;
+  top: 28px;
+  right: -840px;
+  bottom: 28px;
+  width: min(800px, calc(100% - 56px));
   background: white;
-  border-left: 1px solid #dbe3ef;
-  box-shadow: -24px 0 70px rgba(15, 23, 42, 0.18);
-  padding: 30px;
+  border: 1px solid #dbe3ef;
+  border-radius: 24px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.18);
+  padding: 28px;
   z-index: 100;
   overflow-y: auto;
   transition: 0.25s ease;
 }
 
 .candidate-detail-panel.open {
-  right: 0;
+  right: 28px;
 }
 
 .panel-overlay {
@@ -508,14 +514,13 @@ select:focus {
 }
 
 .close-panel-btn {
-  border: 0;
-  background: #eaf0f8;
-  color: #0f172a;
-  border-radius: 999px;
-  width: 38px;
-  height: 38px;
-  font-size: 24px;
-  font-weight: 800;
+  border: 1px solid #dbe3ef;
+  background: #fff;
+  color: #2563eb;
+  border-radius: 12px;
+  padding: 10px 13px;
+  font-size: 13px;
+  font-weight: 900;
   cursor: pointer;
   float: right;
 }
@@ -554,6 +559,24 @@ select:focus {
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin-bottom: 22px;
+}
+
+.contact-grid {
+  grid-template-columns: 1fr;
+}
+
+.contact-grid .detail-item {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  align-items: center;
+}
+
+.contact-grid .detail-item span {
+  margin-bottom: 0;
+}
+
+.contact-grid .detail-item strong {
+  overflow-wrap: anywhere;
 }
 
 .detail-item {

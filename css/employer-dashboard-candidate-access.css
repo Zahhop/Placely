@@ -1,0 +1,52 @@
+.network-premium-card {
+  display: grid;
+  gap: 14px;
+}
+
+.network-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.network-feature {
+  min-height: 74px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.network-feature span {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.network-feature.locked {
+  background: var(--soft);
+}
+
+.network-feature.active {
+  border-color: #bfdbfe;
+  background: #f8fbff;
+}
+
+.network-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.hidden {
+  display: none !important;
+}
+
+@media (max-width: 760px) {
+  .network-feature-grid {
+    grid-template-columns: 1fr;
+  }
+}
