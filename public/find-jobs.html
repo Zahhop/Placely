@@ -30,16 +30,6 @@
 
 <main class="page-shell">
 
-  <section class="hero-card">
-    <div>
-      <span class="eyebrow">Find Jobs</span>
-      <h1>Trades jobs matched to your profile.</h1>
-      <p>Search open roles posted by employers and apply directly through Placely Talent.</p>
-    </div>
-
-    <a href="../candidates/candidate-dashboard.html" class="secondary-btn">Back to Dashboard</a>
-  </section>
-
   <section class="search-card">
     <input id="keywordInput" type="text" placeholder="Search trade, company, keyword..." />
 
@@ -58,29 +48,29 @@
     <button id="searchBtn" type="button">Search</button>
   </section>
 
-  <section class="jobs-layout">
-
-    <aside class="jobs-list-panel">
-      <div class="panel-header">
-        <div>
-          <span class="small-label">Open Roles</span>
-          <h2>Available jobs</h2>
-        </div>
-        <strong id="jobCount">0</strong>
+  <section class="jobs-board">
+    <div class="panel-header">
+      <div>
+        <span class="small-label">Open Roles</span>
+        <h2>Available jobs</h2>
       </div>
+      <strong id="jobCount">0</strong>
+    </div>
 
-      <div id="jobsList" class="jobs-list"></div>
-    </aside>
+    <div id="jobsList" class="jobs-list"></div>
+  </section>
 
-    <section class="job-detail-panel">
+  <div id="jobDetailsModal" class="job-modal" aria-hidden="true">
+    <div id="jobModalOverlay" class="modal-overlay"></div>
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-label="Job details">
+      <button id="closeJobModalBtn" type="button" class="close-modal">Close</button>
       <div id="jobDetails" class="job-details-empty">
         <span class="small-label">Job Details</span>
         <h2>Select a job</h2>
-        <p>Choose a role from the left to view company details, requirements, pay, and apply.</p>
+        <p>Choose a role to view company details, requirements, pay, and apply.</p>
       </div>
     </section>
-
-  </section>
+  </div>
 
 </main>
 

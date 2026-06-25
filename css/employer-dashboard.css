@@ -5,6 +5,19 @@
   font-family: "Inter", sans-serif;
 }
 
+:root {
+  --blue: #2563eb;
+  --blue-dark: #1d4ed8;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --line: #dbe3ef;
+  --line-strong: #cbd5e1;
+  --soft: #f8fbff;
+  --shadow: 0 22px 55px rgba(15, 23, 42, 0.07);
+  --shadow-sm: 0 14px 32px rgba(15, 23, 42, 0.06);
+  --radius: 22px;
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -12,21 +25,21 @@ html {
 body {
   min-height: 100vh;
   background:
-    radial-gradient(circle at 88% 8%, rgba(37, 99, 235, 0.14), transparent 30%),
-    radial-gradient(circle at 8% 45%, rgba(59, 130, 246, 0.08), transparent 28%),
-    linear-gradient(180deg, #ffffff 0%, #f8fafc 44%, #f8fafc 100%);
-  color: #0f172a;
+    linear-gradient(135deg, rgba(239, 246, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 38%, rgba(248, 250, 252, 0.96) 100%),
+    #f8fafc;
+  color: var(--ink);
 }
 
 header {
-  height: 76px;
-  padding: 0 8%;
-  background: rgba(255, 255, 255, 0.92);
+  min-height: 76px;
+  padding: 0 clamp(28px, 6vw, 110px);
+  background: rgba(255, 255, 255, 0.94);
   border-bottom: 1px solid #e2e8f0;
   backdrop-filter: blur(18px);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 28px;
   position: sticky;
   top: 0;
   z-index: 50;
@@ -36,11 +49,12 @@ header {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  flex: 0 0 auto;
 }
 
 .logo {
   text-decoration: none;
-  color: #0f172a;
+  color: var(--ink);
   font-size: 24px;
   font-weight: 900;
   letter-spacing: 0.5px;
@@ -60,7 +74,9 @@ header {
 nav {
   display: flex;
   align-items: center;
-  gap: 24px;
+  justify-content: flex-end;
+  gap: clamp(12px, 1.7vw, 24px);
+  min-width: 0;
 }
 
 nav a {
@@ -68,10 +84,11 @@ nav a {
   color: #334155;
   font-size: 14px;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 nav a:hover {
-  color: #2563eb;
+  color: var(--blue);
 }
 
 .logout-btn,
@@ -80,13 +97,16 @@ nav a:hover {
 .panel-link,
 .empty-action,
 .job-btn,
-.candidate-search-form button {
+.candidate-search-form button,
+.preview-candidate button {
+  min-height: 42px;
   cursor: pointer;
   text-decoration: none;
   border-radius: 12px;
   font-size: 13px;
   font-weight: 900;
-  transition: 0.2s ease;
+  line-height: 1;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .logout-btn,
@@ -94,31 +114,37 @@ nav a:hover {
 .candidate-search-form button,
 .job-btn {
   border: 0;
-  background: #2563eb;
-  color: white;
+  background: var(--blue);
+  color: #fff;
   box-shadow: 0 14px 28px rgba(37, 99, 235, 0.2);
 }
 
 .logout-btn {
-  padding: 13px 20px;
-  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.25);
+  padding: 13px 18px;
+}
+
+.primary-btn,
+.secondary-btn,
+.empty-action,
+.job-btn,
+.panel-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.primary-btn,
+.secondary-btn {
+  padding: 14px 20px;
 }
 
 .secondary-btn,
 .empty-action,
 .job-btn.secondary {
-  border: 1px solid #dbe3ef;
-  background: white;
-  color: #2563eb;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--blue);
   box-shadow: none;
-}
-
-.primary-btn,
-.secondary-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 14px 20px;
 }
 
 .primary-btn.full,
@@ -130,46 +156,46 @@ nav a:hover {
 .logout-btn:hover,
 .candidate-search-form button:hover,
 .job-btn:hover {
-  background: #1d4ed8;
+  background: var(--blue-dark);
   transform: translateY(-1px);
 }
 
 .secondary-btn:hover,
 .empty-action:hover,
 .job-btn.secondary:hover {
-  background: #f8fbff;
+  background: var(--soft);
   border-color: #bfdbfe;
 }
 
 .employer-shell {
-  width: 84%;
-  max-width: 1480px;
+  width: min(1480px, calc(100% - 56px));
   margin: 0 auto;
-  padding: 32px 0 56px;
+  padding: 30px 0 56px;
 }
 
 .hero-card,
 .metric-card,
 .panel,
 .company-card {
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid #dbe3ef;
-  border-radius: 24px;
-  box-shadow: 0 22px 55px rgba(15, 23, 42, 0.06);
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
 
 .hero-card {
-  padding: 36px 40px;
-  display: flex;
-  justify-content: space-between;
+  min-height: 184px;
+  padding: 34px 38px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 32px;
-  margin-bottom: 18px;
+  gap: 30px;
+  margin-bottom: 16px;
 }
 
 .eyebrow {
   display: block;
-  color: #2563eb;
+  color: var(--blue);
   font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.06em;
@@ -177,9 +203,9 @@ nav a:hover {
 }
 
 .hero-card h1 {
-  font-size: 42px;
+  max-width: 880px;
+  font-size: clamp(34px, 3vw, 46px);
   line-height: 1.04;
-  letter-spacing: -0.055em;
   margin: 9px 0 10px;
 }
 
@@ -187,10 +213,11 @@ nav a:hover {
 .panel-heading p,
 .candidate-preview-results p,
 .company-info p,
-.company-info small {
-  color: #64748b;
+.company-info small,
+.side-copy {
+  color: var(--muted);
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.55;
   font-weight: 650;
 }
 
@@ -202,16 +229,17 @@ nav a:hover {
 
 .metric-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 18px;
 }
 
 .metric-card {
-  padding: 22px;
+  min-height: 132px;
+  padding: 21px;
   text-decoration: none;
   color: inherit;
-  transition: 0.2s ease;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .metric-card:hover,
@@ -220,29 +248,33 @@ nav a:hover {
   border-color: #bfdbfe;
 }
 
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
 .metric-card span {
-  color: #64748b;
+  color: var(--muted);
   font-size: 12px;
   font-weight: 900;
 }
 
 .metric-card strong {
   display: block;
-  font-size: 34px;
+  font-size: 36px;
   line-height: 1;
-  letter-spacing: -0.05em;
-  margin: 10px 0 8px;
+  margin: 12px 0 9px;
 }
 
 .metric-card p {
-  color: #64748b;
+  color: var(--muted);
   font-size: 13px;
   font-weight: 750;
 }
 
 .dashboard-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 355px;
+  grid-template-columns: minmax(0, 1fr) minmax(315px, 360px);
   gap: 18px;
   align-items: start;
 }
@@ -261,7 +293,7 @@ nav a:hover {
 
 .panel,
 .company-card {
-  padding: 26px;
+  padding: 24px;
 }
 
 .panel-heading {
@@ -273,6 +305,7 @@ nav a:hover {
 }
 
 .panel-heading.compact {
+  align-items: center;
   margin-bottom: 14px;
 }
 
@@ -280,28 +313,28 @@ nav a:hover {
 .quick-actions-panel h2,
 .company-info h2 {
   font-size: 24px;
-  letter-spacing: -0.04em;
-  margin-top: 5px;
+  line-height: 1.1;
+  margin-top: 6px;
 }
 
 .panel-link {
-  color: #2563eb;
+  min-height: 34px;
+  color: var(--blue);
   font-size: 13px;
   font-weight: 900;
-  text-decoration: none;
   white-space: nowrap;
 }
 
 .pipeline-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 11px;
   margin-bottom: 16px;
 }
 
 .pipeline-row div {
-  background: #f8fbff;
-  border: 1px solid #dbe3ef;
+  background: var(--soft);
+  border: 1px solid var(--line);
   border-radius: 16px;
   padding: 15px;
 }
@@ -310,13 +343,12 @@ nav a:hover {
   display: block;
   font-size: 29px;
   line-height: 1;
-  letter-spacing: -0.05em;
 }
 
 .pipeline-row span {
   display: block;
   margin-top: 7px;
-  color: #64748b;
+  color: var(--muted);
   font-size: 13px;
   font-weight: 850;
 }
@@ -336,7 +368,7 @@ nav a:hover {
   overflow: hidden;
   background: linear-gradient(135deg, #eff6ff, #dbeafe);
   border: 1px solid #bfdbfe;
-  color: #2563eb;
+  color: var(--blue);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -357,14 +389,14 @@ nav a:hover {
 }
 
 .company-info span {
-  color: #64748b;
+  color: var(--muted);
   font-size: 12px;
   font-weight: 900;
 }
 
 .company-info h2 {
   font-size: 20px;
-  margin: 3px 0;
+  margin: 4px 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -379,7 +411,6 @@ nav a:hover {
 
 .recruiter-panel {
   background:
-    radial-gradient(circle at 94% 10%, rgba(37, 99, 235, 0.1), transparent 34%),
     linear-gradient(135deg, rgba(239, 246, 255, 0.98), rgba(255, 255, 255, 0.98));
 }
 
@@ -393,9 +424,9 @@ nav a:hover {
 
 .network-grid {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr) 310px;
+  grid-template-columns: 210px minmax(260px, 1fr) minmax(260px, 320px);
   gap: 14px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .network-status {
@@ -404,33 +435,34 @@ nav a:hover {
 }
 
 .network-status div {
-  background: white;
-  border: 1px solid #dbe3ef;
+  background: #fff;
+  border: 1px solid var(--line);
   border-radius: 15px;
   padding: 14px;
 }
 
 .network-status span {
   display: block;
-  color: #64748b;
+  color: var(--muted);
   font-size: 12px;
   font-weight: 900;
   margin-bottom: 5px;
 }
 
 .network-status strong {
-  color: #0f172a;
+  color: var(--ink);
   font-size: 14px;
   font-weight: 900;
 }
 
 .locked-text {
-  color: #2563eb !important;
+  color: var(--blue) !important;
 }
 
 .candidate-search-form {
   display: grid;
   gap: 10px;
+  align-content: start;
 }
 
 .search-bottom-row {
@@ -443,9 +475,9 @@ input,
 select,
 textarea {
   width: 100%;
-  border: 1px solid #cbd5e1;
-  background: white;
-  color: #0f172a;
+  border: 1px solid var(--line-strong);
+  background: #fff;
+  color: var(--ink);
   border-radius: 12px;
   padding: 13px 14px;
   font-size: 14px;
@@ -456,7 +488,7 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: #2563eb;
+  border-color: var(--blue);
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
 }
 
@@ -465,17 +497,18 @@ textarea:focus {
 }
 
 .candidate-preview-results {
-  border: 1px dashed #cbd5e1;
-  background: #f8fbff;
+  min-height: 100%;
+  max-height: 292px;
+  overflow-y: auto;
+  border: 1px dashed var(--line-strong);
+  background: var(--soft);
   border-radius: 15px;
   padding: 14px;
-  max-height: 260px;
-  overflow-y: auto;
 }
 
 .candidate-preview-results strong {
   display: block;
-  color: #0f172a;
+  color: var(--ink);
   font-size: 14px;
   font-weight: 900;
   margin-bottom: 5px;
@@ -488,15 +521,20 @@ textarea:focus {
   gap: 12px;
 }
 
+.side-copy {
+  margin: 6px 0 16px;
+}
+
 .quick-action-list a,
 .job-card,
 .candidate-card,
 .activity-card,
 .action-card,
-.empty-state {
-  border: 1px solid #dbe3ef;
+.empty-state,
+.preview-candidate {
+  border: 1px solid var(--line);
   border-radius: 17px;
-  background: white;
+  background: #fff;
   padding: 16px;
 }
 
@@ -504,7 +542,7 @@ textarea:focus {
   display: block;
   text-decoration: none;
   color: inherit;
-  transition: 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .quick-action-list strong,
@@ -512,7 +550,7 @@ textarea:focus {
 .candidate-card h3,
 .activity-card h3,
 .action-card strong {
-  color: #0f172a;
+  color: var(--ink);
   font-size: 15px;
   font-weight: 900;
   margin-bottom: 5px;
@@ -525,18 +563,65 @@ textarea:focus {
 .candidate-card p,
 .activity-card p,
 .action-card p {
-  color: #64748b;
+  color: var(--muted);
   font-size: 13px;
   font-weight: 700;
   line-height: 1.45;
 }
 
 .job-card,
-.candidate-card {
-  display: flex;
-  justify-content: space-between;
+.candidate-card,
+.activity-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 16px;
   align-items: center;
+}
+
+.activity-card {
+  align-items: start;
+}
+
+.activity-side,
+.job-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.status-pill,
+.tags span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.status-pill {
+  min-height: 28px;
+  padding: 7px 10px;
+  background: #eff6ff;
+  color: var(--blue);
+}
+
+.status-pill.interview,
+.status-pill.offer {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.status-pill.hired {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.status-pill.rejected {
+  background: #fef2f2;
+  color: #b91c1c;
 }
 
 .tags {
@@ -548,18 +633,8 @@ textarea:focus {
 
 .tags span {
   background: #eff6ff;
-  color: #2563eb;
-  padding: 6px 9px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 900;
-}
-
-.job-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  color: var(--blue);
+  padding: 7px 9px;
 }
 
 .job-btn {
@@ -568,9 +643,9 @@ textarea:focus {
 
 .empty-state {
   text-align: center;
-  background: #f8fbff;
+  background: var(--soft);
   border-style: dashed;
-  padding: 28px 20px;
+  padding: 26px 20px;
 }
 
 .empty-state strong {
@@ -581,14 +656,13 @@ textarea:focus {
 }
 
 .empty-state p {
-  color: #64748b;
+  color: var(--muted);
   font-size: 13px;
   font-weight: 700;
   margin-bottom: 14px;
 }
 
 .empty-action {
-  display: inline-flex;
   padding: 10px 14px;
 }
 
@@ -596,16 +670,13 @@ textarea:focus {
 .action-card:hover,
 .job-card:hover,
 .candidate-card:hover,
-.activity-card:hover {
+.activity-card:hover,
+.preview-candidate:hover {
   border-color: #bfdbfe;
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.05);
+  box-shadow: var(--shadow-sm);
 }
 
 .preview-candidate {
-  border: 1px solid #dbe3ef;
-  background: white;
-  border-radius: 14px;
-  padding: 13px;
   margin-top: 10px;
 }
 
@@ -617,30 +688,32 @@ textarea:focus {
 
 .preview-candidate span {
   display: block;
-  color: #64748b;
+  color: var(--muted);
   font-size: 12px;
   font-weight: 750;
-  margin-top: 3px;
+  margin-top: 4px;
 }
 
 .preview-candidate button {
   margin-top: 10px;
-  border: 1px solid #dbe3ef;
+  border: 1px solid var(--line);
   background: #eff6ff;
-  color: #2563eb;
-  border-radius: 9px;
-  padding: 9px 12px;
-  font-size: 12px;
-  font-weight: 900;
-  cursor: pointer;
+  color: var(--blue);
+  padding: 10px 12px;
+  box-shadow: none;
+}
+
+.preview-candidate button:hover {
+  border-color: #bfdbfe;
+  background: #dbeafe;
 }
 
 .toast {
   position: fixed;
   right: 24px;
   bottom: 24px;
-  background: #0f172a;
-  color: white;
+  background: var(--ink);
+  color: #fff;
   padding: 14px 18px;
   border-radius: 14px;
   font-weight: 800;
@@ -657,68 +730,101 @@ textarea:focus {
   transform: translateY(0);
 }
 
-@media (max-width: 1280px) {
-  .dashboard-layout,
+@media (max-width: 1320px) {
+  header {
+    padding-inline: 36px;
+  }
+
+  nav {
+    gap: 12px;
+  }
+
+  .dashboard-layout {
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+
   .network-grid {
+    grid-template-columns: minmax(180px, 0.65fr) minmax(0, 1fr);
+  }
+
+  .candidate-preview-results {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 1100px) {
+  header {
+    align-items: flex-start;
+    padding-block: 16px;
+  }
+
+  nav {
+    flex-wrap: wrap;
+  }
+
+  .hero-card {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .dashboard-layout {
     grid-template-columns: 1fr;
   }
 
   .side-stack {
     position: static;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .recruiter-btn {
-    width: 100%;
+  .company-card,
+  .quick-actions-panel,
+  .side-panel {
+    min-height: 100%;
   }
 }
 
 @media (max-width: 900px) {
-  .metric-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .employer-shell {
+    width: min(100% - 32px, 1480px);
   }
 
-  .hero-card,
+  .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hero-actions,
   .recruiter-heading {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .hero-actions {
-    width: 100%;
-    flex-direction: column;
-  }
-
   .primary-btn,
-  .secondary-btn {
+  .secondary-btn,
+  .recruiter-btn {
     width: 100%;
   }
 
-  .search-bottom-row {
+  .network-grid,
+  .search-bottom-row,
+  .side-stack {
     grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 700px) {
   header {
-    height: auto;
     padding: 16px 5%;
-    align-items: flex-start;
-    gap: 18px;
+    flex-direction: column;
   }
 
   nav {
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 12px;
+    justify-content: flex-start;
   }
 
-  .employer-shell {
-    width: 90%;
-    padding-top: 22px;
-  }
-
-  .hero-card h1 {
-    font-size: 34px;
+  .hero-card,
+  .panel,
+  .company-card {
+    padding: 22px;
   }
 
   .metric-grid,
@@ -728,8 +834,15 @@ textarea:focus {
 
   .panel-heading,
   .job-card,
-  .candidate-card {
+  .candidate-card,
+  .activity-card {
+    grid-template-columns: 1fr;
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .job-actions,
+  .activity-side {
+    justify-content: flex-start;
   }
 }

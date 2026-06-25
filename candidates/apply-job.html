@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Apply for Job | Placely Talent</title>
+
+  <link rel="stylesheet" href="../css/apply-job.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<header>
+  <div class="logo-wrapper">
+    <a href="candidate-dashboard.html" class="logo">PLACELY TALENT</a>
+    <div class="logo-subtitle">Talent Platform</div>
+  </div>
+
+  <nav>
+    <a href="candidate-dashboard.html">Dashboard</a>
+    <a href="../public/find-jobs.html?role=candidate">Find Jobs</a>
+    <a href="../public/saved-jobs.html">Saved Jobs</a>
+    <a href="candidate-applications.html">Applications</a>
+    <a href="candidate-messages.html">Messages</a>
+    <a href="candidate-profile.html">Profile</a>
+  </nav>
+</header>
+
+<main class="page-shell">
+
+  <section class="hero-card">
+    <div>
+      <span class="eyebrow">Job Application</span>
+      <h1>Review your application before sending.</h1>
+      <p>Confirm your profile details, add a message to the employer, and submit only when everything looks ready.</p>
+    </div>
+
+    <a href="../public/find-jobs.html?role=candidate" class="secondary-btn">Back to Jobs</a>
+  </section>
+
+  <section id="duplicateNotice" class="notice-card hidden">
+    <strong>You already applied to this job.</strong>
+    <p>You can review this application from your application tracker.</p>
+    <a href="candidate-applications.html" class="primary-btn">View Applications</a>
+  </section>
+
+  <section class="application-layout">
+
+    <section class="panel application-panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Candidate Snapshot</span>
+          <h2>Your profile details</h2>
+          <p>These details will be saved with your application so the employer can review the same snapshot you submitted.</p>
+        </div>
+
+        <a href="candidate-profile.html" class="secondary-btn small-btn">Edit Profile</a>
+      </div>
+
+      <div id="candidateSummary" class="candidate-summary">
+        <div class="empty-state">Loading your profile...</div>
+      </div>
+
+      <form id="applicationForm" class="application-form">
+        <label for="coverLetter">Message to employer</label>
+        <textarea id="coverLetter" rows="7" placeholder="Introduce yourself, mention relevant experience, and explain why this role is a good fit."></textarea>
+
+        <label for="additionalNotes">Additional notes</label>
+        <textarea id="additionalNotes" rows="4" placeholder="Optional: availability notes, schedule constraints, transportation, certifications in progress, or anything else useful."></textarea>
+
+        <label class="confirm-row">
+          <input id="confirmInfo" type="checkbox" />
+          <span>I confirm my profile, contact information, and resume details are ready to send.</span>
+        </label>
+
+        <div id="formMessage" class="form-message"></div>
+
+        <div class="form-actions">
+          <a href="../public/find-jobs.html?role=candidate" class="secondary-btn">Cancel</a>
+          <button id="submitApplicationBtn" type="submit" class="primary-btn">Submit Application</button>
+        </div>
+      </form>
+    </section>
+
+    <aside class="panel job-panel">
+      <span class="eyebrow">Selected Role</span>
+      <div id="jobSummary" class="job-summary">
+        <div class="empty-state">Loading job details...</div>
+      </div>
+    </aside>
+
+  </section>
+
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
+<script src="../js/apply-job.js"></script>
+
+</body>
+</html>

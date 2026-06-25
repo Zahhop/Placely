@@ -77,13 +77,27 @@
         <div>
           <span class="eyebrow">YOUR POSTINGS</span>
           <h2>Current job posts</h2>
+          <p>Search, filter, and manage the roles your team is actively hiring for.</p>
         </div>
+
+        <div class="panel-actions">
+          <a href="post-job.html" class="primary-link">Post New Job</a>
+        </div>
+      </div>
+
+      <div class="jobs-toolbar">
+        <input id="jobSearchInput" type="text" placeholder="Search title, location, type, pay..." />
 
         <div class="filter-row">
           <button class="filter-btn active" data-filter="all">All</button>
           <button class="filter-btn" data-filter="active">Active</button>
           <button class="filter-btn" data-filter="paused">Paused</button>
         </div>
+
+        <select id="jobSortSelect">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+        </select>
       </div>
 
       <div id="jobsGrid" class="jobs-grid"></div>
@@ -95,36 +109,6 @@
         <a href="post-job.html">Create Job Post</a>
       </div>
     </section>
-
-    <aside class="side-panel">
-      <div class="sidebar-card">
-        <span class="eyebrow">NEXT STEP</span>
-        <h3>Keep your pipeline clean</h3>
-        <p>Pause roles that are filled, review applicants quickly, and keep active posts updated with clear pay and location details.</p>
-
-        <div class="checklist">
-          <div>
-            <strong>Review applicants</strong>
-            <span>Check new candidates daily</span>
-          </div>
-          <div>
-            <strong>Update stale posts</strong>
-            <span>Refresh roles older than 14 days</span>
-          </div>
-          <div>
-            <strong>Save strong talent</strong>
-            <span>Build a shortlist for later roles</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="sidebar-card compact">
-        <span class="eyebrow">SHORTCUTS</span>
-        <a href="post-job.html">Create a new job</a>
-        <a href="saved-talent.html">Review saved talent</a>
-        <a href="employer-dashboard.html">Back to dashboard</a>
-      </div>
-    </aside>
 
   </section>
 

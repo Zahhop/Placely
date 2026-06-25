@@ -370,6 +370,7 @@ nav a:hover {
   white-space: nowrap;
 }
 
+.status-pill.new,
 .status-pill.submitted {
   background: #eff6ff;
   color: #2563eb;
