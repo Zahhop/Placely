@@ -7,6 +7,7 @@
   <title>Saved Talent | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/saved-talent.css" />
+  <link rel="stylesheet" href="../css/employer-consistency.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
@@ -65,7 +66,7 @@
 
     <div class="stat-card">
       <span>Newest save</span>
-      <strong id="newestSave">—</strong>
+      <strong id="newestSave">-</strong>
       <p>Most recent shortlist add</p>
     </div>
   </section>
@@ -125,50 +126,18 @@
       <div class="empty-state hidden" id="emptyState">
         <div class="empty-icon">PT</div>
         <h3>No saved candidates yet</h3>
-        <p>Save candidates from the candidate network and they’ll appear here.</p>
+        <p>Save candidates from the candidate network and they will appear here.</p>
         <a href="find-candidates.html">Find Candidates</a>
       </div>
 
     </section>
-
-    <aside class="side-panel">
-      <div class="sidebar-card">
-        <span class="eyebrow">HIRING WORKFLOW</span>
-        <h3>Turn saved talent into hires</h3>
-        <p>Use this page as your employer shortlist. Keep strong candidates saved, compare availability, then message when a role is ready.</p>
-
-        <div class="workflow-list">
-          <div>
-            <strong>Review saved profiles</strong>
-            <span>Compare experience, location, and certifications.</span>
-          </div>
-
-          <div>
-            <strong>Prioritize fast starters</strong>
-            <span>Move available candidates into conversations first.</span>
-          </div>
-
-          <div>
-            <strong>Remove weak matches</strong>
-            <span>Keep your shortlist clean and useful.</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="sidebar-card compact">
-        <span class="eyebrow">SHORTCUTS</span>
-        <a href="find-candidates.html">Search candidate network</a>
-        <a href="post-job.html">Create job post</a>
-        <a href="employer-dashboard.html">Back to dashboard</a>
-      </div>
-    </aside>
 
   </section>
 
 </main>
 
 <aside class="candidate-detail-panel" id="candidateDetailPanel">
-  <button class="close-panel-btn" id="closePanelBtn">×</button>
+  <button class="close-panel-btn" id="closePanelBtn">Close</button>
   <div id="candidateDetailContent"></div>
 </aside>
 

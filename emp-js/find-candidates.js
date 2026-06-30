@@ -6,11 +6,15 @@ const employerSupabase = window.supabase.createClient(
 const candidatesGrid = document.getElementById("candidatesGrid");
 const emptyState = document.getElementById("emptyState");
 const resultsText = document.getElementById("resultsText");
+const accessStateText = document.getElementById("accessStateText");
+const activeFilterText = document.getElementById("activeFilterText");
+const upgradeBanner = document.getElementById("upgradeBanner");
 
 const totalCandidates = document.getElementById("totalCandidates");
 const resultCount = document.getElementById("resultCount");
 const savedCount = document.getElementById("savedCount");
 const fastStartCount = document.getElementById("fastStartCount");
+const newThisWeekCount = document.getElementById("newThisWeekCount");
 
 const keywordInput = document.getElementById("keywordInput");
 const tradeFilter = document.getElementById("tradeFilter");
@@ -20,12 +24,9 @@ const availabilityFilter = document.getElementById("availabilityFilter");
 const certificationFilter = document.getElementById("certificationFilter");
 const sortFilter = document.getElementById("sortFilter");
 
-const filterBtn = document.getElementById("filterBtn");
-const filtersPanel = document.getElementById("filtersPanel");
-const searchBtn = document.getElementById("searchBtn");
-const applyFiltersBtn = document.getElementById("applyFiltersBtn");
 const clearFiltersBtn = document.getElementById("clearFiltersBtn");
 const emptyClearBtn = document.getElementById("emptyClearBtn");
+const upgradeAccessBtn = document.getElementById("upgradeAccessBtn");
 
 const candidateDetailPanel = document.getElementById("candidateDetailPanel");
 const candidateDetailContent = document.getElementById("candidateDetailContent");
@@ -33,9 +34,17 @@ const closePanelBtn = document.getElementById("closePanelBtn");
 const panelOverlay = document.getElementById("panelOverlay");
 const logoutBtn = document.getElementById("logoutBtn");
 
+let currentUser = null;
+let employerAccess = {
+  subscription_status: "free",
+  subscription_plan: "",
+  candidate_access: false
+};
+let hasCandidateAccess = false;
 let loadedCandidates = [];
 let filteredCandidates = [];
 let savedCandidates = new Set();
+let selectedCandidateId = null;
 
 document.addEventListener("DOMContentLoaded", initFindCandidates);
 
@@ -45,33 +54,26 @@ async function initFindCandidates() {
   const user = await requireEmployerLogin();
   if (!user) return;
 
+  currentUser = user;
   loadSavedCandidates();
+  employerAccess = await loadEmployerAccess(user.id);
+  hasCandidateAccess = hasUnlockedCandidateAccess(employerAccess);
+
+  renderAccessState();
   await loadCandidates();
 }
 
 function setupEvents() {
-  if (filterBtn) {
-    filterBtn.addEventListener("click", () => {
-      filtersPanel.classList.toggle("active");
-    });
-  }
+  [keywordInput, tradeFilter, cityFilter, experienceFilter, availabilityFilter, certificationFilter, sortFilter].forEach((input) => {
+    if (!input) return;
 
-  if (searchBtn) searchBtn.addEventListener("click", applyFilters);
-  if (applyFiltersBtn) applyFiltersBtn.addEventListener("click", applyFilters);
+    input.addEventListener("input", debounce(applyFilters, 220));
+    input.addEventListener("change", applyFilters);
+  });
+
   if (clearFiltersBtn) clearFiltersBtn.addEventListener("click", clearFilters);
   if (emptyClearBtn) emptyClearBtn.addEventListener("click", clearFilters);
-
-  if (keywordInput) {
-    keywordInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") applyFilters();
-    });
-
-    keywordInput.addEventListener("input", debounce(applyFilters, 250));
-  }
-
-  [tradeFilter, cityFilter, experienceFilter, availabilityFilter, certificationFilter, sortFilter].forEach((input) => {
-    if (input) input.addEventListener("change", applyFilters);
-  });
+  if (upgradeAccessBtn) upgradeAccessBtn.addEventListener("click", showUpgradeComingSoon);
 
   if (closePanelBtn) closePanelBtn.addEventListener("click", closeCandidatePanel);
   if (panelOverlay) panelOverlay.addEventListener("click", closeCandidatePanel);
@@ -102,19 +104,46 @@ async function requireEmployerLogin() {
     .maybeSingle();
 
   if (profile?.role && profile.role !== "employer") {
-    window.location.href = "../candidate/candidate-dashboard.html";
+    window.location.href = "../candidates/candidate-dashboard.html";
     return null;
   }
 
   return user;
 }
 
+async function loadEmployerAccess(userId) {
+  const freeAccess = {
+    subscription_status: "free",
+    subscription_plan: "",
+    candidate_access: false
+  };
+
+  try {
+    const { data, error } = await employerSupabase
+      .from("employer_profiles")
+      .select("subscription_status, candidate_access, subscription_plan, subscription_started_at")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (data) return { ...freeAccess, ...data };
+  } catch (error) {
+    console.warn("Employer subscription fields unavailable; defaulting candidate access to free.", error);
+    return freeAccess;
+  }
+
+  return freeAccess;
+}
+
 async function loadCandidates() {
   resultsText.textContent = "Loading candidates...";
 
+  const paidColumns = "*";
+  const previewColumns = "id, trade, location, experience, availability, skills, certifications, created_at, profile_visible";
+
   const { data: candidates, error } = await employerSupabase
     .from("candidate_profiles")
-    .select("*")
+    .select(hasCandidateAccess ? paidColumns : previewColumns)
     .eq("profile_visible", true)
     .order("created_at", { ascending: false });
 
@@ -144,15 +173,14 @@ function applyFilters() {
 
   filteredCandidates = loadedCandidates.filter((candidate) => {
     const searchable = clean([
-      candidate.full_name,
+      hasCandidateAccess ? candidate.full_name : "",
       candidate.trade,
       candidate.location,
       candidate.experience,
       candidate.availability,
-      candidate.bio,
+      hasCandidateAccess ? candidate.bio : "",
       candidate.skills,
-      candidate.certifications,
-      candidate.contact_method
+      candidate.certifications
     ].join(" "));
 
     const matchesKeyword = !keyword || searchable.includes(keyword);
@@ -160,7 +188,10 @@ function applyFilters() {
     const matchesCity = !city || clean(candidate.location).includes(city);
     const matchesExperience = !experience || clean(candidate.experience).includes(experience);
     const matchesAvailability = !availability || clean(candidate.availability).includes(availability);
-    const matchesCertification = !certification || clean(candidate.certifications).includes(certification);
+    const matchesCertification =
+      !certification ||
+      clean(candidate.certifications).includes(certification) ||
+      clean(candidate.skills).includes(certification);
 
     return (
       matchesKeyword &&
@@ -175,15 +206,16 @@ function applyFilters() {
   sortCandidates();
   renderCandidates();
   updateStats();
+  updateActiveFilterText();
 }
 
 function sortCandidates() {
   const sort = sortFilter.value;
 
   filteredCandidates.sort((a, b) => {
-    if (sort === "name") return clean(a.full_name).localeCompare(clean(b.full_name));
-    if (sort === "trade") return clean(a.trade).localeCompare(clean(b.trade));
-    if (sort === "location") return clean(a.location).localeCompare(clean(b.location));
+    if (sort === "experience") return getExperienceYears(b.experience) - getExperienceYears(a.experience);
+    if (sort === "availability") return getAvailabilityRank(a.availability) - getAvailabilityRank(b.availability);
+    if (sort === "match") return getMatchScore(b) - getMatchScore(a);
 
     return new Date(b.created_at || 0) - new Date(a.created_at || 0);
   });
@@ -195,131 +227,204 @@ function renderCandidates() {
   if (!filteredCandidates.length) {
     emptyState.classList.remove("hidden");
     resultsText.textContent = "No candidates match your current search.";
+    selectedCandidateId = null;
+    renderDetailEmpty();
     return;
   }
 
   emptyState.classList.add("hidden");
   resultsText.textContent = `${filteredCandidates.length} candidate${filteredCandidates.length === 1 ? "" : "s"} found`;
 
-  filteredCandidates.forEach((candidate) => {
-    candidatesGrid.appendChild(createCandidateCard(candidate));
+  if (selectedCandidateId && !filteredCandidates.some((candidate) => String(candidate.id) === String(selectedCandidateId))) {
+    selectedCandidateId = null;
+  }
+
+  filteredCandidates.forEach((candidate, index) => {
+    candidatesGrid.appendChild(createCandidateRow(candidate, index));
   });
 }
 
-function createCandidateCard(candidate) {
-  const card = document.createElement("article");
-  card.className = "candidate-card";
+function createCandidateRow(candidate, index) {
+  const row = document.createElement("article");
 
   const id = String(candidate.id);
-  const name = candidate.full_name || "Unnamed Candidate";
-  const trade = candidate.trade || "No trade added";
-  const location = candidate.location || "Location not added";
-  const experience = candidate.experience || "Experience not added";
-  const availability = candidate.availability || "Availability not added";
-  const bio = candidate.bio || "No bio added yet.";
+  const isSelected = String(selectedCandidateId) === id;
+  const name = hasCandidateAccess ? cleanFallback(candidate.full_name, "Candidate") : getPreviewName(index);
+  const trade = cleanFallback(candidate.trade, "Trade not listed");
+  const location = cleanFallback(candidate.location, "Location not listed");
+  const experience = cleanFallback(candidate.experience, "Experience not listed");
+  const availability = cleanFallback(candidate.availability, "Availability not listed");
   const tags = getCandidateTags(candidate);
   const isSaved = savedCandidates.has(id);
 
-  card.innerHTML = `
-    <div class="candidate-top">
-      <img src="${escapeAttribute(candidate.profile_photo_url || "https://placehold.co/120x120?text=PT")}" class="avatar" alt="Candidate photo" />
+  row.className = `candidate-row${hasCandidateAccess ? "" : " locked"}${isSelected ? " active" : ""}`;
+  row.dataset.id = id;
+
+  row.innerHTML = `
+    <div class="candidate-identity">
+      <div class="avatar">
+        ${
+          candidate.profile_photo_url
+            ? `<img src="${escapeAttribute(candidate.profile_photo_url)}" alt="Candidate photo">`
+            : `${escapeHTML(getInitials(name))}`
+        }
+      </div>
 
       <div>
-        <h3>${escapeHTML(name)}</h3>
-        <p>${escapeHTML(trade)}</p>
+        <h3 class="candidate-name">${escapeHTML(name)}</h3>
+        <p class="candidate-title">${escapeHTML(trade)}</p>
+        <p class="candidate-meta sensitive">${escapeHTML(location)}</p>
       </div>
     </div>
 
-    <div class="candidate-info">
-      <span>${escapeHTML(location)}</span>
-      <span>${escapeHTML(experience)}</span>
-      <span>${escapeHTML(availability)}</span>
+    <div class="candidate-cell experience-cell">
+      <strong>${escapeHTML(experience)}</strong>
     </div>
 
-    <p class="candidate-bio">${escapeHTML(truncateText(bio, 115))}</p>
-
-    <div class="tag-row">
-      ${tags.map((tag) => `<span>${escapeHTML(tag)}</span>`).join("")}
+    <div class="candidate-cell">
+      <strong>${escapeHTML(availability)}</strong>
     </div>
 
-    <div class="card-actions">
-      <button type="button" class="view-btn" data-action="view" data-id="${escapeAttribute(id)}">View Profile</button>
-      <button type="button" class="save-btn ${isSaved ? "saved" : ""}" data-action="save" data-id="${escapeAttribute(id)}">
-        ${isSaved ? "Saved" : "Save"}
-      </button>
+    <div>
+      <div class="tag-row">
+        ${tags.length ? tags.map((tag) => `<span>${escapeHTML(tag)}</span>`).join("") : `<span>Skills not listed</span>`}
+      </div>
+    </div>
+
+    <div class="row-status">
+      ${isSaved ? `<span class="saved-pill">Saved</span>` : ""}
+      ${hasCandidateAccess ? "" : `<span class="locked-pill">Unlock</span>`}
+      <button type="button" class="row-chevron" data-action="view" data-id="${escapeAttribute(id)}" aria-label="View candidate">&gt;</button>
     </div>
   `;
 
-  card.addEventListener("click", (event) => {
-    const button = event.target.closest("button");
+  row.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-action]");
+    const action = button?.dataset.action;
 
-    if (button?.dataset.action === "save") {
+    selectedCandidateId = id;
+    renderCandidates();
+
+    if (action === "save") {
       event.stopPropagation();
       toggleSaveCandidate(candidate);
       return;
     }
 
-    openCandidatePanel(candidate);
+    if (action === "message") {
+      event.stopPropagation();
+      startMessageWithCandidate(candidate);
+      return;
+    }
+
+    openCandidatePanel();
   });
 
-  return card;
+  return row;
 }
 
-function openCandidatePanel(candidate) {
-  const tags = getCandidateTags(candidate);
+function renderSelectedCandidateDetail() {
+  const selected = filteredCandidates.find((candidate) => String(candidate.id) === String(selectedCandidateId));
+
+  if (!selected) {
+    renderDetailEmpty();
+    return;
+  }
+
+  if (!hasCandidateAccess) {
+    renderLockedDetail();
+    return;
+  }
+
+  renderCandidateDetail(selected);
+}
+
+function renderCandidateDetail(candidate) {
+  const skills = getSplitValues(candidate.skills);
+  const certifications = getSplitValues(candidate.certifications);
+  const isSaved = savedCandidates.has(String(candidate.id));
 
   candidateDetailContent.innerHTML = `
-    <img src="${escapeAttribute(candidate.profile_photo_url || "https://placehold.co/160x160?text=PT")}" class="detail-photo" alt="Candidate photo" />
-
-    <h2 class="detail-name">${escapeHTML(candidate.full_name || "Unnamed Candidate")}</h2>
-    <div class="detail-trade">${escapeHTML(candidate.trade || "No trade added")}</div>
-
-    <p class="detail-bio">${escapeHTML(candidate.bio || "No bio added yet.")}</p>
-
-    <div class="detail-info-grid">
-      <div class="detail-item">
-        <span>Location</span>
-        <strong>${escapeHTML(candidate.location || "Not added")}</strong>
+    <div class="detail-head">
+      <div class="avatar large">
+        ${
+          candidate.profile_photo_url
+            ? `<img src="${escapeAttribute(candidate.profile_photo_url)}" alt="Candidate photo">`
+            : `${escapeHTML(getInitials(candidate.full_name))}`
+        }
       </div>
 
-      <div class="detail-item">
-        <span>Experience</span>
-        <strong>${escapeHTML(candidate.experience || "Not added")}</strong>
+      <div>
+        <h2 class="detail-name">${escapeHTML(cleanFallback(candidate.full_name, "Candidate"))}</h2>
+        <div class="detail-trade">${escapeHTML(cleanFallback(candidate.trade, "Trade not listed"))}</div>
       </div>
+    </div>
 
-      <div class="detail-item">
-        <span>Availability</span>
-        <strong>${escapeHTML(candidate.availability || "Not added")}</strong>
-      </div>
+    <div class="detail-quick-meta">
+      <span class="tag-row"><span>${escapeHTML(cleanFallback(candidate.location, "Location not listed"))}</span></span>
+      <span class="tag-row"><span>${escapeHTML(cleanFallback(candidate.availability, "Availability not listed"))}</span></span>
+      <span class="tag-row"><span>${escapeHTML(cleanFallback(candidate.experience, "Experience not listed"))}</span></span>
+    </div>
 
-      <div class="detail-item">
-        <span>Preferred Contact</span>
-        <strong>${escapeHTML(candidate.contact_method || "Not added")}</strong>
-      </div>
+    <p class="detail-bio">${escapeHTML(cleanFallback(candidate.bio, "Profile summary not listed."))}</p>
 
-      <div class="detail-item">
-        <span>Email</span>
-        <strong>${escapeHTML(candidate.email || "Locked / not added")}</strong>
-      </div>
+    <div class="detail-section">
+      <h3>Profile details</h3>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span>Location</span>
+          <strong>${escapeHTML(cleanFallback(candidate.location, "Location not listed"))}</strong>
+        </div>
 
-      <div class="detail-item">
-        <span>Phone</span>
-        <strong>${escapeHTML(candidate.phone || "Locked / not added")}</strong>
+        <div class="detail-item">
+          <span>Experience</span>
+          <strong>${escapeHTML(cleanFallback(candidate.experience, "Experience not listed"))}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Availability</span>
+          <strong>${escapeHTML(cleanFallback(candidate.availability, "Availability not listed"))}</strong>
+        </div>
       </div>
     </div>
 
     <div class="detail-section">
-      <h4>Skills & Certifications</h4>
-      <div class="tag-row">
-        ${tags.map((tag) => `<span>${escapeHTML(tag)}</span>`).join("")}
+      <h3>Contact</h3>
+      <div class="contact-grid">
+        <div class="detail-item">
+          <span>Preferred Contact</span>
+          <strong>${escapeHTML(cleanFallback(candidate.contact_method, "Contact method not listed"))}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Email</span>
+          <strong>${escapeHTML(cleanFallback(candidate.email, "Email not listed"))}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Phone</span>
+          <strong>${escapeHTML(cleanFallback(candidate.phone, "Phone not listed"))}</strong>
+        </div>
       </div>
     </div>
 
-    <div class="card-actions">
-      <button type="button" class="view-btn" id="messageCandidateBtn">Message Candidate</button>
-      <button type="button" class="save-btn ${savedCandidates.has(String(candidate.id)) ? "saved" : ""}" id="detailSaveBtn">
-        ${savedCandidates.has(String(candidate.id)) ? "Saved" : "Save Candidate"}
-      </button>
+    <div class="detail-section">
+      <h3>Skills</h3>
+      <div class="tag-row">
+        ${skills.length ? skills.map((tag) => `<span>${escapeHTML(tag)}</span>`).join("") : `<span>Skills not listed</span>`}
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h3>Certifications</h3>
+      <div class="tag-row">
+        ${certifications.length ? certifications.map((tag) => `<span>${escapeHTML(tag)}</span>`).join("") : `<span>Certifications not listed</span>`}
+      </div>
+    </div>
+
+    <div class="detail-actions">
+      <button type="button" class="row-action ${isSaved ? "saved" : ""}" id="detailSaveBtn">${isSaved ? "Saved" : "Save Candidate"}</button>
+      <button type="button" class="row-action primary" id="detailMessageBtn">Message Candidate</button>
     </div>
   `;
 
@@ -327,36 +432,104 @@ function openCandidatePanel(candidate) {
     toggleSaveCandidate(candidate);
   });
 
-// Message Button \/\/ //
+  document.getElementById("detailMessageBtn").addEventListener("click", () => {
+    startMessageWithCandidate(candidate);
+  });
 
-  document.getElementById("messageCandidateBtn").addEventListener("click", async () => {
-  const {
-    data: { user },
-    error: userError
-  } = await employerSupabase.auth.getUser();
+  candidateDetailPanel.setAttribute("aria-hidden", "false");
+  candidateDetailPanel.classList.add("open");
+  panelOverlay.classList.add("open");
+}
 
-  if (userError || !user) {
-    window.location.href = "employer-login.html";
+function renderLockedDetail() {
+  candidateDetailContent.innerHTML = `
+    <div class="locked-detail-card">
+      <div class="empty-icon">PT</div>
+      <h3>Unlock Candidate Network</h3>
+      <p>Search verified trades candidates, view full profiles, save talent, and message candidates.</p>
+      <div class="detail-actions">
+        <button type="button" class="row-action primary" id="detailUpgradeBtn">Upgrade Access</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("detailUpgradeBtn").addEventListener("click", showUpgradeComingSoon);
+  candidateDetailPanel.setAttribute("aria-hidden", "false");
+  candidateDetailPanel.classList.add("open");
+  panelOverlay.classList.add("open");
+}
+
+function renderDetailEmpty() {
+  candidateDetailContent.innerHTML = `
+    <div class="empty-detail-card">
+      <div class="empty-icon">PT</div>
+      <h3>Select a candidate to view profile details</h3>
+      <p>Profile details, skills, certifications, and contact options will appear here after you choose someone from the list.</p>
+    </div>
+  `;
+}
+
+function openCandidatePanel() {
+  renderSelectedCandidateDetail();
+}
+
+function closeCandidatePanel() {
+  candidateDetailPanel.classList.remove("open");
+  candidateDetailPanel.setAttribute("aria-hidden", "true");
+  panelOverlay.classList.remove("open");
+}
+
+function toggleSaveCandidate(candidate) {
+  if (!hasCandidateAccess) {
+    showUpgradeComingSoon();
     return;
   }
 
-  const candidateId = candidate.id;
+  const id = String(candidate.id);
+  const savedDates = getSavedDates();
 
-  const { data: employerProfile } = await employerSupabase
-  .from("employer_profiles")
-  .select("company_name")
-  .eq("user_id", user.id)
-  .maybeSingle();
+  if (savedCandidates.has(id)) {
+    savedCandidates.delete(id);
+    delete savedDates[id];
+    showToast("Candidate removed from saved talent.");
+  } else {
+    savedCandidates.add(id);
+    savedDates[id] = new Date().toISOString();
+    showToast("Candidate saved.");
+  }
+
+  localStorage.setItem("placelySavedCandidates", JSON.stringify([...savedCandidates]));
+  localStorage.setItem("placelySavedCandidateDates", JSON.stringify(savedDates));
+
+  renderCandidates();
+  updateStats();
+
+  if (candidateDetailPanel.classList.contains("open")) {
+    renderSelectedCandidateDetail();
+  }
+}
+
+async function startMessageWithCandidate(candidate) {
+  if (!hasCandidateAccess) {
+    showUpgradeComingSoon();
+    return;
+  }
+
+  if (!currentUser) return;
+
+  const candidateId = candidate.id;
+  const employerName = await getEmployerName(currentUser.id);
 
   let { data: existingConversation, error: findError } = await employerSupabase
     .from("conversations")
     .select("*")
-    .eq("employer_id", user.id)
+    .eq("employer_id", currentUser.id)
     .eq("candidate_id", candidateId)
     .maybeSingle();
 
   if (findError) {
     console.error("Find conversation error:", findError);
+    showToast("Could not open conversation.");
     return;
   }
 
@@ -365,12 +538,12 @@ function openCandidatePanel(candidate) {
       .from("conversations")
       .insert([
         {
-          employer_id: user.id,
-          employer_name: employerProfile?.company_name || "Employer",
+          employer_id: currentUser.id,
+          employer_name: employerName,
           candidate_id: candidateId,
-          candidate_name: candidate.full_name || "Unnamed Candidate",
-          candidate_role: candidate.trade || "No trade added",
-          candidate_location: candidate.location || "Location not added",
+          candidate_name: candidate.full_name || "Candidate",
+          candidate_role: candidate.trade || "Trade not listed",
+          candidate_location: candidate.location || "Location not listed",
           candidate_initials: getInitials(candidate.full_name)
         }
       ])
@@ -379,6 +552,7 @@ function openCandidatePanel(candidate) {
 
     if (createError) {
       console.error("Create conversation error:", createError);
+      showToast("Could not start conversation.");
       return;
     }
 
@@ -386,36 +560,16 @@ function openCandidatePanel(candidate) {
   }
 
   window.location.href = `employer-messages.html?conversation=${existingConversation.id}`;
-});
-
-
-
-  candidateDetailPanel.classList.add("open");
-  panelOverlay.classList.add("open");
 }
 
-function closeCandidatePanel() {
-  candidateDetailPanel.classList.remove("open");
-  panelOverlay.classList.remove("open");
-}
+async function getEmployerName(userId) {
+  const { data: profileById } = await employerSupabase
+    .from("employer_profiles")
+    .select("company_name")
+    .eq("id", userId)
+    .maybeSingle();
 
-function toggleSaveCandidate(candidate) {
-  const id = String(candidate.id);
-
-  if (savedCandidates.has(id)) {
-    savedCandidates.delete(id);
-  } else {
-    savedCandidates.add(id);
-  }
-
-  localStorage.setItem("placelySavedCandidates", JSON.stringify([...savedCandidates]));
-
-  renderCandidates();
-  updateStats();
-
-  if (candidateDetailPanel.classList.contains("open")) {
-    openCandidatePanel(candidate);
-  }
+  return profileById?.company_name || "Employer";
 }
 
 function loadSavedCandidates() {
@@ -441,6 +595,7 @@ function clearFilters() {
   sortCandidates();
   renderCandidates();
   updateStats();
+  updateActiveFilterText();
 }
 
 function updateStats() {
@@ -451,35 +606,135 @@ function updateStats() {
   fastStartCount.textContent = loadedCandidates.filter((candidate) => {
     return clean(candidate.availability).includes("immediately");
   }).length;
+
+  if (newThisWeekCount) {
+    newThisWeekCount.textContent = loadedCandidates.filter((candidate) => {
+      return isWithinLastDays(candidate.created_at, 7);
+    }).length;
+  }
+}
+
+function renderAccessState() {
+  if (hasCandidateAccess) {
+    upgradeBanner.classList.add("hidden");
+    accessStateText.textContent = "Full candidate access enabled";
+    return;
+  }
+
+  upgradeBanner.classList.remove("hidden");
+  accessStateText.textContent = "Locked preview: upgrade to view full profiles, save, or message";
+}
+
+function updateActiveFilterText() {
+  const active = [
+    keywordInput.value && "keyword",
+    cityFilter.value && "location",
+    tradeFilter.value && "trade",
+    experienceFilter.value && "experience",
+    availabilityFilter.value && "availability",
+    certificationFilter.value && "skills/certifications"
+  ].filter(Boolean);
+
+  activeFilterText.textContent = active.length
+    ? `${active.length} filter${active.length === 1 ? "" : "s"} applied`
+    : "No filters applied";
+}
+
+function showUpgradeComingSoon() {
+  // TODO: Replace this placeholder with Stripe checkout or a hosted billing flow.
+  showToast("Billing is coming soon. Candidate Network access will unlock full profiles, saving, and messaging.");
 }
 
 function getCandidateTags(candidate) {
-  const tags = [];
+  return [...getSplitValues(candidate.skills), ...getSplitValues(candidate.certifications)].slice(0, 2);
+}
 
-  if (candidate.certifications) {
-    tags.push(...String(candidate.certifications).split(","));
-  }
-
-  if (candidate.skills) {
-    tags.push(...String(candidate.skills).split(","));
-  }
-
-  return tags
+function getSplitValues(value) {
+  return String(value || "")
+    .split(",")
     .map((tag) => tag.trim())
-    .filter(Boolean)
-    .slice(0, 5);
+    .filter(Boolean);
+}
+
+function hasUnlockedCandidateAccess(profile) {
+  return isTruthy(profile?.candidate_access) || clean(profile?.subscription_status) === "active";
+}
+
+function isTruthy(value) {
+  if (value === true) return true;
+  return ["true", "1", "yes", "active"].includes(clean(value));
+}
+
+function isWithinLastDays(value, days) {
+  if (!value) return false;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return false;
+  return Date.now() - date.getTime() <= days * 24 * 60 * 60 * 1000;
+}
+
+function getExperienceYears(value) {
+  const text = clean(value);
+  if (text.includes("10")) return 10;
+
+  const match = text.match(/\d+/);
+  return match ? Number(match[0]) : 0;
+}
+
+function getAvailabilityRank(value) {
+  const text = clean(value);
+  if (text.includes("immediately")) return 0;
+  if (text.includes("1 week")) return 1;
+  if (text.includes("2 week")) return 2;
+  if (text.includes("month")) return 3;
+  if (text.includes("employed")) return 4;
+  return 5;
+}
+
+function getMatchScore(candidate) {
+  const keyword = clean(keywordInput.value);
+  const trade = clean(tradeFilter.value);
+  const city = clean(cityFilter.value);
+  const availability = clean(availabilityFilter.value);
+  const certification = clean(certificationFilter.value);
+  const searchable = clean([
+    candidate.full_name,
+    candidate.trade,
+    candidate.location,
+    candidate.experience,
+    candidate.availability,
+    candidate.bio,
+    candidate.skills,
+    candidate.certifications
+  ].join(" "));
+
+  return [
+    keyword && searchable.includes(keyword),
+    trade && clean(candidate.trade).includes(trade),
+    city && clean(candidate.location).includes(city),
+    availability && clean(candidate.availability).includes(availability),
+    certification && searchable.includes(certification)
+  ].filter(Boolean).length;
+}
+
+function getPreviewName(index) {
+  return `Candidate ${String(index + 1).padStart(2, "0")}`;
+}
+
+function getSavedDates() {
+  try {
+    return JSON.parse(localStorage.getItem("placelySavedCandidateDates")) || {};
+  } catch {
+    return {};
+  }
+}
+
+function cleanFallback(value, fallback) {
+  const text = String(value || "").trim();
+  return text || fallback;
 }
 
 function clean(value) {
   return String(value || "").toLowerCase().trim();
-}
-
-function truncateText(text, limit) {
-  const value = String(text || "");
-
-  if (value.length <= limit) return value;
-
-  return `${value.slice(0, limit).trim()}...`;
 }
 
 function debounce(callback, delay) {
@@ -504,6 +759,8 @@ function getInitials(name) {
   return String(name || "PT")
     .trim()
     .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
     .map((part) => part[0])
     .join("")
     .slice(0, 2)
@@ -513,3 +770,24 @@ function getInitials(name) {
 function escapeAttribute(value) {
   return escapeHTML(value).replaceAll("`", "&#096;");
 }
+
+function showToast(message) {
+  const toast = document.getElementById("toast");
+
+  if (!toast) {
+    alert(message);
+    return;
+  }
+
+  toast.textContent = message;
+  toast.classList.add("show");
+
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 2600);
+}
+
+// TODO: Enforce Candidate Network access in Supabase RLS or RPC before returning
+// full candidate profile and contact columns. This frontend gate prevents unpaid
+// employers from requesting contact fields now, but server-side authorization
+// should be the source of truth before billing launches.
