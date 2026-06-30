@@ -35,6 +35,7 @@ let conversationsData = [];
 let activeConversationId = null;
 let activeRealtimeChannel = null;
 let currentUser = null;
+let refreshTimer = null;
 
 document.addEventListener("DOMContentLoaded", initMessages);
 
@@ -54,6 +55,7 @@ async function initMessages() {
   }
 
   setupEvents();
+  startConversationPolling();
 }
 
 async function setupAuth() {
@@ -114,18 +116,18 @@ async function handlePendingSavedTalentMessage() {
     candidate.name ||
     candidate.full_name ||
     candidate.fullName ||
-    "Unnamed Candidate";
+    "Candidate";
 
   const candidateRole =
     candidate.trade ||
     candidate.role ||
     candidate.candidate_role ||
-    "No trade added";
+    "Trade not listed";
 
   const candidateLocation =
     candidate.location ||
     candidate.candidate_location ||
-    "Location not added";
+    "Location not listed";
 
   const { data: newConversation, error: createError } =
     await employerMessagesSupabase
@@ -181,25 +183,31 @@ async function loadConversations() {
         .eq("id", conversation.candidate_id)
         .maybeSingle();
 
+      const latest = await getLatestMessage(conversation.id);
+
       return {
         id: conversation.id,
         candidateId: conversation.candidate_id,
-        name: conversation.candidate_name || "Unnamed Candidate",
+        name: conversation.candidate_name || "Candidate",
         initials:
           conversation.candidate_initials ||
           getInitials(conversation.candidate_name),
-        role: conversation.candidate_role || "No trade added",
-        location: conversation.candidate_location || "Location not added",
+        role: conversation.candidate_role || "Trade not listed",
+        location: conversation.candidate_location || "Location not listed",
         photoUrl: candidateProfile?.profile_photo_url || "",
         time: "New",
         source: conversation.source || "Candidate Profile",
         status: conversation.status || "Active",
         response: conversation.response || "New",
+        latestMessage: latest?.message || "",
+        latestAt: latest?.created_at || conversation.created_at,
         nextStep: "Send a first message",
         nextText: "Start the conversation with this candidate."
       };
     })
   );
+
+  conversationsData.sort(sortByLatestActivity);
 
   const requestedExists = conversationsData.some(
     (conversation) => conversation.id === requestedConversationId
@@ -255,7 +263,16 @@ function setupEvents() {
         return;
       }
 
-      const { error } = await employerMessagesSupabase.from("messages").insert([
+      const optimisticMessage = {
+        sender_type: "employer",
+        message: text,
+        created_at: new Date().toISOString()
+      };
+
+      appendMessageBubble(optimisticMessage);
+      messageInput.value = "";
+
+      const { data: sentMessage, error } = await employerMessagesSupabase.from("messages").insert([
         {
           conversation_id: activeConversationId,
           sender_type: "employer",
@@ -265,19 +282,20 @@ function setupEvents() {
           candidate_name: conversation.name,
           candidate_role: conversation.role
         }
-      ]);
+      ]).select().single();
 
       if (error) {
         console.error("Message send error:", error);
         alert("Message failed to send. Check the console.");
+        await openConversation(activeConversationId);
         return;
       }
 
-      messageInput.value = "";
-
-      conversation.time = "Now";
+      conversation.latestMessage = sentMessage?.message || text;
+      conversation.latestAt = sentMessage?.created_at || optimisticMessage.created_at;
+      conversationsData.sort(sortByLatestActivity);
       renderConversationList(conversationsData);
-      await openConversation(activeConversationId);
+      await refreshActiveConversation();
     });
   }
 
@@ -339,8 +357,6 @@ async function renderConversationList(list) {
   }
 
   for (const conversation of list) {
-    const latestMessage = await getLatestMessage(conversation.id);
-
     const row = document.createElement("div");
     row.className = `conversation ${
       conversation.id === activeConversationId ? "active" : ""
@@ -359,11 +375,11 @@ async function renderConversationList(list) {
         <div class="conversation-top">
           <h3>${escapeHTML(conversation.name)}</h3>
           <span>${escapeHTML(
-            formatConversationTime(latestMessage?.created_at, conversation.time)
+            formatConversationTime(conversation.latestAt, conversation.time)
           )}</span>
         </div>
 
-        <p>${escapeHTML(latestMessage?.message || "No messages yet.")}</p>
+        <p>${escapeHTML(conversation.latestMessage || "No messages yet.")}</p>
       </div>
     `;
 
@@ -473,6 +489,29 @@ async function openConversation(id) {
   subscribeToMessages(id);
 }
 
+function appendMessageBubble(message) {
+  if (!chatMessages) return;
+
+  const emptyMessage = chatMessages.querySelector(".empty-message");
+  if (emptyMessage) chatMessages.innerHTML = "";
+
+  const bubble = document.createElement("div");
+  bubble.className = `message ${message.sender_type === "employer" ? "sent" : "received"}`;
+  bubble.innerHTML = `
+    ${escapeHTML(message.message)}
+    <span>${formatMessageTime(message.created_at)}</span>
+  `;
+  chatMessages.appendChild(bubble);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+async function refreshActiveConversation() {
+  const currentId = activeConversationId;
+  await loadConversations();
+  renderConversationList(conversationsData);
+  if (currentId) await openConversation(currentId);
+}
+
 function showNoConversationState() {
   activeConversationId = null;
 
@@ -567,9 +606,7 @@ function subscribeToMessages(conversationId) {
         filter: `conversation_id=eq.${conversationId}`
       },
       async () => {
-        await loadConversations();
-        renderConversationList(conversationsData);
-        await openConversation(conversationId);
+        await refreshActiveConversation();
       }
     )
     .subscribe();

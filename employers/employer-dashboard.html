@@ -7,6 +7,8 @@
   <title>Employer Dashboard | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/employer-dashboard.css" />
+  <link rel="stylesheet" href="../css/employer-dashboard-candidate-access.css" />
+  <link rel="stylesheet" href="../css/employer-consistency.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
@@ -66,7 +68,7 @@
     <a href="employer-messages.html" class="metric-card">
       <span>Messages</span>
       <strong id="messagesCount">0</strong>
-      <p>Unread messages</p>
+      <p>Conversations</p>
     </a>
   </section>
 
@@ -100,7 +102,19 @@
             <strong id="interviewCount">0</strong>
             <span>Interview</span>
           </div>
+
+          <div>
+            <strong id="offerCount">0</strong>
+            <span>Offer</span>
+          </div>
+
+          <div>
+            <strong id="hiredCount">0</strong>
+            <span>Hired</span>
+          </div>
         </div>
+
+        <p class="pipeline-muted" id="rejectedCountText"></p>
 
         <div id="pipelineList" class="stack-list pipeline-list"></div>
       </section>
@@ -123,48 +137,30 @@
         <div class="panel-heading recruiter-heading">
           <div>
             <span class="eyebrow">CANDIDATE NETWORK</span>
-            <h2>Candidate network</h2>
-            <p>Preview skilled trades candidates, save strong matches, and unlock contact access when your team is ready.</p>
+            <h2 id="candidateAccessTitle">Unlock Candidate Network</h2>
+            <p id="candidateAccessCopy">Upgrade to search verified trades candidates, view full profiles, save talent, and message candidates.</p>
           </div>
 
-          <a href="hiring-requests.html" class="primary-btn recruiter-btn">Unlock Employer Access</a>
+          <a href="find-candidates.html" class="primary-btn recruiter-btn" id="candidateAccessCta">Upgrade Access</a>
         </div>
 
-        <div class="network-grid">
-          <div class="network-status">
-            <div>
-              <span>Preview mode</span>
-              <strong>Enabled</strong>
+        <div class="network-premium-card">
+          <div class="network-feature-grid" id="candidateAccessFeatures">
+            <div class="network-feature locked">
+              <span>Candidate database</span>
             </div>
 
-            <div>
-              <span>Contact details</span>
-              <strong class="locked-text">Locked</strong>
+            <div class="network-feature locked">
+              <span>Full profiles</span>
             </div>
 
-            <a href="find-candidates.html" class="secondary-btn full">Open Full Search</a>
+            <div class="network-feature locked">
+              <span>Contact + messaging</span>
+            </div>
           </div>
 
-          <form class="candidate-search-form" id="candidateSearchForm">
-            <input type="text" id="candidateKeyword" placeholder="Trade, skill, certification">
-            <input type="text" id="candidateLocation" placeholder="City or province">
-
-            <div class="search-bottom-row">
-              <select id="candidateExperience">
-                <option value="">Any experience</option>
-                <option value="entry">Entry level</option>
-                <option value="apprentice">Apprentice</option>
-                <option value="journeyman">Journeyman</option>
-                <option value="senior">Senior</option>
-              </select>
-
-              <button type="submit">Preview Matches</button>
-            </div>
-          </form>
-
-          <div id="candidatePreviewResults" class="candidate-preview-results" aria-live="polite">
-            <strong>Candidate preview</strong>
-            <p>Search to preview matching candidates and save strong profiles.</p>
+          <div class="network-actions">
+            <a href="find-candidates.html" class="secondary-btn" id="candidatePreviewCta">Preview Network</a>
           </div>
         </div>
       </section>
@@ -241,6 +237,7 @@
 <script src="../js/config.js"></script>
 <script src="../js/auth-guards.js"></script>
 <script src="../emp-js/employer-dashboard.js"></script>
+<script src="../emp-js/employer-dashboard-candidate-access.js"></script>
 
 </body>
 </html>

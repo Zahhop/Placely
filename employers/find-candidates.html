@@ -7,6 +7,7 @@
   <title>Find Candidates | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/find-candidates.css" />
+  <link rel="stylesheet" href="../css/employer-consistency.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
@@ -34,8 +35,8 @@
   <section class="hero-card">
     <div>
       <span class="eyebrow">CANDIDATE NETWORK</span>
-      <h1>Find qualified trades candidates</h1>
-      <p>Search your candidate network by trade, location, experience, availability, certifications, and keywords.</p>
+      <h1>Search verified trades talent.</h1>
+      <p>Filter visible candidate profiles by trade, location, experience, availability, certifications, and skills.</p>
     </div>
 
     <div class="hero-actions">
@@ -44,182 +45,131 @@
     </div>
   </section>
 
-  <section class="stats-grid">
-    <div class="stat-card">
-      <span>Visible candidates</span>
+  <section class="candidate-summary-strip" aria-label="Candidate network summary">
+    <button type="button" class="summary-pill active">
+      <span>All candidates</span>
       <strong id="totalCandidates">0</strong>
-      <p>Available in your network</p>
-    </div>
+    </button>
 
-    <div class="stat-card">
-      <span>Search results</span>
-      <strong id="resultCount">0</strong>
-      <p>Matching current filters</p>
-    </div>
-
-    <div class="stat-card">
-      <span>Saved talent</span>
-      <strong id="savedCount">0</strong>
-      <p>Shortlisted candidates</p>
-    </div>
-
-    <div class="stat-card">
-      <span>Fast starters</span>
+    <button type="button" class="summary-pill">
+      <span>Available now</span>
       <strong id="fastStartCount">0</strong>
-      <p>Available immediately</p>
+    </button>
+
+    <button type="button" class="summary-pill">
+      <span>Saved</span>
+      <strong id="savedCount">0</strong>
+    </button>
+
+    <button type="button" class="summary-pill">
+      <span>New this week</span>
+      <strong id="newThisWeekCount">0</strong>
+    </button>
+  </section>
+
+  <section class="upgrade-banner hidden" id="upgradeBanner">
+    <div>
+      <span class="eyebrow">PREMIUM ACCESS</span>
+      <h2>Unlock Candidate Network</h2>
+      <p>Search verified trades candidates, view full profiles, save talent, and message candidates.</p>
+    </div>
+
+    <div class="upgrade-actions">
+      <button type="button" class="primary-link button-link" id="upgradeAccessBtn">Upgrade Access</button>
+      <a href="employer-dashboard.html" class="secondary-link">Back to Dashboard</a>
     </div>
   </section>
 
-  <section class="content-layout">
-
-    <section class="main-panel">
-
-      <div class="search-card">
-        <div class="search-top">
-          <div>
-            <span class="eyebrow">SEARCH</span>
-            <h2>Candidate search</h2>
-          </div>
-
-          <button type="button" class="filter-toggle" id="filterBtn">Advanced Filters</button>
-        </div>
-
-        <div class="search-row">
-          <input id="keywordInput" type="text" placeholder="Search by name, trade, skill, certification, city, or keyword..." />
-          <button type="button" class="search-btn" id="searchBtn">Search</button>
-        </div>
-
-        <div class="filters-panel" id="filtersPanel">
-          <div class="filter-grid">
-
-            <div class="filter-group">
-              <label for="tradeFilter">Trade</label>
-              <select id="tradeFilter">
-                <option value="">Any trade</option>
-                <option value="electrical">Electrical</option>
-                <option value="electrician">Electrician</option>
-                <option value="welding">Welding</option>
-                <option value="welder">Welder</option>
-                <option value="plumbing">Plumbing</option>
-                <option value="hvac">HVAC</option>
-                <option value="construction">Construction</option>
-                <option value="labour">Labour</option>
-                <option value="oil">Oil & Gas</option>
-              </select>
-            </div>
-
-            <div class="filter-group">
-              <label for="cityFilter">City / Province</label>
-              <input id="cityFilter" type="text" placeholder="Calgary, Edmonton, Penticton..." />
-            </div>
-
-            <div class="filter-group">
-              <label for="experienceFilter">Experience</label>
-              <select id="experienceFilter">
-                <option value="">Any experience</option>
-                <option value="no experience">No experience</option>
-                <option value="0-1">0-1 years</option>
-                <option value="2-4">2-4 years</option>
-                <option value="5-10">5-10 years</option>
-                <option value="10+">10+ years</option>
-              </select>
-            </div>
-
-            <div class="filter-group">
-              <label for="availabilityFilter">Availability</label>
-              <select id="availabilityFilter">
-                <option value="">Any availability</option>
-                <option value="immediately">Available immediately</option>
-                <option value="1 week">Within 1 week</option>
-                <option value="2 weeks">Within 2 weeks</option>
-                <option value="1 month">Within 1 month</option>
-                <option value="employed">Currently employed</option>
-              </select>
-            </div>
-
-            <div class="filter-group">
-              <label for="certificationFilter">Certification</label>
-              <input id="certificationFilter" type="text" placeholder="CSTS, WHMIS, CWB, Fall Protection..." />
-            </div>
-
-            <div class="filter-group">
-              <label for="sortFilter">Sort by</label>
-              <select id="sortFilter">
-                <option value="newest">Newest profiles</option>
-                <option value="name">Name A-Z</option>
-                <option value="trade">Trade A-Z</option>
-                <option value="location">Location A-Z</option>
-              </select>
-            </div>
-
-          </div>
-
-          <div class="filter-actions">
-            <button type="button" class="clear-btn" id="clearFiltersBtn">Clear Filters</button>
-            <button type="button" class="apply-btn" id="applyFiltersBtn">Apply Filters</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="results-header">
-        <div>
-          <span class="eyebrow">RESULTS</span>
-          <h2>Candidate matches</h2>
-        </div>
+  <section class="candidate-database-panel">
+    <div class="panel-heading">
+      <div>
+        <span class="eyebrow">TALENT DATABASE</span>
+        <h2>Candidate search</h2>
         <p id="resultsText">Loading candidates...</p>
       </div>
 
-      <section class="candidate-grid" id="candidatesGrid"></section>
+      <button type="button" class="secondary-link button-link" id="clearFiltersBtn">Clear filters</button>
+    </div>
+
+    <div class="filter-bar" aria-label="Candidate filters">
+      <input id="keywordInput" type="text" placeholder="Search name, trade, skill, certification..." />
+      <input id="cityFilter" type="text" placeholder="Location" />
+
+      <select id="tradeFilter">
+        <option value="">Any trade</option>
+        <option value="electrical">Electrical</option>
+        <option value="electrician">Electrician</option>
+        <option value="welding">Welding</option>
+        <option value="welder">Welder</option>
+        <option value="plumbing">Plumbing</option>
+        <option value="hvac">HVAC</option>
+        <option value="construction">Construction</option>
+        <option value="labour">Labour</option>
+        <option value="oil">Oil & Gas</option>
+      </select>
+
+      <select id="experienceFilter">
+        <option value="">Any experience</option>
+        <option value="no experience">No experience</option>
+        <option value="0-1">0-1 years</option>
+        <option value="2-4">2-4 years</option>
+        <option value="5-10">5-10 years</option>
+        <option value="10+">10+ years</option>
+      </select>
+
+      <select id="availabilityFilter">
+        <option value="">Any availability</option>
+        <option value="immediately">Available immediately</option>
+        <option value="1 week">Within 1 week</option>
+        <option value="2 weeks">Within 2 weeks</option>
+        <option value="1 month">Within 1 month</option>
+        <option value="employed">Currently employed</option>
+      </select>
+
+      <input id="certificationFilter" type="text" placeholder="Certifications / skills" />
+
+      <select id="sortFilter">
+        <option value="newest">Newest</option>
+        <option value="experience">Most experienced</option>
+        <option value="availability">Availability</option>
+        <option value="match">Closest match</option>
+      </select>
+    </div>
+
+    <div class="candidate-results-panel">
+      <div class="results-meta">
+        <span id="accessStateText">Candidate access loading...</span>
+        <span><strong id="resultCount">0</strong> results</span>
+        <span id="activeFilterText">No filters applied</span>
+      </div>
+
+      <div class="candidate-list-head" aria-hidden="true">
+        <span>Candidate</span>
+        <span>Experience</span>
+        <span>Availability</span>
+        <span>Top skills</span>
+        <span></span>
+      </div>
+
+      <div class="candidate-list" id="candidatesGrid" aria-live="polite"></div>
 
       <div class="empty-state hidden" id="emptyState">
         <div class="empty-icon">PT</div>
         <h3>No candidates found</h3>
-        <p>Try clearing filters or searching a broader trade, city, or certification.</p>
-        <button type="button" id="emptyClearBtn">Clear Search</button>
+        <p>Try clearing filters or searching a broader trade, city, skill, or certification.</p>
+        <button type="button" id="emptyClearBtn">Clear search</button>
       </div>
-
-    </section>
-
-    <aside class="side-panel">
-      <div class="sidebar-card">
-        <span class="eyebrow">HIRING WORKFLOW</span>
-        <h3>Build a stronger shortlist</h3>
-        <p>Search broadly first, save strong candidates, then narrow by certifications, availability, and location when you are ready to contact.</p>
-
-        <div class="workflow-list">
-          <div>
-            <strong>1. Search network</strong>
-            <span>Find candidates by trade, skill, or city.</span>
-          </div>
-          <div>
-            <strong>2. Open profiles</strong>
-            <span>Review experience, bio, and certifications.</span>
-          </div>
-          <div>
-            <strong>3. Save matches</strong>
-            <span>Shortlist the best people for current or future jobs.</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="sidebar-card compact">
-        <span class="eyebrow">SHORTCUTS</span>
-        <a href="saved-talent.html">Review saved talent</a>
-        <a href="post-job.html">Create job post</a>
-        <a href="employer-dashboard.html">Back to dashboard</a>
-      </div>
-    </aside>
-
+    </div>
   </section>
 
 </main>
 
-<aside class="candidate-detail-panel" id="candidateDetailPanel">
-  <button class="close-panel-btn" id="closePanelBtn">×</button>
+<div class="panel-overlay" id="panelOverlay"></div>
+<aside class="candidate-detail-panel" id="candidateDetailPanel" aria-hidden="true">
+  <button class="close-panel-btn" id="closePanelBtn" aria-label="Close candidate profile">Close</button>
   <div id="candidateDetailContent"></div>
 </aside>
-
-<div class="panel-overlay" id="panelOverlay"></div>
+<div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/config.js"></script>

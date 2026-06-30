@@ -1,0 +1,89 @@
+* {
+  font-family: "Inter", sans-serif;
+}
+
+.hero-card,
+.conversations-panel,
+.chat-panel,
+.context-panel {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #dbe3ef;
+  border-radius: 24px;
+  box-shadow: 0 22px 55px rgba(15, 23, 42, 0.06);
+}
+
+.messages-layout {
+  gap: 18px;
+}
+
+.panel-header h2,
+.chat-header h2,
+.context-panel h2 {
+  font-size: 24px;
+  line-height: 1.12;
+}
+
+.chat-header,
+.panel-header {
+  gap: 16px;
+}
+
+.conversation {
+  border: 1px solid #dbe3ef;
+  border-radius: 16px;
+  background: #fff;
+  transition: 0.2s ease;
+}
+
+.conversation:hover,
+.conversation.active {
+  border-color: #bfdbfe;
+  background: #f8fbff;
+}
+
+.conversation-top h3 {
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.conversation-info p,
+.chat-header p,
+.context-card p,
+.context-list span {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.chat-input-area input,
+.conversation-search {
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.chat-input-area input:focus,
+.conversation-search:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.message {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.message span {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.context-card,
+.context-list div {
+  border-radius: 14px;
+  border: 1px solid #dbe3ef;
+  background: #f8fafc;
+}
