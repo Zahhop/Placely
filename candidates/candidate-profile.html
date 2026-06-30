@@ -7,6 +7,9 @@
   <title>Edit Profile | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/candidate-profile.css" />
+  <link rel="stylesheet" href="../css/candidate-header.css" />
+  <link rel="stylesheet" href="../css/candidate-preview.css" />
+  <link rel="stylesheet" href="../css/candidate-scale.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
@@ -21,9 +24,12 @@
   <nav>
     <a href="candidate-dashboard.html">Dashboard</a>
     <a href="../public/find-jobs.html?role=candidate">Find Jobs</a>
+    <a href="../public/saved-jobs.html">Saved Jobs</a>
     <a href="candidate-applications.html">Applications</a>
     <a href="candidate-messages.html">Messages</a>
-    <button class="nav-btn save-top-btn" type="button">Save Profile</button>
+    <a href="candidate-profile.html" class="active">Profile</a>
+    <a href="candidate-settings.html">Settings</a>
+    <button id="logoutBtn" class="nav-btn" type="button">Logout</button>
   </nav>
 </header>
 
@@ -123,7 +129,7 @@
             </div>
           </div>
 
-          <button type="button" class="secondary-btn">View Preview</button>
+          <button type="button" class="secondary-btn" id="viewPreviewBtn">View Preview</button>
         </div>
       </section>
 
@@ -285,7 +291,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/config.js"></script>
+<script src="../js/auth-guards.js"></script>
+<script src="../js/candidate-preview.js"></script>
 <script src="../js/candidate-profile.js"></script>
+<script src="../js/candidate-header.js"></script>
 
 </body>
 </html>

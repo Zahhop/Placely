@@ -11,13 +11,11 @@ let selectedJob = null;
 let currentUser = null;
 let savedJobIds = [];
 let employerLogos = {};
+let employerProfiles = {};
 
 const jobsList = document.getElementById("jobsList");
 const jobDetails = document.getElementById("jobDetails");
 const jobCount = document.getElementById("jobCount");
-const jobDetailsModal = document.getElementById("jobDetailsModal");
-const jobModalOverlay = document.getElementById("jobModalOverlay");
-const closeJobModalBtn = document.getElementById("closeJobModalBtn");
 
 const keywordInput = document.getElementById("keywordInput");
 const locationFilter = document.getElementById("locationFilter");
@@ -64,16 +62,12 @@ function normalizeJob(job) {
 }
 
 async function loadCurrentUser() {
-  const {
-    data: { user },
-    error
-  } = await jobsSupabase.auth.getUser();
+  const user = await verifyCandidateAccess(jobsSupabase, {
+    loginPath: "../candidates/candidate-login.html",
+    employerDashboardPath: "../employers/employer-dashboard.html"
+  });
 
-  if (error || !user) {
-    window.location.href = "../candidates/candidate-login.html";
-    return null;
-  }
-
+  if (!user) return null;
   currentUser = user;
   return user;
 }
@@ -115,14 +109,19 @@ async function loadEmployerLogos(jobs) {
   }
 
   employerLogos = {};
+  employerProfiles = {};
 
   (data || []).forEach((profile) => {
-    employerLogos[String(profile.id)] =
+    const logo =
       profile.company_logo_url ||
+      profile.company_photo_url ||
       profile.logo_url ||
       profile.company_logo ||
       profile.company_logo_preview ||
       "";
+
+    employerLogos[String(profile.id)] = logo;
+    employerProfiles[String(profile.id)] = profile;
   });
 }
 
@@ -163,7 +162,9 @@ async function loadJobs() {
     jobIdFromUrl &&
     filteredJobs.some((job) => String(job.id) === String(jobIdFromUrl))
   ) {
-    openJobDetails(jobIdFromUrl);
+    selectJob(jobIdFromUrl);
+  } else if (filteredJobs.length) {
+    selectJob(filteredJobs[0].id);
   }
 }
 
@@ -191,14 +192,17 @@ function renderJobs() {
         No jobs found. Try changing your search filters.
       </div>
     `;
-    renderEmptyDetails();
+    renderEmptyDetails(
+      "No jobs found",
+      "Try changing your search filters to see more open roles."
+    );
     return;
   }
 
   jobsList.innerHTML = filteredJobs.map(renderJobCard).join("");
 
   document.querySelectorAll(".job-card").forEach((card) => {
-    card.addEventListener("click", () => openJobDetails(card.dataset.jobId));
+    card.addEventListener("click", () => selectJob(card.dataset.jobId));
   });
 
   document.querySelectorAll(".save-job-btn").forEach((button) => {
@@ -211,7 +215,7 @@ function renderJobs() {
   document.querySelectorAll(".view-job-btn").forEach((button) => {
     button.addEventListener("click", (event) => {
       event.stopPropagation();
-      openJobDetails(button.dataset.jobId);
+      selectJob(button.dataset.jobId);
     });
   });
 
@@ -225,9 +229,10 @@ function renderJobs() {
 
 function renderJobCard(job) {
   const alreadySaved = savedJobIds.includes(String(job.id));
+  const isSelected = selectedJob && String(selectedJob.id) === String(job.id);
 
   return `
-    <article class="job-card" data-job-id="${escapeHTML(job.id)}">
+    <article class="job-card ${isSelected ? "selected" : ""}" data-job-id="${escapeHTML(job.id)}">
       <div class="job-card-top">
         ${renderCompanyAvatar(job)}
 
@@ -260,14 +265,20 @@ function renderJobCard(job) {
   `;
 }
 
-function openJobDetails(jobId) {
+function selectJob(jobId) {
   selectedJob = filteredJobs.find((job) => String(job.id) === String(jobId)) ||
     allJobs.find((job) => String(job.id) === String(jobId));
 
   if (!selectedJob) return;
 
+  updateSelectedCard();
   renderJobDetails();
-  openModal();
+}
+
+function updateSelectedCard() {
+  document.querySelectorAll(".job-card").forEach((card) => {
+    card.classList.toggle("selected", String(card.dataset.jobId) === String(selectedJob?.id));
+  });
 }
 
 function renderJobDetails() {
@@ -277,6 +288,13 @@ function renderJobDetails() {
   }
 
   const alreadySaved = savedJobIds.includes(String(selectedJob.id));
+  const employerProfile = employerProfiles[String(selectedJob.employer_id)] || {};
+  const companyInfo =
+    employerProfile.company_description ||
+    employerProfile.description ||
+    employerProfile.about ||
+    selectedJob.raw?.company_description ||
+    "Company information has not been added yet.";
 
   jobDetails.innerHTML = `
     <div class="job-detail-content">
@@ -340,6 +358,11 @@ function renderJobDetails() {
       </div>
 
       <div class="description-box">
+        <span class="small-label">Company Info</span>
+        <p>${escapeHTML(companyInfo)}</p>
+      </div>
+
+      <div class="description-box">
         <span class="small-label">Requirements</span>
         <p>${escapeHTML(selectedJob.requirements)}</p>
       </div>
@@ -361,28 +384,14 @@ function renderJobDetails() {
   document.getElementById("applyBtn").addEventListener("click", applyToSelectedJob);
 }
 
-function renderEmptyDetails() {
+function renderEmptyDetails(title = "No job selected", message = "Choose a role from the list to view company details, requirements, pay, and apply.") {
   jobDetails.innerHTML = `
     <div class="job-details-empty">
       <span class="small-label">Job Details</span>
-      <h2>Select a job</h2>
-      <p>Choose a role to view company details, requirements, pay, and apply.</p>
+      <h2>${escapeHTML(title)}</h2>
+      <p>${escapeHTML(message)}</p>
     </div>
   `;
-}
-
-function openModal() {
-  if (!jobDetailsModal) return;
-
-  jobDetailsModal.classList.add("open");
-  jobDetailsModal.setAttribute("aria-hidden", "false");
-}
-
-function closeModal() {
-  if (!jobDetailsModal) return;
-
-  jobDetailsModal.classList.remove("open");
-  jobDetailsModal.setAttribute("aria-hidden", "true");
 }
 
 function filterJobs() {
@@ -404,8 +413,11 @@ function filterJobs() {
     return matchesKeyword && matchesLocation && matchesType;
   });
 
-  selectedJob = null;
+  selectedJob = filteredJobs[0] || null;
   renderJobs();
+  if (selectedJob) {
+    renderJobDetails();
+  }
 }
 
 async function saveJob(jobId) {
@@ -507,13 +519,6 @@ searchBtn.addEventListener("click", filterJobs);
 
 keywordInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") filterJobs();
-});
-
-if (jobModalOverlay) jobModalOverlay.addEventListener("click", closeModal);
-if (closeJobModalBtn) closeJobModalBtn.addEventListener("click", closeModal);
-
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") closeModal();
 });
 
 function escapeHTML(value) {

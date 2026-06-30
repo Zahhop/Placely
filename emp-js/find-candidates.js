@@ -85,28 +85,10 @@ function setupEvents() {
 }
 
 async function requireEmployerLogin() {
-  const {
-    data: { user },
-    error
-  } = await employerSupabase.auth.getUser();
-
-  if (error || !user) {
-    window.location.href = "employer-login.html";
-    return null;
-  }
-
-  const { data: profile } = await employerSupabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (profile?.role && profile.role !== "employer") {
-    window.location.href = "../candidate/candidate-dashboard.html";
-    return null;
-  }
-
-  return user;
+  return verifyEmployerAccess(employerSupabase, {
+    loginPath: "employer-login.html",
+    candidateDashboardPath: "../candidates/candidate-dashboard.html"
+  });
 }
 
 async function loadCandidates() {

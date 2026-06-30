@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Account Settings | Placely Talent</title>
+
+  <link rel="stylesheet" href="../css/candidate-dashboard.css" />
+  <link rel="stylesheet" href="../css/candidate-settings.css" />
+  <link rel="stylesheet" href="../css/candidate-header.css" />
+  <link rel="stylesheet" href="../css/candidate-scale.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<header>
+  <div class="logo-wrapper">
+    <a href="candidate-dashboard.html" class="logo">PLACELY TALENT</a>
+    <div class="logo-subtitle">Talent Platform</div>
+  </div>
+
+  <nav>
+    <a href="candidate-dashboard.html">Dashboard</a>
+    <a href="../public/find-jobs.html?role=candidate">Find Jobs</a>
+    <a href="../public/saved-jobs.html">Saved Jobs</a>
+    <a href="candidate-applications.html">Applications</a>
+    <a href="candidate-messages.html">Messages</a>
+    <a href="candidate-profile.html">Profile</a>
+    <a href="candidate-settings.html" class="active">Settings</a>
+    <button id="logoutBtn" class="nav-btn" type="button">Logout</button>
+  </nav>
+</header>
+
+<main class="candidate-shell">
+
+  <section class="dashboard-intro">
+    <div>
+      <span class="eyebrow">Settings</span>
+      <h1>Account settings</h1>
+      <p>Manage your preferences, notifications, and account access.</p>
+    </div>
+
+    <div class="intro-actions">
+      <a href="candidate-profile.html" class="secondary-btn">Edit Profile</a>
+    </div>
+  </section>
+
+  <section class="settings-layout">
+    <section class="panel settings-panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Notifications</span>
+          <h2>Notification preferences</h2>
+        </div>
+      </div>
+
+      <div class="settings-list">
+        <label class="toggle-setting">
+          <span>Email me when an employer messages me</span>
+          <input id="notifyEmployerMessages" type="checkbox" checked />
+        </label>
+
+        <label class="toggle-setting">
+          <span>Email me when my application status changes</span>
+          <input id="notifyApplicationStatus" type="checkbox" checked />
+        </label>
+
+        <label class="toggle-setting">
+          <span>Email me about saved jobs and reminders</span>
+          <input id="notifySavedJobs" type="checkbox" checked />
+        </label>
+      </div>
+    </section>
+
+    <section class="panel settings-panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Account</span>
+          <h2>Account details</h2>
+        </div>
+      </div>
+
+      <div class="account-detail-grid">
+        <div>
+          <span>Name</span>
+          <strong id="settingsName">Loading...</strong>
+        </div>
+
+        <div>
+          <span>Email</span>
+          <strong id="settingsEmail">Loading...</strong>
+        </div>
+
+        <div>
+          <span>Profile Visibility</span>
+          <strong id="settingsVisibility">Loading...</strong>
+        </div>
+      </div>
+
+      <a href="candidate-profile.html" class="primary-btn settings-action">Edit Profile</a>
+    </section>
+
+    <section class="panel settings-panel danger-panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow danger-label">Danger Zone</span>
+          <h2>Delete profile</h2>
+        </div>
+      </div>
+
+      <p>
+        Deleting your profile permanently removes your candidate account, applications, saved jobs, messages, and profile information. This action cannot be undone.
+      </p>
+
+      <button id="deleteProfileBtn" type="button" class="danger-btn">Delete Profile</button>
+    </section>
+  </section>
+
+</main>
+
+<div id="deleteProfileModal" class="settings-modal" aria-hidden="true">
+  <div id="deleteProfileOverlay" class="settings-modal-overlay"></div>
+  <section class="settings-modal-panel" role="dialog" aria-modal="true" aria-labelledby="deleteProfileTitle">
+    <h2 id="deleteProfileTitle">Delete your profile?</h2>
+    <p>Are you sure you want to continue? This action cannot be undone.</p>
+
+    <label for="deleteConfirmInput">Type DELETE to confirm</label>
+    <input id="deleteConfirmInput" type="text" autocomplete="off" />
+
+    <div id="deleteModalMessage" class="modal-message"></div>
+
+    <div class="modal-actions">
+      <button id="cancelDeleteProfileBtn" type="button" class="secondary-btn">Cancel</button>
+      <button id="confirmDeleteProfileBtn" type="button" class="danger-btn" disabled>Permanently Delete Profile</button>
+    </div>
+  </section>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
+<script src="../js/auth-guards.js"></script>
+<script src="../js/candidate-settings.js"></script>
+<script src="../js/candidate-header.js"></script>
+
+</body>
+</html>

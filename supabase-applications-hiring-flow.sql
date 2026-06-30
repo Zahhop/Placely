@@ -7,7 +7,9 @@ create table if not exists public.applications (
   job_id uuid not null,
   candidate_id uuid not null,
   employer_id uuid not null,
-  status text not null default 'new',
+  status text not null default 'submitted',
+  candidate_status text,
+  employer_status text,
   cover_letter text,
   additional_notes text,
   candidate_snapshot jsonb,
@@ -28,10 +30,21 @@ create table if not exists public.applications (
   interview_date timestamptz,
   offer_sent_at timestamptz,
   hired_at timestamptz,
-  rejected_at timestamptz
+  rejected_at timestamptz,
+  withdrawn_at timestamptz,
+  reapplied_at timestamptz,
+  candidate_deleted_at timestamptz
 );
 
 alter table public.applications
+  add column if not exists status text not null default 'submitted';
+
+alter table public.applications
+  alter column status set default 'submitted';
+
+alter table public.applications
+  add column if not exists candidate_status text,
+  add column if not exists employer_status text,
   add column if not exists cover_letter text,
   add column if not exists additional_notes text,
   add column if not exists candidate_snapshot jsonb,
@@ -51,7 +64,14 @@ alter table public.applications
   add column if not exists interview_date timestamptz,
   add column if not exists offer_sent_at timestamptz,
   add column if not exists hired_at timestamptz,
-  add column if not exists rejected_at timestamptz;
+  add column if not exists rejected_at timestamptz,
+  add column if not exists withdrawn_at timestamptz,
+  add column if not exists reapplied_at timestamptz,
+  add column if not exists candidate_deleted_at timestamptz;
+
+alter table public.candidate_profiles
+  add column if not exists is_deleted boolean not null default false,
+  add column if not exists deleted_at timestamptz;
 
 create unique index if not exists applications_candidate_job_unique
   on public.applications (candidate_id, job_id);
@@ -64,7 +84,7 @@ alter table public.applications
 
 alter table public.applications
   add constraint applications_status_check
-  check (status in ('new', 'submitted', 'reviewing', 'interview', 'offer', 'hired', 'rejected', 'withdrawn'));
+  check (status in ('new', 'submitted', 'reviewing', 'interview', 'offer', 'hired', 'rejected', 'withdrawn', 'candidate_deleted'));
 
 alter table public.applications enable row level security;
 
@@ -96,5 +116,13 @@ create policy "Employers can update own applications"
   to authenticated
   using (employer_id = auth.uid())
   with check (employer_id = auth.uid());
+
+drop policy if exists "Candidates can update own applications" on public.applications;
+create policy "Candidates can update own applications"
+  on public.applications
+  for update
+  to authenticated
+  using (candidate_id = auth.uid())
+  with check (candidate_id = auth.uid());
 
 -- The application insert must copy employer_id from jobs.employer_id in client code.

@@ -34,14 +34,14 @@ let activeRealtimeChannel = null;
 document.addEventListener("DOMContentLoaded", initMessages);
 
 async function initMessages() {
-  const { data: { user }, error } = await candidateMessagesSupabase.auth.getUser();
+  const user = await verifyCandidateAccess(candidateMessagesSupabase, {
+    loginPath: "candidate-login.html",
+    employerDashboardPath: "../employers/employer-dashboard.html"
+  });
 
-  if (error || !user) {
-    window.location.href = "candidate-login.html";
-    return;
-  }
-
+  if (!user) return;
   currentUser = user;
+  activeConversationId = new URLSearchParams(window.location.search).get("conversation");
 
   setupEvents();
   await loadConversations();

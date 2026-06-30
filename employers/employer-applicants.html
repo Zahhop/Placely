@@ -79,6 +79,11 @@
       <span>Rejected</span>
       <strong id="rejectedApplicants">0</strong>
     </button>
+
+    <button type="button" class="pipeline-chip" data-status="withdrawn">
+      <span>Withdrawn</span>
+      <strong id="withdrawnApplicants">0</strong>
+    </button>
   </section>
 
   <section class="applicants-panel">
@@ -108,6 +113,7 @@
         <option value="offer">Offer</option>
         <option value="hired">Hired</option>
         <option value="rejected">Rejected</option>
+        <option value="withdrawn">Withdrawn</option>
       </select>
 
       <select id="sortFilter">
@@ -148,6 +154,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/config.js"></script>
+<script src="../js/auth-guards.js"></script>
 <script src="../emp-js/employer-applicants.js"></script>
 
 </body>

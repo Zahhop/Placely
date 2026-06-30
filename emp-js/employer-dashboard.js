@@ -84,6 +84,8 @@ function normalizeApplicationStatus(status) {
   if (["offer", "offered"].includes(value)) return "offer";
   if (["hired"].includes(value)) return "hired";
   if (["rejected", "declined"].includes(value)) return "rejected";
+  if (["withdrawn", "withdraw", "candidate_withdrew"].includes(value)) return "withdrawn";
+  if (["candidate_deleted", "candidate_profile_deleted", "deleted"].includes(value)) return "candidate_deleted";
 
   return "submitted";
 }
@@ -95,7 +97,9 @@ function getStatusLabel(status) {
     interview: "Interview",
     offer: "Offer",
     hired: "Hired",
-    rejected: "Rejected"
+    rejected: "Rejected",
+    withdrawn: "Candidate Withdrew Application",
+    candidate_deleted: "Candidate Profile Deleted"
   };
 
   return labels[status] || "New";
@@ -527,26 +531,13 @@ window.handleSavePreviewCandidate = handleSavePreviewCandidate;
 window.handleLogout = handleLogout;
 
 async function loadEmployerDashboard() {
-  const { data: { user }, error: userError } = await placelySupabase.auth.getUser();
+  const user = await verifyEmployerAccess(placelySupabase, {
+    loginPath: ROUTES.login,
+    candidateDashboardPath: "../candidates/candidate-dashboard.html"
+  });
 
-  if (userError || !user) {
-    window.location.href = ROUTES.login;
-    return;
-  }
-
+  if (!user) return;
   currentUser = user;
-
-  const { data: roleProfile, error: roleError } = await placelySupabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (roleError || !roleProfile || roleProfile.role !== "employer") {
-    await placelySupabase.auth.signOut();
-    window.location.href = ROUTES.login;
-    return;
-  }
 
   const { data: employerData, error: employerError } = await placelySupabase
     .from("employer_profiles")
@@ -556,15 +547,8 @@ async function loadEmployerDashboard() {
 
   if (employerError || !employerData) {
     console.error("Employer profile error:", employerError);
-
-    employerProfile = {
-      company_name: "Employer",
-      company_email: user.email,
-      industry: "Not completed",
-      company_logo_url: ""
-    };
-
-    showToast("Employer profile not completed yet.");
+    window.location.href = ROUTES.login;
+    return;
   } else {
     employerProfile = employerData;
   }

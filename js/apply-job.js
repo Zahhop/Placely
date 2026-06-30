@@ -12,6 +12,10 @@ const confirmInfo = document.getElementById("confirmInfo");
 const formMessage = document.getElementById("formMessage");
 const submitApplicationBtn = document.getElementById("submitApplicationBtn");
 const duplicateNotice = document.getElementById("duplicateNotice");
+const reapplyModal = document.getElementById("reapplyModal");
+const reapplyModalOverlay = document.getElementById("reapplyModalOverlay");
+const cancelReapplyBtn = document.getElementById("cancelReapplyBtn");
+const confirmReapplyBtn = document.getElementById("confirmReapplyBtn");
 
 let currentUser = null;
 let selectedJob = null;
@@ -28,16 +32,12 @@ async function initApplyPage() {
     return;
   }
 
-  const {
-    data: { user },
-    error
-  } = await applySupabase.auth.getUser();
+  const user = await verifyCandidateAccess(applySupabase, {
+    loginPath: "candidate-login.html",
+    employerDashboardPath: "../employers/employer-dashboard.html"
+  });
 
-  if (error || !user) {
-    window.location.href = "candidate-login.html";
-    return;
-  }
-
+  if (!user) return;
   currentUser = user;
 
   const isCandidate = await verifyCandidateRole(user.id);
@@ -81,6 +81,14 @@ function setupEvents() {
   if (applicationForm) {
     applicationForm.addEventListener("submit", submitApplication);
   }
+
+  if (reapplyModalOverlay) reapplyModalOverlay.addEventListener("click", closeReapplyModal);
+  if (cancelReapplyBtn) cancelReapplyBtn.addEventListener("click", closeReapplyModal);
+  if (confirmReapplyBtn) confirmReapplyBtn.addEventListener("click", reapplyToJob);
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeReapplyModal();
+  });
 }
 
 async function loadJob(jobId) {
@@ -134,7 +142,7 @@ async function loadCandidateProfile(userId) {
 async function checkDuplicateApplication(jobId, candidateId) {
   const { data, error } = await applySupabase
     .from("applications")
-    .select("id, status, created_at")
+    .select("id, status, candidate_status, employer_status, withdrawn_at, created_at")
     .eq("candidate_id", candidateId)
     .eq("job_id", jobId)
     .maybeSingle();
@@ -150,9 +158,101 @@ async function checkDuplicateApplication(jobId, candidateId) {
 function updateDuplicateState() {
   if (!existingApplication) return;
 
-  if (duplicateNotice) duplicateNotice.classList.remove("hidden");
+  const status = normalizeApplicationStatus(existingApplication.status);
+
+  if (duplicateNotice) {
+    duplicateNotice.classList.remove("hidden");
+
+    if (status === "withdrawn") {
+      duplicateNotice.innerHTML = `
+        <div>
+          <strong>You previously withdrew from this job.</strong>
+          <p>You can review your previous application or re-apply to make it visible to the employer again.</p>
+        </div>
+
+        <div class="notice-actions">
+          <a href="candidate-applications.html" class="secondary-btn">View Applications</a>
+          <button id="reapplyBtn" type="button" class="primary-btn">Re Apply</button>
+        </div>
+      `;
+
+      const reapplyBtn = document.getElementById("reapplyBtn");
+      if (reapplyBtn) reapplyBtn.addEventListener("click", openReapplyModal);
+    } else {
+      duplicateNotice.innerHTML = `
+        <div>
+          <strong>You already applied to this job.</strong>
+          <p>You can review this application from your application tracker.</p>
+        </div>
+        <a href="candidate-applications.html" class="primary-btn">View Applications</a>
+      `;
+    }
+  }
+
   if (submitApplicationBtn) submitApplicationBtn.disabled = true;
   if (applicationForm) applicationForm.classList.add("hidden");
+}
+
+function openReapplyModal() {
+  if (!existingApplication || normalizeApplicationStatus(existingApplication.status) !== "withdrawn") return;
+
+  if (reapplyModal) {
+    reapplyModal.classList.add("open");
+    reapplyModal.setAttribute("aria-hidden", "false");
+  }
+}
+
+function closeReapplyModal() {
+  if (reapplyModal) {
+    reapplyModal.classList.remove("open");
+    reapplyModal.setAttribute("aria-hidden", "true");
+  }
+
+  if (confirmReapplyBtn) {
+    confirmReapplyBtn.disabled = false;
+    confirmReapplyBtn.textContent = "Re Apply";
+  }
+}
+
+async function reapplyToJob() {
+  if (!existingApplication || !currentUser) return;
+
+  if (confirmReapplyBtn) {
+    confirmReapplyBtn.disabled = true;
+    confirmReapplyBtn.textContent = "Re-applying...";
+  }
+
+  const now = new Date().toISOString();
+  const updatePayload = {
+    status: "submitted",
+    candidate_status: "submitted",
+    employer_status: "submitted",
+    withdrawn_at: null,
+    reapplied_at: now,
+    updated_at: now
+  };
+
+  const { error } = await updateApplicationWithSchemaFallback(existingApplication.id, updatePayload);
+
+  if (error) {
+    logSupabaseError("Re-apply error:", error);
+    showToast("Could not re-apply to this job.");
+
+    if (confirmReapplyBtn) {
+      confirmReapplyBtn.disabled = false;
+      confirmReapplyBtn.textContent = "Re Apply";
+    }
+    return;
+  }
+
+  existingApplication = {
+    ...existingApplication,
+    ...updatePayload
+  };
+
+  closeReapplyModal();
+  showToast("Application reopened.");
+  window.location.href = "candidate-applications.html";
 }
 
 function renderJobSummary() {
@@ -237,6 +337,13 @@ async function submitApplication(event) {
   if (!selectedJob || !candidateProfile || !currentUser) return;
 
   if (existingApplication) {
+    if (normalizeApplicationStatus(existingApplication.status) === "withdrawn") {
+      submitApplicationBtn.disabled = false;
+      submitApplicationBtn.textContent = "Submit Application";
+      openReapplyModal();
+      return;
+    }
+
     setMessage("You already applied to this job.");
     updateDuplicateState();
     return;
@@ -253,6 +360,13 @@ async function submitApplication(event) {
   await checkDuplicateApplication(selectedJob.id, currentUser.id);
 
   if (existingApplication) {
+    if (normalizeApplicationStatus(existingApplication.status) === "withdrawn") {
+      submitApplicationBtn.disabled = false;
+      submitApplicationBtn.textContent = "Submit Application";
+      openReapplyModal();
+      return;
+    }
+
     showToast("You already applied to this job.");
     updateDuplicateState();
     return;
@@ -288,9 +402,15 @@ async function submitApplication(event) {
     submitApplicationBtn.textContent = "Submit Application";
 
     if (error.code === "23505") {
-      showToast("You already applied to this job.");
       await checkDuplicateApplication(selectedJob.id, currentUser.id);
       updateDuplicateState();
+
+      if (existingApplication && normalizeApplicationStatus(existingApplication.status) === "withdrawn") {
+        openReapplyModal();
+        return;
+      }
+
+      showToast("You already applied to this job.");
       return;
     }
 
@@ -337,6 +457,46 @@ async function insertApplicationWithSchemaFallback(payload) {
       message: "Application insert failed after removing missing columns.",
       details: removedColumns.join(", "),
       hint: "Run the Supabase applications hiring flow SQL file so the full application payload can be stored.",
+      code: "SCHEMA_FALLBACK_LIMIT"
+    }
+  };
+}
+
+async function updateApplicationWithSchemaFallback(applicationId, payload) {
+  let safePayload = { ...payload };
+  const removedColumns = [];
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const { error } = await applySupabase
+      .from("applications")
+      .update(safePayload)
+      .eq("id", applicationId)
+      .eq("candidate_id", currentUser.id);
+
+    if (!error) {
+      if (removedColumns.length) {
+        console.warn("Application re-applied after removing missing columns:", removedColumns);
+      }
+
+      return { error: null };
+    }
+
+    logSupabaseError("Re-apply error:", error);
+    const missingColumn = getMissingColumnName(error);
+
+    if (!missingColumn || !(missingColumn in safePayload)) {
+      return { error };
+    }
+
+    removedColumns.push(missingColumn);
+    delete safePayload[missingColumn];
+  }
+
+  return {
+    error: {
+      message: "Application re-apply failed after removing missing columns.",
+      details: removedColumns.join(", "),
+      hint: "Run the Supabase applications hiring flow SQL file so reapply columns can be stored.",
       code: "SCHEMA_FALLBACK_LIMIT"
     }
   };
@@ -406,6 +566,21 @@ function getTags(profile) {
   if (profile.certifications) tags.push(...String(profile.certifications).split(","));
 
   return tags.map((tag) => tag.trim()).filter(Boolean).slice(0, 8);
+}
+
+function normalizeApplicationStatus(status) {
+  const value = String(status || "submitted").toLowerCase().trim();
+
+  if (["withdrawn", "withdraw"].includes(value)) return "withdrawn";
+  if (["new"].includes(value)) return "new";
+  if (["applied", "submitted"].includes(value)) return "submitted";
+  if (["review", "reviewing", "viewed", "in review"].includes(value)) return "reviewing";
+  if (["interview", "interviewing", "interview requested"].includes(value)) return "interview";
+  if (["offer", "offered"].includes(value)) return "offer";
+  if (["hired"].includes(value)) return "hired";
+  if (["rejected", "declined"].includes(value)) return "rejected";
+
+  return "submitted";
 }
 
 function setMessage(message) {

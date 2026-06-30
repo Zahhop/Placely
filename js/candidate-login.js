@@ -16,12 +16,30 @@ function showError(message) {
   errorMessage.style.display = "block";
 }
 
+function showSuccess(message) {
+  if (!errorMessage) return;
+
+  errorMessage.textContent = message;
+  errorMessage.style.display = "block";
+  errorMessage.style.color = "#047857";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const deletionMessage = sessionStorage.getItem("placelyCandidateDeletionMessage");
+
+  if (!deletionMessage) return;
+
+  sessionStorage.removeItem("placelyCandidateDeletionMessage");
+  showSuccess(deletionMessage);
+});
+
 form.addEventListener("submit", async function (e) {
   e.preventDefault();
 
   if (errorMessage) {
     errorMessage.textContent = "";
     errorMessage.style.display = "none";
+    errorMessage.style.color = "";
   }
 
   const email = document.getElementById("email").value.trim();

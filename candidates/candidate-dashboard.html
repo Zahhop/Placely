@@ -7,6 +7,9 @@
   <title>Candidate Dashboard | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/candidate-dashboard.css" />
+  <link rel="stylesheet" href="../css/candidate-header.css" />
+  <link rel="stylesheet" href="../css/candidate-preview.css" />
+  <link rel="stylesheet" href="../css/candidate-scale.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
@@ -19,64 +22,37 @@
   </div>
 
   <nav>
+    <a href="candidate-dashboard.html" class="active">Dashboard</a>
     <a href="../public/find-jobs.html?role=candidate">Find Jobs</a>
     <a href="../public/saved-jobs.html">Saved Jobs</a>
     <a href="candidate-applications.html">Applications</a>
     <a href="candidate-messages.html">Messages</a>
     <a href="candidate-profile.html">Profile</a>
+    <a href="candidate-settings.html">Settings</a>
     <button id="logoutBtn" class="nav-btn" type="button">Logout</button>
   </nav>
 </header>
 
 <main class="candidate-shell">
 
-  <section class="top-layout">
+  <section class="dashboard-intro" id="overview">
+    <div>
+      <span class="eyebrow">Candidate Dashboard</span>
+      <h1>Welcome back, <span id="dashboard_first_name">Candidate</span></h1>
+      <p>Track applications, saved roles, messages, and profile completion from one focused workspace.</p>
+    </div>
 
-    <aside class="profile-card">
-      <div class="profile-head">
-        <div class="candidate-photo-wrap">
-          <img id="profile_photo_url" src="" alt="Profile photo" />
-          <div id="profile_initials" class="profile-initials">PT</div>
-        </div>
-
-        <div>
-          <span class="eyebrow">Candidate Profile</span>
-          <h2 id="full_name">Candidate</h2>
-          <p id="sidebar_trade">Add your trade</p>
-        </div>
-      </div>
-
-      <div class="profile-meta">
-        <div><span>Location</span><strong id="sidebar_location">Add location</strong></div>
-        <div><span>Email</span><strong id="sidebar_email">Loading...</strong></div>
-      </div>
-
-      <div class="profile-footer">
-        <div id="work_status_pill" class="status-chip">Open to Work</div>
-        <a href="candidate-profile.html">Update profile</a>
-      </div>
-    </aside>
-
-    <section class="dashboard-intro" id="overview">
-      <div>
-        <span class="eyebrow">Candidate Dashboard</span>
-        <h1>Welcome back, <span id="dashboard_first_name">Candidate</span></h1>
-        <p>Manage your job search, applications, saved roles, profile strength, and employer visibility from one clean workspace.</p>
-      </div>
-
-      <div class="intro-actions">
-        <a href="../public/find-jobs.html?role=candidate" class="primary-btn">Find Jobs</a>
-        <a href="candidate-profile.html" class="secondary-btn">Edit Profile</a>
-      </div>
-    </section>
-
+    <div class="intro-actions">
+      <a href="../public/find-jobs.html?role=candidate" class="primary-btn">Find Jobs</a>
+      <a href="candidate-profile.html" class="secondary-btn">Edit Profile</a>
+    </div>
   </section>
 
   <section class="metrics-grid">
-    <a href="#jobs" class="metric-card">
-      <span>Matched Jobs</span>
-      <strong id="matched_jobs_count">0</strong>
-      <p>Fresh roles matching your profile</p>
+    <a href="candidate-profile.html" class="metric-card">
+      <span>Profile Completion</span>
+      <strong id="profile_completion_count">0%</strong>
+      <p id="profile_completion_text">Complete your profile</p>
     </a>
 
     <a href="../public/saved-jobs.html" class="metric-card">
@@ -102,153 +78,61 @@
 
     <section class="main-column">
 
-      <section class="job-search-panel">
-        <div>
-          <span class="eyebrow">Job Search</span>
-          <h2>Search live opportunities</h2>
-          <p>Filter roles by trade, location, and job type.</p>
-        </div>
-
-        <div class="search-controls">
-          <input id="job_keyword" type="text" placeholder="Trade or keyword" />
-          <input id="job_location" type="text" placeholder="City or province" />
-
-          <select id="job_type">
-            <option value="">Any job type</option>
-            <option value="Full-time">Full-time</option>
-            <option value="Part-time">Part-time</option>
-            <option value="Contract">Contract</option>
-            <option value="Apprenticeship">Apprenticeship</option>
-          </select>
-
-          <button id="searchJobsBtn" type="button">Search Jobs</button>
-        </div>
-      </section>
-
-      <section class="panel jobs-panel" id="jobs">
+      <section class="panel" id="applications">
         <div class="panel-heading">
           <div>
-            <span class="eyebrow">Best Matches</span>
-            <h2>Jobs worth reviewing today</h2>
+            <span class="eyebrow">Applications</span>
+            <h2>Recent Applications</h2>
           </div>
-          <a href="../public/find-jobs.html?role=candidate">View all jobs</a>
+          <a href="candidate-applications.html">View all</a>
         </div>
 
-        <div id="matched_jobs_list" class="job-list"></div>
+        <div id="applications_list" class="activity-list"></div>
       </section>
 
-      <section class="split-row">
-        <section class="panel" id="applications">
-          <div class="panel-heading">
-            <div>
-              <span class="eyebrow">Applications</span>
-              <h2>Application pipeline</h2>
-            </div>
-            <a href="candidate-applications.html">View applications</a>
-          </div>
-
-          <div class="application-stats">
-            <div><strong id="applied_count">0</strong><span>Applied</span></div>
-            <div><strong id="interviewing_count">0</strong><span>Interviewing</span></div>
-            <div><strong id="offers_count">0</strong><span>Offers</span></div>
-          </div>
-
-          <div id="applications_list" class="activity-list"></div>
-        </section>
-
-        <section class="panel" id="saved">
-          <div class="panel-heading">
-            <div>
-              <span class="eyebrow">Saved Jobs</span>
-              <h2>Shortlist</h2>
-            </div>
-            <a href="../public/saved-jobs.html">Open saved</a>
-          </div>
-
-          <div id="saved_jobs_list" class="job-list"></div>
-        </section>
-      </section>
-
-      <section class="snapshot-panel">
+      <section class="panel" id="profile-preview">
         <div class="panel-heading">
           <div>
-            <span class="eyebrow">Candidate Profile</span>
-            <h2>Profile snapshot</h2>
+            <span class="eyebrow">Employer View</span>
+            <h2>How employers see you</h2>
+            <p>This is the profile snapshot employers see when reviewing candidates.</p>
           </div>
-          <a href="candidate-profile.html">Edit details</a>
         </div>
 
-        <div class="snapshot-grid">
-          <div><span>Trade</span><strong id="trade">Not added</strong></div>
-          <div><span>Experience</span><strong id="experience">Not added</strong></div>
-          <div><span>Phone</span><strong id="phone">Not added</strong></div>
-          <div><span>Email</span><strong id="email">Not available</strong></div>
-          <div><span>Preferred Contact</span><strong id="contact_method">Not added</strong></div>
-          <div><span>Status</span><strong class="green">Active</strong></div>
-        </div>
+        <div id="dashboard_profile_preview" class="dashboard-profile-preview"></div>
       </section>
 
     </section>
 
     <aside class="right-rail">
 
-      <section class="rail-panel next-step-card">
-        <span class="eyebrow">Today</span>
-        <h2>Next best step</h2>
-        <p id="profile_tip">Complete your profile to appear in better employer searches.</p>
-        <div id="priority_actions" class="action-list"></div>
-      </section>
-
-      <section class="rail-panel profile-strength-panel">
-        <span class="eyebrow">Profile Status</span>
-        <h2 id="profile_status_label">Active</h2>
-        <p class="rail-intro">A stronger profile helps employers understand your trade, resume, experience, and availability.</p>
-
-        <div class="status-list">
-          <div><span>Visibility</span><strong id="visibility_status">On</strong></div>
-          <div><span>Strength</span><strong id="profile_strength_text">0%</strong></div>
-          <div><span>Resume</span><strong id="resume_status">Loading</strong></div>
-          <div><span>Availability</span><strong id="availability">Not added</strong></div>
+      <section class="rail-panel">
+        <div class="panel-heading tight">
+          <div>
+            <span class="eyebrow">Shortcuts</span>
+            <h2>Quick Actions</h2>
+          </div>
         </div>
 
-        <div class="progress-track">
-          <div id="profile_strength_bar"></div>
+        <div class="quick-actions">
+          <a href="../public/find-jobs.html?role=candidate">Find Jobs</a>
+          <a href="../public/saved-jobs.html">Saved Jobs</a>
+          <a href="candidate-applications.html">Applications</a>
+          <a href="candidate-messages.html">Messages</a>
+          <a href="candidate-profile.html">Edit Profile</a>
         </div>
-
-        <a href="candidate-profile.html" class="primary-btn full">Complete Profile</a>
       </section>
 
       <section class="rail-panel" id="messages">
         <div class="panel-heading tight">
           <div>
             <span class="eyebrow">Inbox</span>
-            <h2>Messages</h2>
+            <h2>Recent Messages</h2>
           </div>
           <a href="candidate-messages.html">Open</a>
         </div>
 
         <div id="messages_list" class="message-list"></div>
-      </section>
-
-      <section class="rail-panel">
-        <div class="panel-heading tight">
-          <div>
-            <span class="eyebrow">Visibility</span>
-            <h2>Employer discovery</h2>
-          </div>
-          <a href="candidate-profile.html">Manage</a>
-        </div>
-
-        <div class="visibility-box">
-          <h3 id="visibility_title">Visible</h3>
-          <p id="visibility_description">Your profile can be discovered by employers looking for trades candidates.</p>
-        </div>
-
-        <div class="status-list compact">
-          <div><span>Open to work</span><strong id="open_to_work">Enabled</strong></div>
-          <div><span>Local match</span><strong id="match_strength">Medium</strong></div>
-          <div><span>Freshness</span><strong id="profile_freshness">Current</strong></div>
-        </div>
       </section>
 
     </aside>
@@ -261,6 +145,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/config.js"></script>
+<script src="../js/auth-guards.js"></script>
+<script src="../js/candidate-preview.js"></script>
 <script src="../js/candidate-dashboard.js"></script>
 
 </body>

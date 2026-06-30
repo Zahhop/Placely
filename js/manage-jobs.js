@@ -59,33 +59,10 @@ function setupHeaderButtons() {
 }
 
 async function requireEmployerLogin() {
-  const {
-    data: { user },
-    error
-  } = await supabaseClient.auth.getUser();
-
-  if (error || !user) {
-    window.location.href = "employer-login.html";
-    return null;
-  }
-
-  const { data: profile, error: profileError } = await supabaseClient
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (profileError) {
-    console.warn("Profile role check failed:", profileError);
-    return user;
-  }
-
-  if (profile?.role && profile.role !== "employer") {
-    window.location.href = "../candidate/candidate-dashboard.html";
-    return null;
-  }
-
-  return user;
+  return verifyEmployerAccess(supabaseClient, {
+    loginPath: "employer-login.html",
+    candidateDashboardPath: "../candidates/candidate-dashboard.html"
+  });
 }
 
 async function loadEmployerJobs(userId) {

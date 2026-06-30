@@ -6,6 +6,7 @@ const candidateSupabase = window.supabase.createClient(
 let currentUser = null;
 let currentProfile = {};
 let removeResume = false;
+let selectedPhotoPreviewUrl = "";
 
 const PHOTO_BUCKET = "candidate_photos";
 const RESUME_BUCKET = "candidate_resumes";
@@ -65,6 +66,11 @@ function updatePreview() {
   const fullName = value("full_name") || "Candidate Name";
   const trade = value("trade") || "Trade / Job Title";
   const location = value("location") || "Location";
+  const profilePhotoUrl =
+    selectedPhotoPreviewUrl ||
+    currentProfile.profile_photo_url ||
+    currentProfile.avatar_url ||
+    "";
 
   const previewName = getEl("preview_name");
   const previewMeta = getEl("preview_meta");
@@ -74,27 +80,64 @@ function updatePreview() {
   if (previewMeta) previewMeta.textContent = `${trade} · ${location}`;
 
   if (avatar) {
-    const initials = fullName
-      .split(" ")
-      .filter(Boolean)
-      .slice(0, 2)
-      .map(word => word[0].toUpperCase())
-      .join("");
+    const initials = window.CandidateProfilePreview?.getInitials(fullName) || "PT";
 
-    avatar.textContent = initials || "PT";
+    if (profilePhotoUrl) {
+      avatar.innerHTML = `<img src="${escapeAttribute(profilePhotoUrl)}" alt="${escapeAttribute(fullName)} profile photo">`;
+      avatar.classList.add("has-image");
+    } else {
+      avatar.textContent = initials;
+      avatar.classList.remove("has-image");
+    }
   }
 
   updateStrength();
 }
 
+function getPreviewProfileFromForm() {
+  return {
+    ...currentProfile,
+    full_name: value("full_name") || currentProfile.full_name || "Candidate Name",
+    trade: value("trade") || currentProfile.trade || "",
+    location: value("location") || currentProfile.location || "",
+    bio: value("bio") || currentProfile.bio || "",
+    experience: value("experience") || currentProfile.experience || "",
+    skills: value("skills") || currentProfile.skills || "",
+    certifications: value("certifications") || currentProfile.certifications || "",
+    availability: value("availability") || currentProfile.availability || "",
+    email: value("email") || currentProfile.email || currentUser?.email || "",
+    phone: value("phone") || currentProfile.phone || "",
+    contact_method: value("contact_method") || currentProfile.contact_method || "",
+    profile_photo_url:
+      selectedPhotoPreviewUrl ||
+      currentProfile.profile_photo_url ||
+      currentProfile.avatar_url ||
+      "",
+    avatar_url: currentProfile.avatar_url || "",
+    resume_url: removeResume ? "" : currentProfile.resume_url || ""
+  };
+}
+
+function escapeHTML(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function escapeAttribute(value) {
+  return escapeHTML(value).replaceAll("`", "&#096;");
+}
+
 async function loadCandidateProfile() {
-  const { data: { user }, error: userError } = await candidateSupabase.auth.getUser();
+  const user = await verifyCandidateAccess(candidateSupabase, {
+    loginPath: "candidate-login.html",
+    employerDashboardPath: "../employers/employer-dashboard.html"
+  });
 
-  if (userError || !user) {
-    window.location.href = "candidate-login.html";
-    return;
-  }
-
+  if (!user) return;
   currentUser = user;
 
   const { data: profile, error } = await candidateSupabase
@@ -118,7 +161,9 @@ async function loadCandidateProfile() {
   console.log("Loaded availability:", currentProfile.availability);
 
   getEl("profile_photo_preview").src =
-    currentProfile.profile_photo_url || "https://placehold.co/180x180";
+    currentProfile.profile_photo_url ||
+    currentProfile.avatar_url ||
+    "https://placehold.co/180x180";
 
   if (currentProfile.resume_url) {
     const fileName = currentProfile.resume_url.split("/").pop();
@@ -223,6 +268,7 @@ async function saveCandidateProfile() {
 
     currentProfile = data;
     removeResume = false;
+    selectedPhotoPreviewUrl = "";
 
     showToast("Profile saved successfully.");
     updatePreview();
@@ -256,8 +302,10 @@ function setupEvents() {
 
       if (!file) return;
 
-      getEl("profile_photo_preview").src = URL.createObjectURL(file);
+      selectedPhotoPreviewUrl = URL.createObjectURL(file);
+      getEl("profile_photo_preview").src = selectedPhotoPreviewUrl;
       updateStrength();
+      updatePreview();
     });
   }
 
@@ -292,6 +340,10 @@ function setupEvents() {
 
   document.querySelectorAll(".save-profile-btn, .save-top-btn").forEach(button => {
     button.addEventListener("click", saveCandidateProfile);
+  });
+
+  getEl("viewPreviewBtn")?.addEventListener("click", () => {
+    window.CandidateProfilePreview?.openModal(getPreviewProfileFromForm());
   });
 
   document.querySelectorAll("input, textarea, select").forEach(input => {
