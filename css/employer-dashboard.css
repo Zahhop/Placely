@@ -619,7 +619,9 @@ textarea:focus {
   color: #047857;
 }
 
-.status-pill.rejected {
+.status-pill.rejected,
+.status-pill.withdrawn,
+.status-pill.candidate_deleted {
   background: #fef2f2;
   color: #b91c1c;
 }

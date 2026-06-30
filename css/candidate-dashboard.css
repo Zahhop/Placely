@@ -342,6 +342,15 @@ nav a:hover {
   letter-spacing: -0.055em;
 }
 
+.metric-card h3 {
+  display: block;
+  margin-top: 8px;
+  font-size: 32px;
+  line-height: 1;
+  letter-spacing: -0.055em;
+  font-weight: 900;
+}
+
 .metric-card p {
   color: #64748b;
   margin-top: 8px;
@@ -600,6 +609,114 @@ select:focus {
   transition: 0.2s ease;
 }
 
+.quick-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.quick-actions a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 12px 14px;
+  border: 1px solid #dbe3ef;
+  border-radius: 14px;
+  background: white;
+  color: #0f172a;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 900;
+  transition: 0.2s ease;
+}
+
+.quick-actions a:hover {
+  border-color: #bfdbfe;
+  background: #f8fbff;
+  color: #2563eb;
+}
+
+.dashboard-application-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+}
+
+.dashboard-application-card .job-btn {
+  align-self: center;
+}
+
+.message-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: 0.2s ease;
+}
+
+.dashboard-profile-preview {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-preview-card {
+  border: 1px solid #dbe3ef;
+  border-radius: 16px;
+  background: #f8fbff;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 15px;
+}
+
+.dashboard-preview-photo {
+  width: 62px;
+  height: 62px;
+  border-radius: 18px;
+  object-fit: cover;
+  border: 1px solid #bfdbfe;
+  background: #dbeafe;
+  flex: 0 0 auto;
+}
+
+.dashboard-preview-photo.initials {
+  display: grid;
+  place-items: center;
+  color: #2563eb;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.dashboard-preview-info h3 {
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  margin-bottom: 5px;
+}
+
+.dashboard-preview-info p {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.dashboard-preview-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 11px;
+}
+
+.dashboard-preview-tags span {
+  background: #eef4ff;
+  color: #1e3a8a;
+  padding: 6px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
 .action-card:hover,
 .job-card:hover,
 .activity-card:hover,
@@ -773,10 +890,17 @@ select:focus {
   }
 
   .job-card,
+  .dashboard-application-card,
+  .dashboard-preview-card,
   .job-actions,
   .intro-actions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .dashboard-application-card,
+  .dashboard-preview-card {
+    grid-template-columns: 1fr;
   }
 
   .snapshot-grid div {

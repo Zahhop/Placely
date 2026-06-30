@@ -436,7 +436,9 @@ select:focus {
   color: #047857;
 }
 
-.status-pill.rejected {
+.status-pill.rejected,
+.status-pill.withdrawn,
+.status-pill.candidate_deleted {
   background: #fee2e2;
   color: #b91c1c;
 }

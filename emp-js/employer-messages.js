@@ -59,13 +59,12 @@ async function initMessages() {
 }
 
 async function setupAuth() {
-  const {
-    data: { user },
-    error
-  } = await employerMessagesSupabase.auth.getUser();
+  const user = await verifyEmployerAccess(employerMessagesSupabase, {
+    loginPath: "employer-login.html",
+    candidateDashboardPath: "../candidates/candidate-dashboard.html"
+  });
 
-  if (error || !user) {
-    window.location.href = "employer-login.html";
+  if (!user) {
     return false;
   }
 
@@ -682,16 +681,4 @@ function getInitials(name) {
     .join("")
     .slice(0, 2)
     .toUpperCase();
-}
-
-function sortByLatestActivity(a, b) {
-  return new Date(b.latestAt || 0) - new Date(a.latestAt || 0);
-}
-
-function startConversationPolling() {
-  if (refreshTimer) clearInterval(refreshTimer);
-  // Realtime can be unavailable depending on Supabase project settings, so polling keeps snippets fresh.
-  refreshTimer = setInterval(() => {
-    if (!document.hidden) refreshActiveConversation();
-  }, 15000);
 }

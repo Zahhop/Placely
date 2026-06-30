@@ -7,7 +7,8 @@
   <title>Messages | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/candidate-messages.css" />
-  <link rel="stylesheet" href="../css/messages-polish.css" />
+  <link rel="stylesheet" href="../css/candidate-header.css" />
+  <link rel="stylesheet" href="../css/candidate-scale.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
@@ -26,6 +27,8 @@
     <a href="candidate-applications.html">Applications</a>
     <a href="candidate-messages.html" class="active">Messages</a>
     <a href="candidate-profile.html">Profile</a>
+    <a href="candidate-settings.html">Settings</a>
+    <button id="logoutBtn" class="nav-btn" type="button">Logout</button>
   </nav>
 </header>
 
@@ -125,7 +128,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/config.js"></script>
+<script src="../js/auth-guards.js"></script>
 <script src="../js/candidate-messages.js"></script>
+<script src="../js/candidate-header.js"></script>
 
 </body>
 </html>

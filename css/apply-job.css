@@ -380,6 +380,65 @@ textarea:focus {
   font-weight: 900;
 }
 
+.notice-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.confirm-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 100;
+}
+
+.confirm-modal.open {
+  display: block;
+}
+
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.44);
+}
+
+.confirm-panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(460px, calc(100% - 40px));
+  transform: translate(-50%, -50%);
+  background: white;
+  border: 1px solid #dbe3ef;
+  border-radius: 20px;
+  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.2);
+  padding: 26px;
+}
+
+.confirm-panel h2 {
+  color: #0f172a;
+  font-size: 26px;
+  line-height: 1.12;
+  font-weight: 900;
+}
+
+.confirm-panel p {
+  margin-top: 10px;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 650;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
 .hidden {
   display: none !important;
 }
@@ -463,6 +522,19 @@ textarea:focus {
 
   .form-actions {
     flex-direction: column-reverse;
+  }
+
+  .notice-actions,
+  .confirm-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .notice-actions .primary-btn,
+  .notice-actions .secondary-btn,
+  .confirm-actions .primary-btn,
+  .confirm-actions .secondary-btn {
+    width: 100%;
   }
 
   .primary-btn,

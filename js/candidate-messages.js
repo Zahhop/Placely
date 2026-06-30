@@ -35,14 +35,14 @@ let refreshTimer = null;
 document.addEventListener("DOMContentLoaded", initMessages);
 
 async function initMessages() {
-  const { data: { user }, error } = await candidateMessagesSupabase.auth.getUser();
+  const user = await verifyCandidateAccess(candidateMessagesSupabase, {
+    loginPath: "candidate-login.html",
+    employerDashboardPath: "../employers/employer-dashboard.html"
+  });
 
-  if (error || !user) {
-    window.location.href = "candidate-login.html";
-    return;
-  }
-
+  if (!user) return;
   currentUser = user;
+  activeConversationId = new URLSearchParams(window.location.search).get("conversation");
 
   setupEvents();
   await loadConversations();
@@ -556,16 +556,4 @@ function escapeHTML(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
-}
-
-function sortByLatestActivity(a, b) {
-  return new Date(b.latestAt || 0) - new Date(a.latestAt || 0);
-}
-
-function startConversationPolling() {
-  if (refreshTimer) clearInterval(refreshTimer);
-  // Realtime can be unavailable depending on Supabase project settings, so polling keeps snippets fresh.
-  refreshTimer = setInterval(() => {
-    if (!document.hidden) refreshActiveConversation();
-  }, 15000);
 }

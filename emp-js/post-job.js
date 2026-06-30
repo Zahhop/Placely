@@ -40,10 +40,12 @@ jobForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   setMessage("");
 
-  const { data: { user }, error: userError } =
-    await placelySupabase.auth.getUser();
+  const user = await verifyEmployerAccess(placelySupabase, {
+    loginPath: "employer-login.html",
+    candidateDashboardPath: "../candidates/candidate-dashboard.html"
+  });
 
-  if (userError || !user) {
+  if (!user) {
     setMessage("Please log in before posting a job.");
     return;
   }

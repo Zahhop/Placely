@@ -7,6 +7,8 @@
   <title>Applications | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/candidate-applications.css" />
+  <link rel="stylesheet" href="../css/candidate-header.css" />
+  <link rel="stylesheet" href="../css/candidate-scale.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
@@ -25,6 +27,8 @@
     <a href="candidate-applications.html" class="active">Applications</a>
     <a href="candidate-messages.html">Messages</a>
     <a href="candidate-profile.html">Profile</a>
+    <a href="candidate-settings.html">Settings</a>
+    <button id="logoutBtn" class="nav-btn" type="button">Logout</button>
   </nav>
 </header>
 
@@ -87,7 +91,6 @@
             <option value="offer">Offer</option>
             <option value="hired">Hired</option>
             <option value="rejected">Rejected</option>
-            <option value="withdrawn">Withdrawn</option>
           </select>
         </div>
       </div>
@@ -126,9 +129,42 @@
 
 </main>
 
+<div id="applicationModal" class="application-modal" aria-hidden="true">
+  <div id="applicationModalOverlay" class="modal-overlay"></div>
+  <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="applicationModalTitle">
+    <div class="modal-head">
+      <div>
+        <span class="small-label">Submitted Application</span>
+        <h2 id="applicationModalTitle">Application details</h2>
+      </div>
+
+      <button id="closeApplicationModalBtn" type="button" class="card-btn">Close</button>
+    </div>
+
+    <div id="applicationDetail" class="application-detail"></div>
+  </section>
+</div>
+
+<div id="withdrawModal" class="application-modal confirm-modal" aria-hidden="true">
+  <div id="withdrawModalOverlay" class="modal-overlay"></div>
+  <section class="confirm-panel" role="dialog" aria-modal="true" aria-labelledby="withdrawModalTitle">
+    <h2 id="withdrawModalTitle">Withdraw application?</h2>
+    <p>Are you sure you want to withdraw this application? The employer will be notified that you withdrew.</p>
+
+    <div class="confirm-actions">
+      <button id="cancelWithdrawBtn" type="button" class="card-btn">Cancel</button>
+      <button id="confirmWithdrawBtn" type="button" class="danger-btn">Yes, withdraw</button>
+    </div>
+  </section>
+</div>
+
+<div id="toast" class="toast"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/config.js"></script>
+<script src="../js/auth-guards.js"></script>
 <script src="../js/candidate-applications.js"></script>
+<script src="../js/candidate-header.js"></script>
 
 </body>
 </html>

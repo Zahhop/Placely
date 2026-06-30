@@ -41,13 +41,12 @@ function formatDate(value) {
 }
 
 async function loadSavedJobs() {
-  const { data: { user }, error: userError } = await savedSupabase.auth.getUser();
+  const user = await verifyCandidateAccess(savedSupabase, {
+    loginPath: "../candidates/candidate-login.html",
+    employerDashboardPath: "../employers/employer-dashboard.html"
+  });
 
-  if (userError || !user) {
-    window.location.href = "../candidates/candidate-login.html";
-    return;
-  }
-
+  if (!user) return;
   currentUser = user;
 
   const { data, error } = await savedSupabase

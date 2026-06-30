@@ -7,6 +7,7 @@
   <title>Find Jobs | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/find-jobs.css" />
+  <link rel="stylesheet" href="../css/candidate-header.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
@@ -14,7 +15,7 @@
 
 <header>
   <div class="logo-wrapper">
-    <a href="../index.html" class="logo">PLACELY TALENT</a>
+    <a href="../candidates/candidate-dashboard.html" class="logo">PLACELY TALENT</a>
     <div class="logo-subtitle">Talent Platform</div>
   </div>
 
@@ -25,6 +26,8 @@
     <a href="../candidates/candidate-applications.html">Applications</a>
     <a href="../candidates/candidate-messages.html">Messages</a>
     <a href="../candidates/candidate-profile.html">Profile</a>
+    <a href="../candidates/candidate-settings.html">Settings</a>
+    <button id="logoutBtn" class="nav-btn" type="button">Logout</button>
   </nav>
 </header>
 
@@ -48,29 +51,27 @@
     <button id="searchBtn" type="button">Search</button>
   </section>
 
-  <section class="jobs-board">
-    <div class="panel-header">
-      <div>
-        <span class="small-label">Open Roles</span>
-        <h2>Available jobs</h2>
+  <section class="jobs-browser">
+    <aside class="jobs-list-panel">
+      <div class="panel-header">
+        <div>
+          <span class="small-label">Open Roles</span>
+          <h2>Available jobs</h2>
+        </div>
+        <strong id="jobCount">0</strong>
       </div>
-      <strong id="jobCount">0</strong>
-    </div>
 
-    <div id="jobsList" class="jobs-list"></div>
-  </section>
+      <div id="jobsList" class="jobs-list"></div>
+    </aside>
 
-  <div id="jobDetailsModal" class="job-modal" aria-hidden="true">
-    <div id="jobModalOverlay" class="modal-overlay"></div>
-    <section class="modal-panel" role="dialog" aria-modal="true" aria-label="Job details">
-      <button id="closeJobModalBtn" type="button" class="close-modal">Close</button>
+    <section class="job-detail-panel" aria-live="polite">
       <div id="jobDetails" class="job-details-empty">
         <span class="small-label">Job Details</span>
         <h2>Select a job</h2>
         <p>Choose a role to view company details, requirements, pay, and apply.</p>
       </div>
     </section>
-  </div>
+  </section>
 
 </main>
 
@@ -78,7 +79,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/config.js"></script>
+<script src="../js/auth-guards.js"></script>
 <script src="../js/find-jobs.js"></script>
+<script src="../js/candidate-header.js"></script>
 
 </body>
 </html>

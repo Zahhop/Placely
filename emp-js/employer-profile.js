@@ -34,15 +34,12 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function loadEmployerProfile() {
-  const {
-    data: { user },
-    error: userError
-  } = await employerSupabase.auth.getUser();
+  const user = await verifyEmployerAccess(employerSupabase, {
+    loginPath: "employer-login.html",
+    candidateDashboardPath: "../candidates/candidate-dashboard.html"
+  });
 
-  if (userError || !user) {
-    window.location.href = "employer-login.html";
-    return;
-  }
+  if (!user) return;
 
   const { data: profile, error } = await employerSupabase
     .from("employer_profiles")

@@ -24,16 +24,12 @@ let selectedApplicationId = null;
 document.addEventListener("DOMContentLoaded", initApplicants);
 
 async function initApplicants() {
-  const {
-    data: { user },
-    error
-  } = await applicantsSupabase.auth.getUser();
+  const user = await verifyEmployerAccess(applicantsSupabase, {
+    loginPath: "employer-login.html",
+    candidateDashboardPath: "../candidates/candidate-dashboard.html"
+  });
 
-  if (error || !user) {
-    window.location.href = "employer-login.html";
-    return;
-  }
-
+  if (!user) return;
   currentUser = user;
 
   setupEvents();
@@ -316,7 +312,7 @@ function getFilteredApplications() {
 }
 
 function renderApplicantCard(app) {
-  const status = normalizeStatus(app.status);
+  const status = normalizeStatus(app.status || app.employer_status);
   const initials = getInitials(app.candidate_name);
 
   return `
@@ -388,9 +384,11 @@ function renderDetail() {
     return;
   }
 
-  const status = normalizeStatus(app.status);
+  const status = normalizeStatus(app.status || app.employer_status);
   const initials = getInitials(app.candidate_name);
   const tags = getTags(app);
+  const isWithdrawn = status === "withdrawn";
+  const isCandidateDeleted = status === "candidate_deleted";
 
   applicantDetail.innerHTML = `
     <div class="detail-head">
@@ -447,6 +445,7 @@ function renderDetail() {
       <h3>Hiring timeline</h3>
       <div class="timeline-grid">
         <div class="timeline-row"><span>Updated</span><strong>${escapeHTML(formatDate(app.updated_at))}</strong></div>
+        <div class="timeline-row"><span>Withdrawn</span><strong>${escapeHTML(formatDate(app.withdrawn_at))}</strong></div>
         <div class="timeline-row"><span>Reviewed</span><strong>${escapeHTML(formatDate(app.reviewed_at))}</strong></div>
         <div class="timeline-row"><span>Interview</span><strong>${escapeHTML(formatDate(app.interview_date))}</strong></div>
         <div class="timeline-row"><span>Offer</span><strong>${escapeHTML(formatDate(app.offer_sent_at))}</strong></div>
@@ -457,14 +456,20 @@ function renderDetail() {
 
     <div class="detail-section">
       <h3>Hiring actions</h3>
-      <div class="stage-actions">
-        <button class="stage-action" onclick="updateApplicationStatus('${escapeHTML(app.id)}', 'reviewing')">Move to Review</button>
-        <button class="stage-action" onclick="updateApplicationStatus('${escapeHTML(app.id)}', 'interview')">Interview</button>
-        <button class="stage-action success" onclick="updateApplicationStatus('${escapeHTML(app.id)}', 'offer')">Offer</button>
-        <button class="stage-action success" onclick="updateApplicationStatus('${escapeHTML(app.id)}', 'hired')">Hire</button>
-        <button class="stage-action danger" onclick="updateApplicationStatus('${escapeHTML(app.id)}', 'rejected')">Reject</button>
-        <button class="message-btn" onclick="messageCandidate('${escapeHTML(app.id)}')">Message</button>
-      </div>
+      ${
+        isWithdrawn
+          ? `<p class="detail-text detail-message">Candidate withdrew this application. Submitted details remain available for record keeping, but hiring and messaging actions are disabled from this application.</p>`
+          : isCandidateDeleted
+            ? `<p class="detail-text detail-message">Candidate profile deleted. Submitted details remain available for record keeping, but hiring and messaging actions are disabled from this application.</p>`
+          : `<div class="stage-actions">
+              <button class="stage-action" onclick="updateApplicationStatus('${escapeHTML(app.id)}', 'reviewing')">Move to Review</button>
+              <button class="stage-action" onclick="updateApplicationStatus('${escapeHTML(app.id)}', 'interview')">Interview</button>
+              <button class="stage-action success" onclick="updateApplicationStatus('${escapeHTML(app.id)}', 'offer')">Offer</button>
+              <button class="stage-action success" onclick="updateApplicationStatus('${escapeHTML(app.id)}', 'hired')">Hire</button>
+              <button class="stage-action danger" onclick="updateApplicationStatus('${escapeHTML(app.id)}', 'rejected')">Reject</button>
+              <button class="message-btn" onclick="messageCandidate('${escapeHTML(app.id)}')">Message</button>
+            </div>`
+      }
     </div>
 
     <div class="detail-section">
@@ -638,6 +643,7 @@ function updateCounts() {
   setText("offerApplicants", countStatus("offer"));
   setText("hiredApplicants", countStatus("hired"));
   setText("rejectedApplicants", countStatus("rejected"));
+  setText("withdrawnApplicants", countStatus("withdrawn"));
   updateActivePipelineChip(statusFilter?.value || "all");
 }
 
@@ -661,7 +667,8 @@ function normalizeStatus(status) {
   if (["offer", "offered"].includes(value)) return "offer";
   if (value === "hired") return "hired";
   if (["rejected", "declined"].includes(value)) return "rejected";
-  if (value === "withdrawn") return "withdrawn";
+  if (["withdrawn", "withdraw", "candidate_withdrew"].includes(value)) return "withdrawn";
+  if (["candidate_deleted", "candidate_profile_deleted", "deleted"].includes(value)) return "candidate_deleted";
 
   return "submitted";
 }
@@ -675,7 +682,8 @@ function getStatusLabel(status) {
     offer: "Offer",
     hired: "Hired",
     rejected: "Rejected",
-    withdrawn: "Withdrawn"
+    withdrawn: "Candidate Withdrew Application",
+    candidate_deleted: "Candidate Profile Deleted"
   };
 
   return labels[status] || "Submitted";

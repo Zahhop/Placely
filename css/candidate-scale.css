@@ -1,0 +1,255 @@
+main.page-shell,
+main.candidate-shell {
+  width: min(82%, 1380px);
+}
+
+main.page-shell {
+  margin-top: 24px;
+  margin-bottom: 64px;
+  gap: 16px;
+}
+
+main.candidate-shell {
+  padding-top: 22px;
+  padding-bottom: 38px;
+}
+
+main :where(.hero-card, .page-hero, .dashboard-intro, .profile-card, .panel, .rail-panel, .snapshot-panel, .job-search-panel, .stat-card, .metric-card, .notice-card, .conversations-panel, .chat-panel, .context-panel, .application-card, .saved-card, .tip-card, .empty-state, .next-action-card, .candidate-summary, .profile-top-card, .company-top-card, .sidebar-card, .form-card, .preview-card) {
+  border-radius: 18px;
+}
+
+main :where(.hero-card, .page-hero, .dashboard-intro) {
+  padding: 28px 32px;
+  gap: 22px;
+}
+
+main :where(.panel, .rail-panel, .snapshot-panel, .conversations-panel, .context-panel, .notice-card, .profile-top-card, .company-top-card, .sidebar-card, .form-card, .preview-card, .visibility-panel) {
+  padding: 21px;
+}
+
+main :where(.stat-card, .metric-card, .application-card, .saved-card, .tip-card, .next-action-card, .candidate-summary, .conversation, .job-card, .activity-card, .message-card, .action-card) {
+  padding: 15px;
+}
+
+main :where(.top-layout, .metrics-grid, .dashboard-grid, .main-column, .right-rail, .split-row, .content-grid, .application-layout, .messages-layout, .stats-grid) {
+  gap: 15px;
+}
+
+main :where(.top-layout, .metrics-grid, .panel-header, .hero-card, .dashboard-intro, .stats-grid) {
+  margin-bottom: 15px;
+}
+
+main :where(.hero-card h1, .dashboard-intro h1, .page-hero h1) {
+  font-size: 36px;
+  line-height: 1.04;
+  margin-bottom: 9px;
+}
+
+main :where(.panel h2, .panel-heading h2, .rail-panel h2, .snapshot-panel h2, .job-search-panel h2, .chat-header h2, .context-panel h2, .modal-head h2, .confirm-panel h2, .job-summary h2) {
+  font-size: 21px;
+  line-height: 1.12;
+}
+
+main :where(.application-card h3, .saved-card h3, .job-card h3, .activity-card h3, .message-card h3, .profile-card h2, .candidate-summary h2, .readonly-section h3, .readonly-heading h3) {
+  font-size: 16px;
+}
+
+main :where(.hero-card p, .page-hero p, .dashboard-intro p, .panel-heading p, .panel-text, .rail-intro, .job-search-panel p, .job-summary p, .candidate-summary p, .notice-card p, .context-panel p, .chat-header p, .readonly-message, .description-box p) {
+  font-size: 14px;
+  line-height: 1.52;
+}
+
+main :where(.meta-line, .application-note, .saved-card p, .tip-card p, .empty-state p, .next-action-card p, .job-card p, .activity-card p, .message-card p, .action-card p, .job-meta, .conversation p, .context-list span, .context-list strong) {
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+main :where(.eyebrow, .small-label) {
+  font-size: 10.5px;
+  margin-bottom: 7px;
+}
+
+main :where(.primary-btn, .secondary-btn, .danger-btn, .danger-outline-btn, .follow-up-btn, .card-btn, .primary-link, .primary-mini-btn, .light-btn, .empty-action, .job-btn, .small-btn),
+.application-modal :where(.primary-btn, .secondary-btn, .danger-btn, .card-btn),
+.confirm-modal :where(.primary-btn, .secondary-btn, .danger-btn) {
+  min-height: 40px;
+  padding: 10px 15px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+main :where(input, select, textarea),
+.application-modal :where(input, select, textarea),
+.confirm-modal :where(input, select, textarea) {
+  border-radius: 11px;
+  padding: 11px 13px;
+  font-size: 13px;
+}
+
+main textarea {
+  line-height: 1.45;
+}
+
+main :where(label, .application-form label:not(.confirm-row)) {
+  font-size: 13px;
+}
+
+main :where(.application-form, form, .form-grid, .field-grid, .tip-list, .saved-list, .applications-list, .job-list, .activity-list, .message-list, .action-list, .conversation-list, .status-list) {
+  gap: 10px;
+}
+
+main :where(.form-actions, .hero-actions, .intro-actions, .application-actions, .saved-actions, .job-actions, .chat-actions, .confirm-actions) {
+  gap: 8px;
+}
+
+main :where(.company-avatar) {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  font-size: 15px;
+}
+
+main :where(.company-avatar.large) {
+  width: 62px;
+  height: 62px;
+  border-radius: 18px;
+}
+
+main :where(.avatar) {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+}
+
+main :where(.avatar.large) {
+  width: 50px;
+  height: 50px;
+  border-radius: 16px;
+}
+
+main :where(.candidate-photo-wrap) {
+  width: 62px;
+  height: 62px;
+  border-radius: 18px;
+}
+
+main :where(.candidate-photo) {
+  width: 76px;
+  height: 76px;
+  border-radius: 20px;
+  font-size: 21px;
+}
+
+main :where(.photo-ring) {
+  width: 128px;
+  height: 128px;
+}
+
+main :where(.profile-photo) {
+  width: 118px;
+  height: 118px;
+}
+
+main :where(.preview-avatar) {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  font-size: 18px;
+}
+
+main :where(.preview-card) {
+  gap: 14px;
+}
+
+main :where(.candidate-summary) {
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+main :where(.status-pill, .job-tags span, .tags span, .tag-row span, .count-pill, .status-chip) {
+  padding: 6px 9px;
+  font-size: 10.5px;
+}
+
+main :where(.stat-card strong, .metric-card strong, .metric-card h3) {
+  font-size: 29px;
+  margin-top: 6px;
+}
+
+main :where(.application-stats strong) {
+  font-size: 25px;
+}
+
+main :where(.stat-card span, .stat-card p, .metric-card span, .metric-card p, .application-stats span) {
+  font-size: 12px;
+}
+
+main :where(.summary-grid, .job-facts, .readonly-grid, .detail-grid, .snapshot-grid, .application-stats) {
+  gap: 8px;
+}
+
+main :where(.summary-item, .job-fact, .readonly-grid div, .detail-grid div, .detail-row, .timeline-row, .status-list div, .profile-meta div) {
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+main :where(.profile-card, .dashboard-intro) {
+  min-height: 162px;
+}
+
+main :where(.profile-meta) {
+  margin: 11px 0;
+}
+
+main :where(.search-controls button) {
+  min-height: 42px;
+}
+
+main :where(.conversations-panel, .chat-panel, .context-panel) {
+  min-height: 540px;
+}
+
+main :where(.conversation-list) {
+  margin-top: 14px;
+  max-height: 420px;
+}
+
+main :where(.chat-header, .chat-messages) {
+  padding: 20px;
+}
+
+main :where(.chat-input-area) {
+  padding: 13px;
+}
+
+main :where(.message) {
+  padding: 11px 13px;
+  font-size: 13px;
+}
+
+.application-modal .modal-panel {
+  width: min(760px, calc(100% - 52px));
+  padding: 22px;
+  border-radius: 20px;
+}
+
+.confirm-modal .confirm-panel,
+.application-modal .confirm-panel {
+  width: min(430px, calc(100% - 40px));
+  padding: 22px;
+  border-radius: 18px;
+}
+
+@media (max-width: 900px) {
+  main.page-shell,
+  main.candidate-shell {
+    width: min(100% - 32px, 1380px);
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  main :where(.hero-card h1, .dashboard-intro h1, .page-hero h1) {
+    font-size: 31px;
+  }
+}

@@ -11,6 +11,7 @@ const statusBtn = document.getElementById("statusBtn");
 const statusBadge = document.getElementById("statusBadge");
 
 let currentJob = null;
+let currentUser = null;
 
 function updateStatusUI(status) {
   if (status === "paused") {
@@ -29,12 +30,13 @@ function updateStatusUI(status) {
 }
 
 async function loadJob() {
-  const { data: { user } } = await editJobSupabase.auth.getUser();
+  const user = await verifyEmployerAccess(editJobSupabase, {
+    loginPath: "employer-login.html",
+    candidateDashboardPath: "../candidates/candidate-dashboard.html"
+  });
 
-  if (!user) {
-    window.location.href = "employer-login.html";
-    return;
-  }
+  if (!user) return;
+  currentUser = user;
 
   const { data: job, error } = await editJobSupabase
     .from("jobs")
@@ -62,9 +64,7 @@ async function loadJob() {
 }
 
 statusBtn.addEventListener("click", async () => {
-  if (!currentJob) return;
-
-  const { data: { user } } = await editJobSupabase.auth.getUser();
+  if (!currentJob || !currentUser) return;
 
   const newStatus = currentJob.status === "active" ? "paused" : "active";
 
@@ -72,7 +72,7 @@ statusBtn.addEventListener("click", async () => {
     .from("jobs")
     .update({ status: newStatus })
     .eq("id", jobId)
-    .eq("employer_id", user.id);
+    .eq("employer_id", currentUser.id);
 
   if (error) {
     alert("Could not update job status.");
@@ -87,7 +87,7 @@ statusBtn.addEventListener("click", async () => {
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const { data: { user } } = await editJobSupabase.auth.getUser();
+  if (!currentUser) return;
 
   const { error } = await editJobSupabase
     .from("jobs")
@@ -100,7 +100,7 @@ form.addEventListener("submit", async (e) => {
       required_skills: document.getElementById("jobRequirements").value.trim()
     })
     .eq("id", jobId)
-    .eq("employer_id", user.id);
+    .eq("employer_id", currentUser.id);
 
   if (error) {
     alert("Could not save job.");
@@ -112,16 +112,16 @@ form.addEventListener("submit", async (e) => {
 });
 
 document.getElementById("removeBtn").addEventListener("click", async () => {
+  if (!currentUser) return;
+
   const confirmDelete = confirm("Remove this job permanently?");
   if (!confirmDelete) return;
-
-  const { data: { user } } = await editJobSupabase.auth.getUser();
 
   await editJobSupabase
     .from("jobs")
     .delete()
     .eq("id", jobId)
-    .eq("employer_id", user.id);
+    .eq("employer_id", currentUser.id);
 
   window.location.href = "manage-jobs.html";
 });

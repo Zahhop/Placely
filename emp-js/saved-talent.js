@@ -61,28 +61,10 @@ function setupEvents() {
 }
 
 async function requireEmployerLogin() {
-  const {
-    data: { user },
-    error
-  } = await savedSupabase.auth.getUser();
-
-  if (error || !user) {
-    window.location.href = "employer-login.html";
-    return null;
-  }
-
-  const { data: profile } = await savedSupabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (profile?.role && profile.role !== "employer") {
-    window.location.href = "../candidate/candidate-dashboard.html";
-    return null;
-  }
-
-  return user;
+  return verifyEmployerAccess(savedSupabase, {
+    loginPath: "employer-login.html",
+    candidateDashboardPath: "../candidates/candidate-dashboard.html"
+  });
 }
 
 async function loadSavedTalent() {
@@ -505,25 +487,4 @@ function escapeHTML(value) {
 
 function escapeAttribute(value) {
   return escapeHTML(value).replaceAll("`", "&#096;");
-}
-
-async function loadEmployerCandidateAccess(userId) {
-  try {
-    const { data, error } = await savedSupabase
-      .from("employer_profiles")
-      .select("candidate_access, subscription_status")
-      .eq("id", userId)
-      .maybeSingle();
-
-    if (error) throw error;
-    return isTruthy(data?.candidate_access) || clean(data?.subscription_status) === "active";
-  } catch (error) {
-    console.warn("Saved talent candidate access fields unavailable; defaulting to locked.", error);
-    return false;
-  }
-}
-
-function isTruthy(value) {
-  if (value === true) return true;
-  return ["true", "1", "yes", "active"].includes(clean(value));
 }
