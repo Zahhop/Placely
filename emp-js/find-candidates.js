@@ -1,7 +1,8 @@
-const employerSupabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+const employerSupabase = window.employerSupabase;
+
+if (!employerSupabase) {
+  console.error("Employer Supabase client was not initialized.");
+}
 
 const candidatesGrid = document.getElementById("candidatesGrid");
 const emptyState = document.getElementById("emptyState");
@@ -36,8 +37,6 @@ const logoutBtn = document.getElementById("logoutBtn");
 
 let currentUser = null;
 let employerAccess = {
-  subscription_status: "free",
-  subscription_plan: "",
   candidate_access: false
 };
 let hasCandidateAccess = false;
@@ -57,7 +56,12 @@ async function initFindCandidates() {
   currentUser = user;
   loadSavedCandidates();
   employerAccess = await loadEmployerAccess(user.id);
-  hasCandidateAccess = hasUnlockedCandidateAccess(employerAccess);
+  hasCandidateAccess = hasCandidateSearchAccess(employerAccess);
+
+  if (!hasCandidateAccess) {
+    showAccessDeniedRedirect();
+    return;
+  }
 
   renderAccessState();
   await loadCandidates();
@@ -95,17 +99,19 @@ async function requireEmployerLogin() {
 
 async function loadEmployerAccess(userId) {
   const freeAccess = {
-    subscription_status: "free",
-    subscription_plan: "",
     candidate_access: false
   };
 
   try {
     const { data, error } = await employerSupabase
       .from("employer_profiles")
-      .select("subscription_status, candidate_access, subscription_plan, subscription_started_at")
+      .select("candidate_access")
       .eq("id", userId)
       .maybeSingle();
+
+    console.log("Logged-in employer ID:", userId);
+    console.log("Employer profile:", data);
+    console.log("Candidate access:", data?.candidate_access);
 
     if (error) throw error;
     if (data) return { ...freeAccess, ...data };
@@ -607,6 +613,15 @@ function renderAccessState() {
   accessStateText.textContent = "Locked preview: upgrade to view full profiles, save, or message";
 }
 
+function showAccessDeniedRedirect() {
+  if (resultsText) resultsText.textContent = "Candidate access is not enabled for this account.";
+  if (accessStateText) accessStateText.textContent = "Redirecting to dashboard...";
+  showToast("Candidate search access is not enabled for this employer account.");
+  window.setTimeout(() => {
+    window.location.replace("employer-dashboard.html");
+  }, 900);
+}
+
 function updateActiveFilterText() {
   const active = [
     keywordInput.value && "keyword",
@@ -638,13 +653,8 @@ function getSplitValues(value) {
     .filter(Boolean);
 }
 
-function hasUnlockedCandidateAccess(profile) {
-  return isTruthy(profile?.candidate_access) || clean(profile?.subscription_status) === "active";
-}
-
-function isTruthy(value) {
-  if (value === true) return true;
-  return ["true", "1", "yes", "active"].includes(clean(value));
+function hasCandidateSearchAccess(profile) {
+  return profile?.candidate_access === true;
 }
 
 function isWithinLastDays(value, days) {
@@ -769,7 +779,5 @@ function showToast(message) {
   }, 2600);
 }
 
-// TODO: Enforce Candidate Network access in Supabase RLS or RPC before returning
-// full candidate profile and contact columns. This frontend gate prevents unpaid
-// employers from requesting contact fields now, but server-side authorization
-// should be the source of truth before billing launches.
+// TODO: Enforce Candidate Network access in Supabase RLS or RPC so the database
+// is also the source of truth for protected candidate profile and contact fields.

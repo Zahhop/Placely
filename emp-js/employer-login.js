@@ -1,7 +1,8 @@
-const placelySupabase = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-  );
+const placelySupabase = window.employerSupabase;
+
+if (!placelySupabase) {
+  console.error("Employer Supabase client was not initialized.");
+}
 
   const form = document.getElementById("loginForm");
 

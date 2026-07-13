@@ -1,7 +1,8 @@
-const supabaseClient = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+const supabaseClient = window.employerSupabase;
+
+if (!supabaseClient) {
+  console.error("Employer Supabase client was not initialized.");
+}
 
 const JOBS_TABLE = "jobs";
 

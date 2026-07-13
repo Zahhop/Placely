@@ -1,7 +1,4 @@
-const dashboardAccessSupabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+const dashboardAccessSupabase = window.employerSupabase;
 
 if (typeof window.loadCandidatePreviewPool === "function") {
   window.loadCandidatePreviewPool = async function () {
@@ -10,95 +7,109 @@ if (typeof window.loadCandidatePreviewPool === "function") {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  refreshDashboardFromSupabase();
-  setTimeout(refreshDashboardFromSupabase, 1200);
-  setTimeout(refreshDashboardFromSupabase, 3000);
+  document.addEventListener("click", guardLockedCandidateLinks, true);
+  updateDashboardStats();
+  setTimeout(updateDashboardStats, 1200);
+  setTimeout(updateDashboardStats, 3000);
 });
 
-async function refreshDashboardFromSupabase() {
-  await updateDashboardCandidateAccess();
-  await updateDashboardStats();
-}
+async function startCandidateCheckout() {
+  if (!dashboardAccessSupabase) {
+    console.error("Employer Supabase client was not initialized.");
+    showDashboardAccessToast("Could not start checkout. Please refresh and try again.");
+    return;
+  }
 
-async function updateDashboardCandidateAccess() {
-  const freeState = {
-    candidate_access: false,
-    subscription_status: "free"
-  };
-
-  let accessState = freeState;
+  const cta = document.getElementById("candidateAccessCta");
+  const originalText = cta?.textContent || "Upgrade Access";
 
   try {
-    const {
-      data: { user },
-      error: userError
-    } = await dashboardAccessSupabase.auth.getUser();
+    if (cta) {
+      cta.disabled = true;
+      cta.classList.add("is-loading");
+      cta.textContent = "Opening checkout...";
+    }
 
-    if (userError || !user) return;
+    const { data, error } = await dashboardAccessSupabase.functions.invoke(
+      "create-candidate-checkout",
+      {
+        body: {
+          origin: window.location.origin,
+          appPath: getPlacelyAppPath()
+        }
+      }
+    );
 
-    const { data, error } = await dashboardAccessSupabase
-      .from("employer_profiles")
-      .select("candidate_access, subscription_status")
-      .eq("id", user.id)
-      .maybeSingle();
+    if (error) {
+      console.error("Checkout function error:", error);
+      const responseBody = await readFunctionErrorBody(error);
+      if (responseBody) console.error("Checkout function response body:", responseBody);
+      throw new Error(responseBody?.error || error.message || "Unable to start checkout.");
+    }
 
-    if (error) throw error;
-    if (data) accessState = { ...freeState, ...data };
+    if (!data?.url) {
+      throw new Error(data?.error || "Unable to start checkout.");
+    }
+
+    window.location.href = data.url;
   } catch (error) {
-    console.warn("Dashboard candidate access fields unavailable; defaulting to locked.", error);
-  }
+    console.error("Candidate checkout failed:", error);
+    showDashboardAccessToast(error instanceof Error ? error.message : "Unable to start checkout.");
 
-  renderDashboardCandidateAccess(hasUnlockedCandidateAccess(accessState));
-}
-
-function renderDashboardCandidateAccess(isUnlocked) {
-  const cta = document.getElementById("candidateAccessCta");
-  const previewCta = document.getElementById("candidatePreviewCta");
-  const features = document.getElementById("candidateAccessFeatures");
-
-  setDashboardAccessText(
-    "candidateAccessTitle",
-    isUnlocked ? "Candidate Access Active" : "Unlock Candidate Network"
-  );
-
-  setDashboardAccessText(
-    "candidateAccessCopy",
-    isUnlocked
-      ? "Search the full candidate network, save talent, and message candidates from your recruiter workspace."
-      : "Upgrade to search verified trades candidates, view full profiles, save talent, and message candidates."
-  );
-
-  if (cta) {
-    cta.textContent = isUnlocked ? "Search Candidate Network" : "Upgrade Access";
-    cta.href = "find-candidates.html";
-  }
-
-  if (previewCta) {
-    previewCta.classList.toggle("hidden", isUnlocked);
-  }
-
-  if (features) {
-    const featureLabels = isUnlocked
-      ? ["Full candidate profiles", "Saved talent shortlist", "Candidate messaging"]
-      : ["Candidate database", "Full profiles", "Contact + messaging"];
-
-    features.innerHTML = featureLabels
-      .map((label) => `<div class="network-feature ${isUnlocked ? "active" : "locked"}"><span>${escapeDashboardAccessHTML(label)}</span></div>`)
-      .join("");
+    if (cta) {
+      cta.disabled = false;
+      cta.classList.remove("is-loading");
+      cta.textContent = originalText;
+    }
   }
 }
 
-function hasUnlockedCandidateAccess(profile) {
-  return isTruthy(profile?.candidate_access) || cleanAccessValue(profile?.subscription_status) === "active";
+window.startCandidateCheckout = startCandidateCheckout;
+
+async function readFunctionErrorBody(error) {
+  try {
+    if (!error?.context) return null;
+    return await error.context.json();
+  } catch {
+    return null;
+  }
 }
 
-function isTruthy(value) {
-  if (value === true) return true;
-  return ["true", "1", "yes", "active"].includes(cleanAccessValue(value));
+function getPlacelyAppPath() {
+  return window.location.pathname.startsWith("/Placely/") ? "/Placely" : "";
 }
 
-function cleanAccessValue(value) {
-  return String(value || "").toLowerCase().trim();
+function handleLockedCandidateAction(event) {
+  event.preventDefault();
+  document.getElementById("candidate-access")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  showDashboardAccessToast("Upgrade Candidate Network access before opening candidate search.");
+}
+
+function guardLockedCandidateLinks(event) {
+  if (window.currentEmployerCandidateAccess === true) return;
+
+  const link = event.target.closest?.('a[href="find-candidates.html"]');
+  if (!link) return;
+
+  event.preventDefault();
+  document.getElementById("candidate-access")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  showDashboardAccessToast("Upgrade Candidate Network access before opening candidate search.");
+}
+
+function showDashboardAccessToast(message) {
+  const toast = document.getElementById("toast");
+
+  if (!toast) {
+    alert(message);
+    return;
+  }
+
+  toast.textContent = message;
+  toast.classList.add("show");
+
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 2600);
 }
 
 function setDashboardAccessText(id, value) {
@@ -107,6 +118,11 @@ function setDashboardAccessText(id, value) {
 }
 
 async function updateDashboardStats() {
+  if (!dashboardAccessSupabase) {
+    console.error("Employer Supabase client was not initialized.");
+    return;
+  }
+
   try {
     const {
       data: { user },

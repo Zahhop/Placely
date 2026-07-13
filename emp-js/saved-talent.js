@@ -1,7 +1,8 @@
-const savedSupabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+const savedSupabase = window.employerSupabase;
+
+if (!savedSupabase) {
+  console.error("Employer Supabase client was not initialized.");
+}
 
 const savedTalentGrid = document.getElementById("savedTalentGrid");
 const emptyState = document.getElementById("emptyState");

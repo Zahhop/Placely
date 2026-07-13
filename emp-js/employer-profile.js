@@ -1,7 +1,8 @@
-const employerSupabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+const employerSupabase = window.employerSupabase;
+
+if (!employerSupabase) {
+  console.error("Employer Supabase client was not initialized.");
+}
 
 const form = document.getElementById("employerProfileForm");
 const logoutBtn = document.getElementById("logoutBtn");

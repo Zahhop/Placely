@@ -35,10 +35,16 @@
   background: #f8fbff;
 }
 
-.network-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+.recruiter-btn:disabled,
+.recruiter-btn.is-loading {
+  cursor: wait;
+  opacity: 0.78;
+  transform: none;
+}
+
+.quick-action-list a.locked-action {
+  cursor: pointer;
+  opacity: 0.72;
 }
 
 .hidden {
