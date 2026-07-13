@@ -26,7 +26,7 @@ function showToast(message) {
   const toast = document.getElementById("toast");
 
   if (!toast) {
-    alert(message);
+    console.warn(message);
     return;
   }
 
@@ -364,7 +364,10 @@ async function getCandidateProfile(candidateId) {
 }
 
 async function loadSavedCandidates() {
-  const savedIds = getSavedCandidateIds();
+  const savedRows = currentUser ? await loadSavedTalentRows(currentUser.id) : [];
+  const savedIds = savedRows.length
+    ? savedRows.map((row) => String(row.candidate_id || "").trim()).filter(Boolean)
+    : getSavedCandidateIds();
 
   if (!savedIds.length) {
     savedCandidates = [];
@@ -383,14 +386,34 @@ async function loadSavedCandidates() {
     return;
   }
 
+  const rowsByCandidateId = new Map();
+  savedRows.forEach((row) => {
+    const candidateId = String(row.candidate_id || "").trim();
+    if (candidateId && !rowsByCandidateId.has(candidateId)) rowsByCandidateId.set(candidateId, row);
+  });
+
   const savedDates = getSavedDates();
 
   savedCandidates = (data || [])
     .map((candidate) => ({
       ...candidate,
-      saved_at: savedDates[String(candidate.id)] || new Date().toISOString()
+      saved_at: rowsByCandidateId.get(String(candidate.id))?.created_at || savedDates[String(candidate.id)] || new Date().toISOString()
     }))
     .sort((a, b) => new Date(b.saved_at || 0) - new Date(a.saved_at || 0));
+}
+
+async function loadSavedTalentRows(userId) {
+  const { data, error } = await placelySupabase
+    .from("saved_talent")
+    .select("*")
+    .eq("employer_id", userId);
+
+  if (error) {
+    console.warn("Dashboard saved_talent table load failed; using local cache.", error);
+    return [];
+  }
+
+  return data || [];
 }
 
 async function loadUnreadMessages(userId) {
@@ -477,7 +500,7 @@ function renderCandidatePreview(results) {
       <div class="preview-candidate">
         <strong>${escapeHTML(candidate.full_name || "Unnamed Candidate")}</strong>
         <span>${escapeHTML(candidate.trade || "Trade not listed")} &middot; ${escapeHTML(candidate.location || "Location not listed")}</span>
-        <button type="button" onclick="handleSavePreviewCandidate('${escapeHTML(candidate.id)}')">
+        <button type="button" data-save-candidate-id="${escapeHTML(candidate.id)}">
           Save Candidate
         </button>
       </div>
@@ -503,9 +526,25 @@ async function handleSavePreviewCandidate(candidateId) {
   const candidate = candidatePreviewPool.find((person) => String(person.id) === String(candidateId));
   if (!candidate) return;
 
-  if (getSavedCandidateIds().includes(String(candidate.id))) {
+  const existingRows = currentUser ? await loadSavedTalentRows(currentUser.id) : [];
+  const alreadySaved = existingRows.some((row) => String(row.candidate_id) === String(candidate.id)) ||
+    getSavedCandidateIds().includes(String(candidate.id));
+
+  if (alreadySaved) {
     showToast("Candidate is already saved.");
     return;
+  }
+
+  if (currentUser) {
+    const { error } = await placelySupabase
+      .from("saved_talent")
+      .insert([{ employer_id: currentUser.id, candidate_id: candidate.id }]);
+
+    if (error) {
+      console.error("Dashboard save candidate error:", error);
+      showToast("Could not save candidate.");
+      return;
+    }
   }
 
   saveCandidateId(candidate.id);
@@ -592,6 +631,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const logoutBtn = document.getElementById("logoutBtn");
   if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
+
+  const previewContainer = document.getElementById("candidatePreviewResults");
+  if (previewContainer) {
+    previewContainer.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-save-candidate-id]");
+      if (!button) return;
+      handleSavePreviewCandidate(button.dataset.saveCandidateId);
+    });
+  }
 
   const candidateSearchForm = document.getElementById("candidateSearchForm");
   if (candidateSearchForm) candidateSearchForm.addEventListener("submit", handleCandidateSearch);

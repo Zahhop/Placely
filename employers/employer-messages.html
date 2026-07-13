@@ -7,7 +7,7 @@
   <title>Employer Messages | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/employer-messages.css" />
-  <link rel="stylesheet" href="../css/messages-polish.css" />
+  <link rel="stylesheet" href="../css/candidate-detail-drawer.css" />
   <link rel="stylesheet" href="../css/employer-consistency.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
@@ -32,23 +32,21 @@
 </header>
 
 <main class="page-shell">
-
-  <section class="hero-card">
+  <section class="hero-card compact-hero">
     <div>
-      <span class="eyebrow">Employer Messages</span>
-      <h1>Candidate conversations, organized.</h1>
-      <p>Message applicants, saved talent, and active candidates from one clean employer inbox.</p>
+      <span class="eyebrow">EMPLOYER MESSAGES</span>
+      <h1>Candidate conversations</h1>
+      <p>Message applicants, saved talent, and sourced candidates from one organized employer inbox.</p>
     </div>
 
     <div class="hero-actions">
-      <a href="find-candidates.html" class="primary-link">Find Candidates</a>
-      <a href="employer-dashboard.html" class="secondary-btn">Dashboard</a>
+      <a href="find-candidates.html" class="secondary-link">Find Candidates</a>
+      <a href="employer-applicants.html" class="primary-link">Applicants</a>
     </div>
   </section>
 
-  <section class="messages-layout" id="messagesLayout">
-
-    <aside class="conversations-panel">
+  <section class="messages-workspace" id="messagesLayout">
+    <aside class="conversations-panel" aria-label="Conversations">
       <div class="panel-header">
         <div>
           <span class="small-label">Inbox</span>
@@ -57,73 +55,71 @@
         <span class="count-pill" id="inboxCount">0</span>
       </div>
 
-      <div class="search-wrap">
-        <input id="conversationSearch" class="conversation-search" type="text" placeholder="Search candidates..." />
-      </div>
+      <label class="search-wrap" for="conversationSearch">
+        <span class="sr-only">Search conversations</span>
+        <input id="conversationSearch" class="conversation-search" type="search" placeholder="Search candidates" autocomplete="off" />
+      </label>
 
       <div class="conversation-list" id="conversationList"></div>
     </aside>
 
-    <section class="chat-panel">
-
+    <section class="chat-panel" aria-label="Selected conversation">
       <div class="chat-header">
         <div class="chat-user">
-          <div class="avatar large" id="chatAvatar"></div>
+          <div class="avatar large" id="chatAvatar" aria-hidden="true"></div>
 
-          <div>
-            <span class="small-label">Active Conversation</span>
+          <div class="chat-title">
+            <span class="small-label" id="chatEyebrow">Select a conversation</span>
             <h2 id="chatName">No conversation selected</h2>
-            <p id="chatSubtitle">Select a candidate conversation to view messages.</p>
+            <p id="chatSubtitle">Choose a candidate from your inbox or start from Applicants, Candidates, or Saved Talent.</p>
           </div>
         </div>
 
         <div class="chat-actions" id="chatActions">
-          <button type="button" class="light-btn" id="followUpBtn">Follow Up</button>
-          <button type="button" class="primary-mini-btn" id="viewProfileBtn">View Profile</button>
+          <button type="button" class="light-btn" id="viewApplicationBtn">Application</button>
+          <button type="button" class="primary-mini-btn" id="viewProfileBtn">Profile</button>
+          <button type="button" class="light-btn" id="detailsBtn">Details</button>
         </div>
       </div>
 
       <div class="chat-messages" id="chatMessages"></div>
 
-      <form class="chat-input-area" id="messageForm">
-        <input id="messageInput" type="text" placeholder="Type your message..." autocomplete="off" />
-        <button class="primary-btn" type="submit">Send</button>
+      <form class="composer" id="messageForm">
+        <label class="sr-only" for="messageInput">Message</label>
+        <textarea id="messageInput" rows="2" placeholder="Write a message..." autocomplete="off"></textarea>
+        <div class="composer-footer">
+          <span class="composer-status" id="composerStatus"></span>
+          <button class="primary-btn" id="sendMessageBtn" type="submit">Send</button>
+        </div>
       </form>
-
     </section>
-
-    <aside class="context-panel" id="contextPanel">
-      <span class="small-label">Conversation Details</span>
-      <h2 id="detailName">No candidate selected</h2>
-      <p id="detailRole"></p>
-
-      <div class="context-card">
-        <span>Recommended next step</span>
-        <strong id="nextStepTitle">Start a conversation</strong>
-        <p id="nextStepText">Select a candidate from your inbox or message someone from Saved Talent.</p>
-      </div>
-
-      <div class="context-list">
-        <div>
-          <span>Status</span>
-          <strong id="detailStatus">—</strong>
-        </div>
-        <div>
-          <span>Source</span>
-          <strong id="detailSource">—</strong>
-        </div>
-        <div>
-          <span>Response</span>
-          <strong id="detailResponse">—</strong>
-        </div>
-      </div>
-
-      <a href="saved-talent.html" class="secondary-btn wide-btn">Review Saved Talent</a>
-    </aside>
 
   </section>
 
+  <aside id="messageDetailsDrawer" class="applicant-drawer" aria-hidden="true">
+    <div id="messageDrawerOverlay" class="drawer-overlay"></div>
+    <section class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+      <div class="drawer-head">
+        <div>
+          <span class="eyebrow">Candidate Details</span>
+          <h2 id="drawerTitle">Candidate profile</h2>
+        </div>
+
+        <button type="button" id="closeMessageDrawerBtn" class="icon-btn" aria-label="Close candidate details">Close</button>
+      </div>
+
+      <div id="candidateContextContent" class="applicant-detail">
+        <div class="empty-state compact-empty">
+          <div class="empty-icon">PT</div>
+          <h3>Select a conversation</h3>
+          <p>Candidate profile and application details will appear here.</p>
+        </div>
+      </div>
+    </section>
+  </aside>
 </main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/config.js"></script>

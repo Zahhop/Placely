@@ -156,7 +156,8 @@ nav a:hover {
   background: white;
 }
 
-.company-top-card {
+.company-top-card,
+.company-info-layout {
   margin-top: 22px;
   border-radius: 24px;
   padding: 28px;
@@ -312,10 +313,20 @@ nav a:hover {
   gap: 9px;
 }
 
-.score-list div {
+.score-list button {
+  width: 100%;
+  border: 0;
+  background: transparent;
   color: #334155;
   font-size: 13px;
   font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+}
+
+.score-list button:hover {
+  color: #2563eb;
 }
 
 .score-list span {
@@ -340,7 +351,7 @@ nav a:hover {
   gap: 8px;
 }
 
-.sidebar-card a {
+.sidebar-card button {
   text-decoration: none;
   color: #334155;
   background: #f8fafc;
@@ -349,23 +360,37 @@ nav a:hover {
   padding: 14px;
   font-size: 14px;
   font-weight: 900;
+  cursor: pointer;
+  text-align: left;
 }
 
-.sidebar-card a.active,
-.sidebar-card a:hover {
+.sidebar-card button.active,
+.sidebar-card button:hover {
   color: #2563eb;
   background: #eff6ff;
   border-color: #bfdbfe;
 }
 
+.sidebar-card button:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.22);
+  outline-offset: 2px;
+}
+
 .profile-content {
   display: grid;
-  gap: 22px;
 }
 
 .panel {
   border-radius: 24px;
   padding: 28px;
+}
+
+.profile-section.hidden {
+  display: none;
+}
+
+.profile-section.active {
+  display: block;
 }
 
 .panel-header {
@@ -381,6 +406,13 @@ nav a:hover {
   letter-spacing: -0.04em;
 }
 
+.overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 22px;
+  align-items: stretch;
+}
+
 .preview-card {
   border: 1px solid #dbe3ef;
   border-radius: 22px;
@@ -390,6 +422,13 @@ nav a:hover {
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 18px;
+}
+
+.overview-actions {
+  margin-top: 22px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .preview-info h3 {
@@ -488,12 +527,20 @@ textarea:focus {
 
 @media (max-width: 1200px) {
   .company-top-card,
+  .company-info-layout,
+  .overview-grid,
   .content-layout {
     grid-template-columns: 1fr;
   }
 
   .sidebar-card {
     position: static;
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .sidebar-card button {
+    flex: 0 0 auto;
   }
 }
 

@@ -20,6 +20,9 @@ const logoPreview = document.getElementById("company_logo_preview");
 const logoFrame = document.querySelector(".logo-frame");
 const previewLogoImg = document.getElementById("previewLogoImg");
 const previewLogoBox = document.querySelector(".preview-avatar");
+const sectionButtons = document.querySelectorAll("[data-section-target]");
+const profileSections = document.querySelectorAll(".profile-section");
+const scoreList = document.getElementById("scoreList");
 
 const PHOTO_BUCKET = "employer-logos";
 
@@ -27,6 +30,7 @@ let currentLogoUrl = "";
 let isLogoUploading = false;
 
 document.addEventListener("DOMContentLoaded", () => {
+  setupSectionNavigation();
   loadEmployerProfile();
   setupLivePreview();
   setupLogoUpload();
@@ -186,7 +190,6 @@ function setupLogoUpload() {
       showToast("Logo uploaded. Click Save Changes to finish.");
     } catch (error) {
       console.error("Logo upload failed:", error);
-      alert(error?.message || "Logo upload failed.");
       showToast(error?.message || "Logo upload failed.");
 
       if (currentLogoUrl) {
@@ -316,7 +319,7 @@ function updatePreview() {
   const location = getValue("company_location") || "Location";
 
   setText("previewCompanyName", company);
-  setText("previewCompanyMeta", `${industry} · ${location}`);
+  setText("previewCompanyMeta", `${industry} - ${location}`);
   setText("previewEmployment", getValue("employment_type") || "Employment Type");
   setText("previewPay", getValue("pay_range") || "Pay Range");
   setText("previewTimeline", getValue("hiring_timeline") || "Hiring Timeline");
@@ -358,6 +361,99 @@ function updateStrength() {
   if (strengthBar) {
     strengthBar.style.width = `${percent}%`;
   }
+
+  renderStrengthRecommendations(fields, hasLogo);
+}
+
+function setupSectionNavigation() {
+  sectionButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      showProfileSection(button.dataset.sectionTarget, {
+        updateHash: true,
+        focusPanel: button.closest(".sidebar-card") !== null
+      });
+    });
+  });
+
+  window.addEventListener("hashchange", () => {
+    showProfileSection(getSectionFromHash(), { updateHash: false });
+  });
+
+  scoreList?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-section-target]");
+    if (!button) return;
+
+    showProfileSection(button.dataset.sectionTarget, { updateHash: true, focusPanel: true });
+  });
+
+  showProfileSection(getSectionFromHash(), { updateHash: false });
+}
+
+function getSectionFromHash() {
+  return getValidSectionId(window.location.hash.replace("#", "").trim());
+}
+
+function getValidSectionId(id) {
+  return [...profileSections].some((section) => section.id === id) ? id : "overview";
+}
+
+function showProfileSection(sectionId, options = {}) {
+  const nextId = getValidSectionId(sectionId);
+
+  profileSections.forEach((section) => {
+    const isActive = section.id === nextId;
+    section.classList.toggle("active", isActive);
+    section.classList.toggle("hidden", !isActive);
+    section.hidden = !isActive;
+  });
+
+  document.querySelectorAll(".sidebar-card [data-section-target]").forEach((button) => {
+    const isActive = button.dataset.sectionTarget === nextId;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-selected", String(isActive));
+  });
+
+  if (options.updateHash && window.location.hash !== `#${nextId}`) {
+    window.history.pushState(null, "", `#${nextId}`);
+  }
+
+  if (options.focusPanel) {
+    document.getElementById(nextId)?.querySelector("input, textarea, select, button")?.focus({ preventScroll: true });
+  }
+}
+
+function renderStrengthRecommendations(fields, hasLogo) {
+  if (!scoreList) return;
+
+  const fieldSections = {
+    company_name: ["Company name", "company-info"],
+    industry: ["Industry focus", "company-info"],
+    company_location: ["Company location", "company-info"],
+    company_description: ["Company description", "company-info"],
+    main_hiring_industry: ["Hiring industry", "hiring-section"],
+    employment_type: ["Employment type", "hiring-section"],
+    pay_range: ["Pay range", "hiring-section"],
+    hiring_timeline: ["Hiring timeline", "hiring-section"],
+    candidate_qualities: ["Candidate qualities", "candidate-section"],
+    hiring_needs: ["Hiring needs", "hiring-section"],
+    company_email: ["Company email", "contact-section"],
+    phone: ["Phone number", "contact-section"],
+    contact_name: ["Contact name", "contact-section"],
+    company_website: ["Company website", "contact-section"]
+  };
+
+  const missing = fields.filter((id) => !getValue(id)).slice(0, 3);
+  const logoItem = hasLogo
+    ? `<button type="button" data-section-target="company-info"><span>Done</span> Company logo</button>`
+    : `<button type="button" data-section-target="company-info"><span>Add</span> Company logo</button>`;
+
+  scoreList.innerHTML = [
+    logoItem,
+    ...missing.map((id) => {
+      const [label, section] = fieldSections[id] || [id, "company-info"];
+      return `<button type="button" data-section-target="${section}"><span>Add</span> ${escapeHTML(label)}</button>`;
+    })
+  ].join("");
 }
 
 function setupLogout() {
@@ -404,7 +500,7 @@ function getInitials(value) {
 
 function showToast(message) {
   if (!toast) {
-    alert(message);
+    console.warn(message);
     return;
   }
 

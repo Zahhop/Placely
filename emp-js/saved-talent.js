@@ -27,6 +27,7 @@ let currentUser = null;
 let allSavedCandidates = [];
 let filteredSavedCandidates = [];
 let hasCandidateAccess = false;
+let savedTalentRowsByCandidateId = new Map();
 
 document.addEventListener("DOMContentLoaded", initSavedTalent);
 
@@ -70,15 +71,30 @@ async function requireEmployerLogin() {
 async function loadSavedTalent() {
   resultsText.textContent = "Loading saved candidates...";
 
-  const savedIds = getLocalSavedCandidateIds();
+  const savedRows = await loadSavedTalentRows();
+  const legacyIds = getLocalSavedCandidateIds();
+  const candidateIds = [
+    ...new Set([
+      ...savedRows.map((row) => String(row.candidate_id || "").trim()).filter(Boolean),
+      ...legacyIds
+    ])
+  ];
 
-  if (!savedIds.length) {
+  if (!candidateIds.length) {
+    savedTalentRowsByCandidateId = new Map();
     allSavedCandidates = [];
     filteredSavedCandidates = [];
     renderSavedTalent();
     updateStats();
     return;
   }
+
+  savedTalentRowsByCandidateId = new Map();
+  savedRows.forEach((row) => {
+    const candidateId = String(row.candidate_id || "").trim();
+    if (!candidateId || savedTalentRowsByCandidateId.has(candidateId)) return;
+    savedTalentRowsByCandidateId.set(candidateId, row);
+  });
 
   const columns = hasCandidateAccess
     ? "*"
@@ -87,7 +103,7 @@ async function loadSavedTalent() {
   const { data, error } = await savedSupabase
     .from("candidate_profiles")
     .select(columns)
-    .in("id", savedIds)
+    .in("id", candidateIds)
     .eq("profile_visible", true);
 
   if (error) {
@@ -100,13 +116,33 @@ async function loadSavedTalent() {
     return;
   }
 
-  allSavedCandidates = (data || []).map((candidate) => ({
-    ...candidate,
-    saved_at: getSavedDate(candidate.id)
-  }));
+  allSavedCandidates = dedupeCandidates(data || []).map((candidate) => {
+    const savedRow = savedTalentRowsByCandidateId.get(String(candidate.id));
+
+    return {
+      ...candidate,
+      saved_record_id: savedRow?.id || "",
+      saved_at: savedRow?.created_at || savedRow?.saved_at || getSavedDate(candidate.id)
+    };
+  });
 
   filteredSavedCandidates = [...allSavedCandidates];
+  populateTradeFilter();
   applyFilters();
+}
+
+async function loadSavedTalentRows() {
+  const { data, error } = await savedSupabase
+    .from("saved_talent")
+    .select("*")
+    .eq("employer_id", currentUser.id);
+
+  if (error) {
+    console.warn("Saved talent table load failed; using legacy local saved IDs if present.", error);
+    return [];
+  }
+
+  return data || [];
 }
 
 function applyFilters() {
@@ -150,6 +186,7 @@ function sortSavedCandidates() {
     if (sort === "name") return clean(a.full_name).localeCompare(clean(b.full_name));
     if (sort === "trade") return clean(a.trade).localeCompare(clean(b.trade));
     if (sort === "location") return clean(a.location).localeCompare(clean(b.location));
+    if (sort === "oldest") return new Date(a.saved_at || 0) - new Date(b.saved_at || 0);
 
     return new Date(b.saved_at || 0) - new Date(a.saved_at || 0);
   });
@@ -320,20 +357,12 @@ function startMessageWithCandidate(candidate) {
     return;
   }
 
-  const messageCandidate = {
-    id: candidate.id,
-    name: candidate.full_name || "Candidate",
-    trade: candidate.trade || "Trade not listed",
-    location: candidate.location || "Location not listed",
-    photo: candidate.profile_photo_url || ""
-  };
+  if (!candidate?.id) {
+    showToast("Could not open this candidate.");
+    return;
+  }
 
-  localStorage.setItem(
-    "placelyMessageCandidate",
-    JSON.stringify(messageCandidate)
-  );
-
-  window.location.href = "employer-messages.html";
+  window.location.href = `employer-messages.html?candidate_id=${encodeURIComponent(candidate.id)}`;
 }
 
 function closeCandidatePanel() {
@@ -341,8 +370,34 @@ function closeCandidatePanel() {
   panelOverlay.classList.remove("open");
 }
 
-function removeSavedCandidate(candidateId) {
+async function removeSavedCandidate(candidateId) {
   const id = String(candidateId);
+  const savedRow = savedTalentRowsByCandidateId.get(id);
+
+  if (savedRow?.id) {
+    const { error } = await savedSupabase
+      .from("saved_talent")
+      .delete()
+      .eq("id", savedRow.id)
+      .eq("employer_id", currentUser.id);
+
+    if (error) {
+      console.error("Remove saved talent error:", error);
+      showToast("Could not remove candidate from saved talent.");
+      return;
+    }
+  } else {
+    const { error } = await savedSupabase
+      .from("saved_talent")
+      .delete()
+      .eq("employer_id", currentUser.id)
+      .eq("candidate_id", id);
+
+    if (error) {
+      console.warn("Saved talent table delete fallback failed; removing legacy local entry only.", error);
+    }
+  }
+
   const savedIds = getLocalSavedCandidateIds().filter((savedId) => savedId !== id);
 
   localStorage.setItem("placelySavedCandidates", JSON.stringify(savedIds));
@@ -353,7 +408,9 @@ function removeSavedCandidate(candidateId) {
 
   allSavedCandidates = allSavedCandidates.filter((candidate) => String(candidate.id) !== id);
   filteredSavedCandidates = filteredSavedCandidates.filter((candidate) => String(candidate.id) !== id);
+  savedTalentRowsByCandidateId.delete(id);
 
+  populateTradeFilter();
   renderSavedTalent();
   updateStats();
   showToast("Candidate removed from saved talent.");
@@ -385,7 +442,8 @@ function updateStats() {
   savedCount.textContent = allSavedCandidates.length;
 
   readyCount.textContent = allSavedCandidates.filter((candidate) => {
-    return clean(candidate.availability).includes("immediately");
+    const availability = clean(candidate.availability);
+    return ["immediate", "immediately", "available now", "asap", "now"].some((term) => availability.includes(term));
   }).length;
 
   const trades = new Set(
@@ -417,6 +475,34 @@ function getCandidateTags(candidate) {
   return tags.map((tag) => tag.trim()).filter(Boolean).slice(0, 3);
 }
 
+function dedupeCandidates(candidates) {
+  const seen = new Set();
+
+  return candidates.filter((candidate) => {
+    const id = String(candidate.id || "");
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}
+
+function populateTradeFilter() {
+  if (!tradeFilter) return;
+
+  const current = tradeFilter.value;
+  const trades = [...new Set(allSavedCandidates.map((candidate) => String(candidate.trade || "").trim()).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b));
+
+  tradeFilter.innerHTML = `
+    <option value="">All trades</option>
+    ${trades.map((trade) => `<option value="${escapeAttribute(trade)}">${escapeHTML(trade)}</option>`).join("")}
+  `;
+
+  if (trades.some((trade) => clean(trade) === clean(current))) {
+    tradeFilter.value = current;
+  }
+}
+
 function getInitials(name) {
   return String(name || "PT")
     .split(" ")
@@ -430,7 +516,7 @@ function showToast(message) {
   const toast = document.getElementById("toast");
 
   if (!toast) {
-    alert(message);
+    console.warn(message);
     return;
   }
 

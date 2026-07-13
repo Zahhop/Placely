@@ -55,7 +55,7 @@ async function initFindCandidates() {
   if (!user) return;
 
   currentUser = user;
-  loadSavedCandidates();
+  await loadSavedCandidates();
   employerAccess = await loadEmployerAccess(user.id);
   hasCandidateAccess = hasUnlockedCandidateAccess(employerAccess);
 
@@ -461,20 +461,31 @@ function closeCandidatePanel() {
   panelOverlay.classList.remove("open");
 }
 
-function toggleSaveCandidate(candidate) {
+async function toggleSaveCandidate(candidate) {
   if (!hasCandidateAccess) {
     showUpgradeComingSoon();
     return;
   }
 
   const id = String(candidate.id);
+  if (!id) {
+    showToast("Could not save this candidate.");
+    return;
+  }
+
   const savedDates = getSavedDates();
 
   if (savedCandidates.has(id)) {
+    const removed = await removeSavedTalentRecord(id);
+    if (!removed) return;
+
     savedCandidates.delete(id);
     delete savedDates[id];
     showToast("Candidate removed from saved talent.");
   } else {
+    const saved = await saveTalentRecord(id);
+    if (!saved) return;
+
     savedCandidates.add(id);
     savedDates[id] = new Date().toISOString();
     showToast("Candidate saved.");
@@ -499,49 +510,12 @@ async function startMessageWithCandidate(candidate) {
 
   if (!currentUser) return;
 
-  const candidateId = candidate.id;
-  const employerName = await getEmployerName(currentUser.id);
-
-  let { data: existingConversation, error: findError } = await employerSupabase
-    .from("conversations")
-    .select("*")
-    .eq("employer_id", currentUser.id)
-    .eq("candidate_id", candidateId)
-    .maybeSingle();
-
-  if (findError) {
-    console.error("Find conversation error:", findError);
-    showToast("Could not open conversation.");
+  if (!candidate?.id) {
+    showToast("Could not open this candidate.");
     return;
   }
 
-  if (!existingConversation) {
-    const { data: newConversation, error: createError } = await employerSupabase
-      .from("conversations")
-      .insert([
-        {
-          employer_id: currentUser.id,
-          employer_name: employerName,
-          candidate_id: candidateId,
-          candidate_name: candidate.full_name || "Candidate",
-          candidate_role: candidate.trade || "Trade not listed",
-          candidate_location: candidate.location || "Location not listed",
-          candidate_initials: getInitials(candidate.full_name)
-        }
-      ])
-      .select()
-      .single();
-
-    if (createError) {
-      console.error("Create conversation error:", createError);
-      showToast("Could not start conversation.");
-      return;
-    }
-
-    existingConversation = newConversation;
-  }
-
-  window.location.href = `employer-messages.html?conversation=${existingConversation.id}`;
+  window.location.href = `employer-messages.html?candidate_id=${encodeURIComponent(candidate.id)}`;
 }
 
 async function getEmployerName(userId) {
@@ -554,13 +528,77 @@ async function getEmployerName(userId) {
   return profileById?.company_name || "Employer";
 }
 
-function loadSavedCandidates() {
+async function loadSavedCandidates() {
+  savedCandidates = new Set(getLocalSavedCandidateIds());
+
+  if (!currentUser) return;
+
+  const { data, error } = await employerSupabase
+    .from("saved_talent")
+    .select("candidate_id")
+    .eq("employer_id", currentUser.id);
+
+  if (error) {
+    console.warn("Saved talent table unavailable; using local saved candidate cache.", error);
+    return;
+  }
+
+  savedCandidates = new Set((data || []).map((row) => String(row.candidate_id)).filter(Boolean));
+  localStorage.setItem("placelySavedCandidates", JSON.stringify([...savedCandidates]));
+}
+
+function getLocalSavedCandidateIds() {
   try {
     const saved = JSON.parse(localStorage.getItem("placelySavedCandidates")) || [];
-    savedCandidates = new Set(saved.map(String));
+    return saved.map(String);
   } catch {
-    savedCandidates = new Set();
+    return [];
   }
+}
+
+async function saveTalentRecord(candidateId) {
+  const { data: existing, error: existingError } = await employerSupabase
+    .from("saved_talent")
+    .select("id")
+    .eq("employer_id", currentUser.id)
+    .eq("candidate_id", candidateId)
+    .limit(1);
+
+  if (existingError) {
+    console.error("Find saved talent record error:", existingError);
+    showToast("Could not save candidate.");
+    return false;
+  }
+
+  if (existing?.length) return true;
+
+  const { error } = await employerSupabase
+    .from("saved_talent")
+    .insert([{ employer_id: currentUser.id, candidate_id: candidateId }]);
+
+  if (error) {
+    console.error("Save candidate error:", error);
+    showToast("Could not save candidate.");
+    return false;
+  }
+
+  return true;
+}
+
+async function removeSavedTalentRecord(candidateId) {
+  const { error } = await employerSupabase
+    .from("saved_talent")
+    .delete()
+    .eq("employer_id", currentUser.id)
+    .eq("candidate_id", candidateId);
+
+  if (error) {
+    console.error("Remove saved candidate error:", error);
+    showToast("Could not remove candidate.");
+    return false;
+  }
+
+  return true;
 }
 
 function clearFilters() {
@@ -757,7 +795,7 @@ function showToast(message) {
   const toast = document.getElementById("toast");
 
   if (!toast) {
-    alert(message);
+    console.warn(message);
     return;
   }
 

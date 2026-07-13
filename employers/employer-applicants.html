@@ -7,6 +7,7 @@
   <title>Applicants | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/employer-applicants.css" />
+  <link rel="stylesheet" href="../css/candidate-detail-drawer.css" />
   <link rel="stylesheet" href="../css/employer-consistency.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
@@ -32,11 +33,11 @@
 
 <main class="page-shell">
 
-  <section class="hero-card">
+  <section class="hero-card compact-hero">
     <div>
       <span class="eyebrow">APPLICANT TRACKING</span>
-      <h1>Review and manage every applicant.</h1>
-      <p>See every candidate who applied, filter by job or hiring stage, review profiles, message applicants, and move them through your hiring pipeline.</p>
+      <h1>Applicant pipeline</h1>
+      <p>Move applicants through each hiring stage, filter by job, and open a focused profile drawer when you need deeper context.</p>
     </div>
 
     <div class="hero-actions">
@@ -45,113 +46,117 @@
     </div>
   </section>
 
-  <section class="pipeline-summary" aria-label="Applicant pipeline">
-    <button type="button" class="pipeline-chip active" data-status="all">
-      <span>All</span>
-      <strong id="totalApplicants">0</strong>
-    </button>
+  <select id="jobFilter" class="hidden" aria-hidden="true">
+    <option value="">Select job</option>
+  </select>
 
-    <button type="button" class="pipeline-chip" data-status="new">
-      <span>New</span>
-      <strong id="newApplicants">0</strong>
-    </button>
+  <section class="job-toolbar-card" aria-label="Applicant pipeline controls">
+    <div class="job-toolbar-top">
+      <div class="job-selector-wrap">
+        <span class="control-label">Pipeline for</span>
+        <button type="button" id="jobSelectorBtn" class="job-selector-button" aria-haspopup="listbox" aria-expanded="false">
+          <span id="selectedJobContext" class="selected-job-context"></span>
+          <span class="selector-chevron" aria-hidden="true">v</span>
+        </button>
 
-    <button type="button" class="pipeline-chip" data-status="reviewing">
-      <span>Reviewing</span>
-      <strong id="reviewingApplicants">0</strong>
-    </button>
-
-    <button type="button" class="pipeline-chip" data-status="interview">
-      <span>Interview</span>
-      <strong id="interviewApplicants">0</strong>
-    </button>
-
-    <button type="button" class="pipeline-chip" data-status="offer">
-      <span>Offer</span>
-      <strong id="offerApplicants">0</strong>
-    </button>
-
-    <button type="button" class="pipeline-chip" data-status="hired">
-      <span>Hired</span>
-      <strong id="hiredApplicants">0</strong>
-    </button>
-
-    <button type="button" class="pipeline-chip" data-status="rejected">
-      <span>Rejected</span>
-      <strong id="rejectedApplicants">0</strong>
-    </button>
-
-    <button type="button" class="pipeline-chip" data-status="withdrawn">
-      <span>Withdrawn</span>
-      <strong id="withdrawnApplicants">0</strong>
-    </button>
-  </section>
-
-  <section class="applicants-panel">
-    <div class="panel-heading">
-      <div>
-        <span class="eyebrow">CANDIDATE REVIEW</span>
-        <h2>Applicant queue</h2>
-        <p>Filter applicants, open profiles, and update hiring status.</p>
+        <div id="jobSelectorPopover" class="job-selector-popover hidden">
+          <input id="jobSearchInput" type="search" placeholder="Search jobs..." autocomplete="off" />
+          <div id="jobList" class="job-list" role="listbox" aria-label="Select job pipeline"></div>
+        </div>
       </div>
 
-      <button type="button" id="refreshBtn" class="secondary-link button-link">Refresh</button>
+      <a id="selectedJobManageLink" href="manage-jobs.html" class="quiet-btn">Manage Job</a>
     </div>
 
-    <div class="filter-bar">
-      <input id="searchInput" type="text" placeholder="Search name, trade, city, skill, job..." />
+    <div class="pipeline-toolbar" aria-label="Applicant filters and actions">
+      <div class="search-field">
+        <label for="searchInput">Search applicants</label>
+        <input id="searchInput" type="search" placeholder="Search selected job candidates..." autocomplete="off" />
+      </div>
 
-      <select id="jobFilter">
-        <option value="all">All jobs</option>
-      </select>
+      <div class="toolbar-field">
+        <label for="sortFilter">Sort</label>
+        <select id="sortFilter">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="candidate">Candidate A-Z</option>
+        </select>
+      </div>
 
-      <select id="statusFilter">
-        <option value="all">All statuses</option>
-        <option value="new">New</option>
-        <option value="submitted">Submitted</option>
-        <option value="reviewing">Reviewing</option>
-        <option value="interview">Interview</option>
-        <option value="offer">Offer</option>
-        <option value="hired">Hired</option>
-        <option value="rejected">Rejected</option>
-        <option value="withdrawn">Withdrawn</option>
-      </select>
+      <div class="filter-menu-wrap">
+        <button type="button" id="filtersMenuBtn" class="secondary-link button-link" aria-haspopup="true" aria-expanded="false">Filters</button>
+        <div id="filtersPopover" class="filters-popover hidden" role="menu" aria-label="Applicant filters">
+          <label>
+            Availability
+            <select id="availabilityFilter">
+              <option value="">Any availability</option>
+              <option value="immediate">Available immediately</option>
+              <option value="1 week">Within 1 week</option>
+              <option value="2 week">Within 2 weeks</option>
+              <option value="month">Within 1 month</option>
+            </select>
+          </label>
 
-      <select id="sortFilter">
-        <option value="newest">Newest first</option>
-        <option value="oldest">Oldest first</option>
-        <option value="candidate">Candidate A-Z</option>
-      </select>
+          <label class="checkbox-filter">
+            <input id="hasResumeFilter" type="checkbox" />
+            Has resume
+          </label>
+
+          <label class="checkbox-filter">
+            <input id="hasNotesFilter" type="checkbox" />
+            Has notes
+          </label>
+        </div>
+      </div>
+
+      <div class="view-toggle" role="group" aria-label="Applicant view">
+        <button type="button" class="view-btn active" data-view="active">Active pipeline</button>
+        <button type="button" class="view-btn" data-view="archived">Archived</button>
+      </div>
+
+      <div class="toolbar-actions">
+        <button type="button" id="clearFiltersBtn" class="quiet-btn hidden">Clear</button>
+        <button type="button" id="refreshBtn" class="secondary-link button-link">Refresh</button>
+      </div>
     </div>
-
-    <div id="applicantsList" class="applicants-list"></div>
   </section>
 
-  <div id="applicantModal" class="applicant-modal" aria-hidden="true">
-    <div id="modalOverlay" class="modal-overlay"></div>
-    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <div class="modal-head">
+  <section class="pipeline-panel" aria-live="polite">
+    <div id="loadingState" class="empty-state">
+      <div class="empty-icon">PT</div>
+      <h3>Loading applicants</h3>
+      <p>Building your hiring pipeline.</p>
+    </div>
+
+    <div id="pipelineBoard" class="pipeline-board" aria-label="Applicant stages"></div>
+    <div id="archivedApplicants" class="archived-list hidden" aria-label="Archived applicants"></div>
+  </section>
+
+  <aside id="applicantDrawer" class="applicant-drawer" aria-hidden="true">
+    <div id="drawerOverlay" class="drawer-overlay"></div>
+    <section class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+      <div class="drawer-head">
         <div>
           <span class="eyebrow">Applicant Details</span>
-          <h2 id="modalTitle">Candidate profile</h2>
+          <h2 id="drawerTitle">Candidate profile</h2>
         </div>
 
-        <button type="button" id="closeModalBtn" class="close-modal" aria-label="Close applicant details">Close</button>
+        <button type="button" id="closeDrawerBtn" class="icon-btn" aria-label="Close applicant details">Close</button>
       </div>
 
       <div id="applicantDetail" class="applicant-detail">
         <div class="empty-state compact-empty">
           <div class="empty-icon">PT</div>
           <h3>Select an applicant</h3>
-          <p>Profile details, resume, contact information, job applied for, and hiring actions will appear here.</p>
+          <p>Candidate details, resume links, notes, and hiring actions will appear here.</p>
         </div>
       </div>
     </section>
-  </div>
+  </aside>
 
 </main>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/config.js"></script>
