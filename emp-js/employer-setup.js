@@ -1,7 +1,8 @@
-const setupSupabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+const setupSupabase = window.employerSupabase;
+
+if (!setupSupabase) {
+  console.error("Employer Supabase client was not initialized.");
+}
 
 const employerSetupForm = document.getElementById("employerSetupForm");
 const setupMessage = document.getElementById("setupMessage");

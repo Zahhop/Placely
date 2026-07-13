@@ -386,6 +386,24 @@ async function refreshActiveConversation() {
   if (currentId) await openConversation(currentId);
 }
 
+function startConversationPolling() {
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+  }
+
+  refreshTimer = setInterval(async () => {
+    const currentId = activeConversationId;
+
+    await loadConversations();
+    await renderConversationList(conversationsData);
+
+    if (currentId && conversationsData.some((conversation) => conversation.id === currentId)) {
+      activeConversationId = currentId;
+      await renderConversationList(conversationsData);
+    }
+  }, 30000);
+}
+
 function showNoConversationState() {
   activeConversationId = null;
 
@@ -536,6 +554,13 @@ function formatConversationTime(value, fallback) {
     month: "short",
     day: "numeric"
   });
+}
+
+function sortByLatestActivity(a, b) {
+  const aTime = new Date(a?.latestAt || 0).getTime();
+  const bTime = new Date(b?.latestAt || 0).getTime();
+
+  return bTime - aTime;
 }
 
 function getInitials(name) {

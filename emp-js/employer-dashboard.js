@@ -1,7 +1,6 @@
-const placelySupabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+const placelySupabase = window.employerSupabase;
+
+console.log("Employer Supabase ready:", Boolean(placelySupabase));
 
 const ROUTES = {
   login: "employer-login.html",
@@ -531,6 +530,11 @@ window.handleSavePreviewCandidate = handleSavePreviewCandidate;
 window.handleLogout = handleLogout;
 
 async function loadEmployerDashboard() {
+  if (!placelySupabase) {
+    console.error("Employer Supabase client was not initialized.");
+    return;
+  }
+
   const user = await verifyEmployerAccess(placelySupabase, {
     loginPath: ROUTES.login,
     candidateDashboardPath: "../candidates/candidate-dashboard.html"
@@ -543,7 +547,7 @@ async function loadEmployerDashboard() {
     .from("employer_profiles")
     .select("*")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
   if (employerError || !employerData) {
     console.error("Employer profile error:", employerError);
@@ -552,6 +556,14 @@ async function loadEmployerDashboard() {
   } else {
     employerProfile = employerData;
   }
+
+  const hasCandidateAccess = employerProfile?.candidate_access === true;
+
+  console.log("Logged-in employer ID:", user?.id);
+  console.log("Loaded employer profile:", employerProfile);
+  console.log("Candidate access:", hasCandidateAccess);
+
+  window.applyCandidateAccessUI?.(hasCandidateAccess);
 
   const companyName = employerProfile.company_name || "Employer";
   const email = employerProfile.company_email || user.email || "Not available";
@@ -576,7 +588,7 @@ async function loadEmployerDashboard() {
     logoBox.textContent = getInitials(companyName);
   }
 
-  await Promise.all([
+  await Promise.allSettled([
     loadEmployerJobs(user.id),
     loadApplications(user.id),
     loadSavedCandidates(),

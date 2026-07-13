@@ -1,7 +1,8 @@
-const employerMessagesSupabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+const employerMessagesSupabase = window.employerSupabase;
+
+if (!employerMessagesSupabase) {
+  console.error("Employer Supabase client was not initialized.");
+}
 
 const messagesLayout = document.getElementById("messagesLayout");
 

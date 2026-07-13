@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Candidate Access Confirmation | Placely Talent</title>
+
+  <link rel="stylesheet" href="../css/employer-dashboard.css" />
+  <link rel="stylesheet" href="../css/employer-consistency.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<header>
+  <div class="logo-wrapper">
+    <a href="employer-dashboard.html" class="logo">PLACELY TALENT</a>
+    <div class="logo-subtitle">Employer Platform</div>
+  </div>
+
+  <nav data-employer-nav>
+    <a href="employer-dashboard.html" class="employer-nav-link">Dashboard</a>
+    <a href="manage-jobs.html" class="employer-nav-link">Jobs</a>
+    <a href="employer-applicants.html" class="employer-nav-link">Applicants</a>
+    <a href="find-candidates.html" id="employerCandidatesNav" class="employer-nav-link employer-candidates-nav" hidden>Candidates</a>
+    <a href="saved-talent.html" class="employer-nav-link">Saved Talent</a>
+    <a href="employer-messages.html" class="employer-nav-link">Messages</a>
+    <a href="employer-profile.html" class="employer-nav-link">Company</a>
+    <button type="button" id="logoutBtn" class="logout-btn">Logout</button>
+  </nav>
+</header>
+
+<main class="employer-shell">
+  <section class="hero-card" aria-labelledby="upgradeSuccessTitle">
+    <div>
+      <span class="eyebrow">PAYMENT CONFIRMATION</span>
+      <h1 id="upgradeSuccessTitle">Confirming Candidate Network access.</h1>
+      <p id="upgradeStatusText">Your payment was received by Stripe. Placely is confirming your subscription before opening candidate search.</p>
+    </div>
+
+    <div class="hero-actions">
+      <a href="employer-dashboard.html" class="secondary-btn">Back to Dashboard</a>
+      <a href="find-candidates.html" class="primary-btn hidden" id="findCandidatesBtn">Find Candidates</a>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
+<script src="../js/auth-guards.js"></script>
+<script src="../emp-js/employer-navbar.js"></script>
+<script src="../emp-js/employer-upgrade-success.js"></script>
+
+</body>
+</html>

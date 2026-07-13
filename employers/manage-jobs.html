@@ -19,14 +19,15 @@
     <div class="logo-subtitle">Employer Platform</div>
   </div>
 
-  <nav>
-    <a href="manage-jobs.html" class="active">Jobs</a>
-    <a href="employer-applicants.html">Applicants</a>
-    <a href="find-candidates.html">Candidates</a>
-    <a href="saved-talent.html">Saved Talent</a>
-    <a href="employer-messages.html">Messages</a>
-    <a href="employer-profile.html">Company</a>
-    <button id="logoutBtn" class="logout-btn">Logout</button>
+  <nav data-employer-nav>
+    <a href="employer-dashboard.html" class="employer-nav-link">Dashboard</a>
+    <a href="manage-jobs.html" class="employer-nav-link">Jobs</a>
+    <a href="employer-applicants.html" class="employer-nav-link">Applicants</a>
+    <a href="find-candidates.html" id="employerCandidatesNav" class="employer-nav-link employer-candidates-nav" hidden>Candidates</a>
+    <a href="saved-talent.html" class="employer-nav-link">Saved Talent</a>
+    <a href="employer-messages.html" class="employer-nav-link">Messages</a>
+    <a href="employer-profile.html" class="employer-nav-link">Company</a>
+    <button type="button" id="logoutBtn" class="logout-btn">Logout</button>
   </nav>
 </header>
 
@@ -118,6 +119,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/config.js"></script>
 <script src="../js/auth-guards.js"></script>
+<script src="../emp-js/employer-navbar.js"></script>
 <script src="../js/manage-jobs.js"></script>
 
 </body>

@@ -1,7 +1,8 @@
-const editJobSupabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+const editJobSupabase = window.employerSupabase;
+
+if (!editJobSupabase) {
+  console.error("Employer Supabase client was not initialized.");
+}
 
 const params = new URLSearchParams(window.location.search);
 const jobId = params.get("id");
