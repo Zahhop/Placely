@@ -136,10 +136,10 @@ function setupEvents() {
 function getMessageRoute() {
   const params = new URLSearchParams(window.location.search);
   return {
-    candidateId: cleanParam(params.get("candidate_id")),
+    candidateId: cleanParam(params.get("candidate_id") || params.get("candidate")),
     conversationId: cleanParam(params.get("conversation_id") || params.get("conversation")),
-    jobId: cleanParam(params.get("job_id")),
-    applicationId: cleanParam(params.get("application_id"))
+    jobId: cleanParam(params.get("job_id") || params.get("job")),
+    applicationId: cleanParam(params.get("application_id") || params.get("application"))
   };
 }
 
@@ -434,12 +434,27 @@ async function getUnreadCount(conversationId) {
   return count || 0;
 }
 
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      await window.PlacelyAuth.clearAuthState();
-      window.location.href = "employer-login.html";
-    });
-  }
+function getFilteredConversations() {
+  const keyword = String(conversationSearch?.value || "").trim().toLowerCase();
+  const source = Array.isArray(conversationsData) ? conversationsData : [];
+
+  if (!keyword) return [...source];
+
+  return source.filter((conversation) => {
+    const searchable = [
+      conversation?.name,
+      conversation?.role,
+      conversation?.location,
+      conversation?.latestMessage,
+      conversation?.source,
+      conversation?.status,
+      conversation?.application?.job_title
+    ]
+      .map((value) => String(value || "").toLowerCase())
+      .join(" ");
+
+    return searchable.includes(keyword);
+  });
 }
 
 function renderConversationList(list) {
