@@ -49,23 +49,23 @@
 
   <section class="candidate-summary-strip" aria-label="Candidate network summary">
     <button type="button" class="summary-pill active">
-      <span>All candidates</span>
-      <strong id="totalCandidates">0</strong>
+      <span>Recommended</span>
+      <strong id="recommendedSignal">View</strong>
     </button>
 
     <button type="button" class="summary-pill">
       <span>Available now</span>
-      <strong id="fastStartCount">0</strong>
+      <strong id="fastStartCount">Ready</strong>
     </button>
 
     <button type="button" class="summary-pill">
-      <span>Saved</span>
+      <span>Recently joined</span>
+      <strong id="newThisWeekCount">New</strong>
+    </button>
+
+    <button type="button" class="summary-pill">
+      <span>Saved talent</span>
       <strong id="savedCount">0</strong>
-    </button>
-
-    <button type="button" class="summary-pill">
-      <span>New this week</span>
-      <strong id="newThisWeekCount">0</strong>
     </button>
   </section>
 
@@ -93,57 +93,57 @@
       <button type="button" class="secondary-link button-link" id="clearFiltersBtn">Clear filters</button>
     </div>
 
-    <div class="filter-bar" aria-label="Candidate filters">
-      <input id="keywordInput" type="text" placeholder="Search name, trade, skill, certification..." />
-      <input id="cityFilter" type="text" placeholder="Location" />
+    <form class="filter-bar" id="candidateSearchForm" aria-label="Candidate filters">
+      <label class="sr-only" for="keywordInput">Keyword search</label>
+      <input id="keywordInput" type="search" placeholder="Search name, trade, skill, certification..." autocomplete="off" />
+      <label class="sr-only" for="cityFilter">Location</label>
+      <input id="cityFilter" type="search" placeholder="Location" autocomplete="off" />
 
+      <label class="sr-only" for="tradeFilter">Trade</label>
       <select id="tradeFilter">
         <option value="">Any trade</option>
-        <option value="electrical">Electrical</option>
-        <option value="electrician">Electrician</option>
-        <option value="welding">Welding</option>
-        <option value="welder">Welder</option>
-        <option value="plumbing">Plumbing</option>
-        <option value="hvac">HVAC</option>
-        <option value="construction">Construction</option>
-        <option value="labour">Labour</option>
-        <option value="oil">Oil & Gas</option>
       </select>
 
+      <label class="sr-only" for="experienceFilter">Experience</label>
       <select id="experienceFilter">
         <option value="">Any experience</option>
-        <option value="no experience">No experience</option>
-        <option value="0-1">0-1 years</option>
-        <option value="2-4">2-4 years</option>
+        <option value="entry">Entry level</option>
+        <option value="under-2">Under 2 years</option>
+        <option value="2-5">2-5 years</option>
         <option value="5-10">5-10 years</option>
         <option value="10+">10+ years</option>
       </select>
 
+      <label class="sr-only" for="availabilityFilter">Availability</label>
       <select id="availabilityFilter">
         <option value="">Any availability</option>
         <option value="immediately">Available immediately</option>
-        <option value="1 week">Within 1 week</option>
-        <option value="2 weeks">Within 2 weeks</option>
-        <option value="1 month">Within 1 month</option>
+        <option value="soon">Available soon</option>
+        <option value="open">Open to opportunities</option>
         <option value="employed">Currently employed</option>
+        <option value="not-listed">Not listed</option>
       </select>
 
-      <input id="certificationFilter" type="text" placeholder="Certifications / skills" />
+      <label class="sr-only" for="certificationFilter">Skills or certifications</label>
+      <input id="certificationFilter" type="search" placeholder="Certifications / skills" autocomplete="off" />
 
+      <label class="sr-only" for="sortFilter">Sort candidates</label>
       <select id="sortFilter">
+        <option value="recommended">Recommended</option>
         <option value="newest">Newest</option>
         <option value="experience">Most experienced</option>
         <option value="availability">Availability</option>
-        <option value="match">Closest match</option>
+        <option value="name">Name A-Z</option>
       </select>
-    </div>
+    </form>
 
     <div class="candidate-results-panel">
-      <div class="results-meta">
+      <div class="results-meta" aria-live="polite">
         <span id="accessStateText">Candidate access loading...</span>
-        <span><strong id="resultCount">0</strong> results</span>
-        <span id="activeFilterText">No filters applied</span>
+        <span hidden><strong id="resultCount">0</strong> results</span>
       </div>
+
+      <div class="active-filter-chips" id="activeFilterChips" aria-label="Active filters"></div>
 
       <div class="candidate-list-head" aria-hidden="true">
         <span>Candidate</span>
@@ -154,6 +154,10 @@
       </div>
 
       <div class="candidate-list" id="candidatesGrid" aria-live="polite"></div>
+
+      <div class="load-more-wrap hidden" id="loadMoreWrap">
+        <button type="button" class="load-more-btn" id="loadMoreBtn">Load more candidates</button>
+      </div>
 
       <div class="empty-state hidden" id="emptyState">
         <div class="empty-icon">PT</div>

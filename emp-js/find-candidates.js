@@ -8,10 +8,10 @@ const candidatesGrid = document.getElementById("candidatesGrid");
 const emptyState = document.getElementById("emptyState");
 const resultsText = document.getElementById("resultsText");
 const accessStateText = document.getElementById("accessStateText");
-const activeFilterText = document.getElementById("activeFilterText");
+const activeFilterChips = document.getElementById("activeFilterChips");
 const upgradeBanner = document.getElementById("upgradeBanner");
 
-const totalCandidates = document.getElementById("totalCandidates");
+const recommendedSignal = document.getElementById("recommendedSignal");
 const resultCount = document.getElementById("resultCount");
 const savedCount = document.getElementById("savedCount");
 const fastStartCount = document.getElementById("fastStartCount");
@@ -24,10 +24,13 @@ const experienceFilter = document.getElementById("experienceFilter");
 const availabilityFilter = document.getElementById("availabilityFilter");
 const certificationFilter = document.getElementById("certificationFilter");
 const sortFilter = document.getElementById("sortFilter");
+const candidateSearchForm = document.getElementById("candidateSearchForm");
 
 const clearFiltersBtn = document.getElementById("clearFiltersBtn");
 const emptyClearBtn = document.getElementById("emptyClearBtn");
 const upgradeAccessBtn = document.getElementById("upgradeAccessBtn");
+const loadMoreBtn = document.getElementById("loadMoreBtn");
+const loadMoreWrap = document.getElementById("loadMoreWrap");
 
 const candidateDetailPanel = document.getElementById("candidateDetailPanel");
 const candidateDetailContent = document.getElementById("candidateDetailContent");
@@ -43,7 +46,18 @@ let hasCandidateAccess = false;
 let loadedCandidates = [];
 let filteredCandidates = [];
 let savedCandidates = new Set();
+let savedTalentRowsByCandidateId = new Map();
+let saveMutationIds = new Set();
+let activeSummaryFilter = "recommended";
 let selectedCandidateId = null;
+let visibleResultLimit = 50;
+let lastFocusedElement = null;
+let employerProfile = {};
+let activeJobs = [];
+let savedRefreshWarningShown = false;
+
+const PAGE_SIZE = 50;
+const NOT_LISTED = "Not listed";
 
 document.addEventListener("DOMContentLoaded", initFindCandidates);
 
@@ -54,33 +68,80 @@ async function initFindCandidates() {
   if (!user) return;
 
   currentUser = user;
-  await loadSavedCandidates();
   employerAccess = await loadEmployerAccess(user.id);
   hasCandidateAccess = hasCandidateSearchAccess(employerAccess);
+  await loadEmployerRecruitingContext(user.id);
+
+  renderAccessState();
 
   if (!hasCandidateAccess) {
-    showAccessDeniedRedirect();
+    renderLockedNetworkState();
     return;
   }
 
-  renderAccessState();
-  await loadCandidates();
+  const loaded = await loadCandidates();
+  if (!loaded) return;
+
+  await loadSavedCandidates();
+  applyFilters();
 }
 
 function setupEvents() {
-  [keywordInput, tradeFilter, cityFilter, experienceFilter, availabilityFilter, certificationFilter, sortFilter].forEach((input) => {
-    if (!input) return;
+  if (candidateSearchForm) {
+    candidateSearchForm.addEventListener("submit", (event) => event.preventDefault());
+  }
 
-    input.addEventListener("input", debounce(applyFilters, 220));
-    input.addEventListener("change", applyFilters);
+  const debouncedApplyFilters = debounce(() => applyFilters(), 240);
+
+  [keywordInput, cityFilter, certificationFilter].forEach((input) => {
+    if (!input) return;
+    input.addEventListener("input", debouncedApplyFilters);
+  });
+
+  [tradeFilter, experienceFilter, availabilityFilter, sortFilter].forEach((input) => {
+    if (!input) return;
+    input.addEventListener("change", () => applyFilters());
   });
 
   if (clearFiltersBtn) clearFiltersBtn.addEventListener("click", clearFilters);
-  if (emptyClearBtn) emptyClearBtn.addEventListener("click", clearFilters);
+  if (emptyClearBtn) {
+    emptyClearBtn.addEventListener("click", () => {
+      if (emptyState?.dataset.state === "error") {
+        loadCandidates();
+        return;
+      }
+
+      if (emptyState?.dataset.state === "locked") {
+        window.location.href = "employer-dashboard.html";
+        return;
+      }
+
+      clearFilters();
+    });
+  }
   if (upgradeAccessBtn) upgradeAccessBtn.addEventListener("click", showUpgradeComingSoon);
+  if (loadMoreBtn) loadMoreBtn.addEventListener("click", loadMoreCandidates);
 
   if (closePanelBtn) closePanelBtn.addEventListener("click", closeCandidatePanel);
   if (panelOverlay) panelOverlay.addEventListener("click", closeCandidatePanel);
+
+  document.querySelectorAll(".summary-pill").forEach((button, index) => {
+    const filter = ["recommended", "available", "new", "saved"][index] || "recommended";
+    button.dataset.summaryFilter = filter;
+    button.setAttribute("aria-pressed", filter === activeSummaryFilter ? "true" : "false");
+    button.setAttribute("aria-label", `${getSummaryFilterLabel(filter)} view`);
+    button.addEventListener("click", () => setSummaryFilter(filter));
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && candidateDetailPanel?.classList.contains("open")) {
+      closeCandidatePanel();
+    }
+
+    if (event.key === "Tab" && candidateDetailPanel?.classList.contains("open")) {
+      trapDrawerFocus(event);
+    }
+  });
 
   if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {
@@ -109,10 +170,6 @@ async function loadEmployerAccess(userId) {
       .eq("id", userId)
       .maybeSingle();
 
-    console.log("Logged-in employer ID:", userId);
-    console.log("Employer profile:", data);
-    console.log("Candidate access:", data?.candidate_access);
-
     if (error) throw error;
     if (data) return { ...freeAccess, ...data };
   } catch (error) {
@@ -125,33 +182,68 @@ async function loadEmployerAccess(userId) {
 
 async function loadCandidates() {
   resultsText.textContent = "Loading candidates...";
+  renderLoadingRows();
 
   const paidColumns = "*";
   const previewColumns = "id, trade, location, experience, availability, skills, certifications, created_at, profile_visible";
 
-  const { data: candidates, error } = await employerSupabase
-    .from("candidate_profiles")
-    .select(hasCandidateAccess ? paidColumns : previewColumns)
-    .eq("profile_visible", true)
-    .order("created_at", { ascending: false });
+  try {
+    const { data: candidates, error } = await employerSupabase
+      .from("candidate_profiles")
+      .select(hasCandidateAccess ? paidColumns : previewColumns)
+      .eq("profile_visible", true)
+      .order("created_at", { ascending: false });
 
-  if (error) {
+    if (error) throw error;
+
+    loadedCandidates = dedupeCandidates(candidates || []);
+    filteredCandidates = [...loadedCandidates];
+
+    populateTradeFilter();
+    applyFilters();
+    return true;
+  } catch (error) {
     console.error("Error loading candidates:", error);
     loadedCandidates = [];
     filteredCandidates = [];
-    renderCandidates();
     updateStats();
-    resultsText.textContent = "Could not load candidates.";
-    return;
+    renderLoadError();
+    return false;
   }
+}
 
-  loadedCandidates = candidates || [];
-  filteredCandidates = [...loadedCandidates];
+async function loadEmployerRecruitingContext(userId) {
+  employerProfile = {};
+  activeJobs = [];
 
-  applyFilters();
+  try {
+    const [profileResult, jobsResult] = await Promise.all([
+      employerSupabase
+        .from("employer_profiles")
+        .select("company_location, industry, main_hiring_industry, employment_type, hiring_timeline, candidate_qualities")
+        .eq("id", userId)
+        .maybeSingle(),
+      employerSupabase
+        .from("jobs")
+        .select("id, job_title, location, required_skills, experience_level, employment_type, status, created_at")
+        .eq("employer_id", userId)
+        .order("created_at", { ascending: false })
+    ]);
+
+    if (!profileResult.error && profileResult.data) employerProfile = profileResult.data;
+
+    if (!jobsResult.error) {
+      activeJobs = (jobsResult.data || []).filter((job) => normalizeJobStatus(job.status) === "active");
+    }
+  } catch (error) {
+    console.warn("Employer recruiting context unavailable; using default candidate ordering.", error);
+    employerProfile = {};
+    activeJobs = [];
+  }
 }
 
 function applyFilters() {
+  visibleResultLimit = PAGE_SIZE;
   const keyword = clean(keywordInput.value);
   const trade = clean(tradeFilter.value);
   const city = clean(cityFilter.value);
@@ -160,6 +252,8 @@ function applyFilters() {
   const certification = clean(certificationFilter.value);
 
   filteredCandidates = loadedCandidates.filter((candidate) => {
+    const skills = getSplitValues(candidate.skills).join(" ");
+    const certifications = getSplitValues(candidate.certifications).join(" ");
     const searchable = clean([
       hasCandidateAccess ? candidate.full_name : "",
       candidate.trade,
@@ -167,19 +261,20 @@ function applyFilters() {
       candidate.experience,
       candidate.availability,
       hasCandidateAccess ? candidate.bio : "",
-      candidate.skills,
-      candidate.certifications
+      skills,
+      certifications
     ].join(" "));
 
     const matchesKeyword = !keyword || searchable.includes(keyword);
-    const matchesTrade = !trade || clean(candidate.trade).includes(trade) || clean(candidate.skills).includes(trade);
+    const matchesTrade = !trade || clean(candidate.trade) === trade || clean(candidate.trade).includes(trade) || clean(skills).includes(trade);
     const matchesCity = !city || clean(candidate.location).includes(city);
-    const matchesExperience = !experience || clean(candidate.experience).includes(experience);
-    const matchesAvailability = !availability || clean(candidate.availability).includes(availability);
+    const matchesExperience = !experience || candidateMatchesExperience(candidate, experience);
+    const matchesAvailability = !availability || candidateMatchesAvailability(candidate, availability);
     const matchesCertification =
       !certification ||
-      clean(candidate.certifications).includes(certification) ||
-      clean(candidate.skills).includes(certification);
+      clean(certifications).includes(certification) ||
+      clean(skills).includes(certification);
+    const matchesSummary = matchesSummaryFilter(candidate);
 
     return (
       matchesKeyword &&
@@ -187,23 +282,26 @@ function applyFilters() {
       matchesCity &&
       matchesExperience &&
       matchesAvailability &&
-      matchesCertification
+      matchesCertification &&
+      matchesSummary
     );
   });
 
   sortCandidates();
   renderCandidates();
   updateStats();
-  updateActiveFilterText();
+  renderActiveFilterChips();
+  updateSummaryPills();
 }
 
 function sortCandidates() {
   const sort = sortFilter.value;
 
   filteredCandidates.sort((a, b) => {
+    if (sort === "recommended") return getCandidateRecommendationRank(b) - getCandidateRecommendationRank(a);
     if (sort === "experience") return getExperienceYears(b.experience) - getExperienceYears(a.experience);
     if (sort === "availability") return getAvailabilityRank(a.availability) - getAvailabilityRank(b.availability);
-    if (sort === "match") return getMatchScore(b) - getMatchScore(a);
+    if (sort === "name") return getDisplayName(a).localeCompare(getDisplayName(b));
 
     return new Date(b.created_at || 0) - new Date(a.created_at || 0);
   });
@@ -211,25 +309,34 @@ function sortCandidates() {
 
 function renderCandidates() {
   candidatesGrid.innerHTML = "";
+  candidatesGrid.removeAttribute("aria-busy");
+  emptyState.dataset.state = "";
 
   if (!filteredCandidates.length) {
     emptyState.classList.remove("hidden");
-    resultsText.textContent = "No candidates match your current search.";
+    loadMoreWrap?.classList.add("hidden");
+    resultsText.textContent = getEmptyResultsText();
     selectedCandidateId = null;
     renderDetailEmpty();
     return;
   }
 
   emptyState.classList.add("hidden");
-  resultsText.textContent = `${filteredCandidates.length} candidate${filteredCandidates.length === 1 ? "" : "s"} found`;
+  resultsText.textContent = getResultsText();
 
   if (selectedCandidateId && !filteredCandidates.some((candidate) => String(candidate.id) === String(selectedCandidateId))) {
     selectedCandidateId = null;
   }
 
-  filteredCandidates.forEach((candidate, index) => {
+  filteredCandidates.slice(0, visibleResultLimit).forEach((candidate, index) => {
     candidatesGrid.appendChild(createCandidateRow(candidate, index));
   });
+
+  if (loadMoreWrap && loadMoreBtn) {
+    const hasMore = filteredCandidates.length > visibleResultLimit;
+    loadMoreWrap.classList.toggle("hidden", !hasMore);
+    loadMoreBtn.textContent = `Load more candidates (${filteredCandidates.length - visibleResultLimit} remaining)`;
+  }
 }
 
 function createCandidateRow(candidate, index) {
@@ -237,22 +344,26 @@ function createCandidateRow(candidate, index) {
 
   const id = String(candidate.id);
   const isSelected = String(selectedCandidateId) === id;
-  const name = hasCandidateAccess ? cleanFallback(candidate.full_name, "Candidate") : getPreviewName(index);
-  const trade = cleanFallback(candidate.trade, "Trade not listed");
-  const location = cleanFallback(candidate.location, "Location not listed");
-  const experience = cleanFallback(candidate.experience, "Experience not listed");
-  const availability = cleanFallback(candidate.availability, "Availability not listed");
+  const name = getDisplayName(candidate, index);
+  const trade = formatDisplayValue(candidate.trade, "Trade not listed");
+  const location = formatDisplayValue(candidate.location, "Location not listed");
+  const experience = normalizeExperienceLabel(candidate.experience);
+  const availability = normalizeAvailabilityLabel(candidate.availability);
   const tags = getCandidateTags(candidate);
-  const isSaved = savedCandidates.has(id);
+  const isSaved = isCandidateSaved(id);
+  const contextLabel = getCandidateContextLabel(candidate);
 
   row.className = `candidate-row${hasCandidateAccess ? "" : " locked"}${isSelected ? " active" : ""}`;
   row.dataset.id = id;
+  row.tabIndex = 0;
+  row.setAttribute("role", "button");
+  row.setAttribute("aria-label", `${hasCandidateAccess ? `View ${name}'s profile` : "Preview locked candidate profile"}`);
 
   row.innerHTML = `
     <div class="candidate-identity">
       <div class="avatar">
         ${
-          candidate.profile_photo_url
+          hasCandidateAccess && candidate.profile_photo_url
             ? `<img src="${escapeAttribute(candidate.profile_photo_url)}" alt="Candidate photo">`
             : `${escapeHTML(getInitials(name))}`
         }
@@ -262,6 +373,7 @@ function createCandidateRow(candidate, index) {
         <h3 class="candidate-name">${escapeHTML(name)}</h3>
         <p class="candidate-title">${escapeHTML(trade)}</p>
         <p class="candidate-meta sensitive">${escapeHTML(location)}</p>
+        ${contextLabel ? `<p class="candidate-context-label">${escapeHTML(contextLabel)}</p>` : ""}
       </div>
     </div>
 
@@ -282,7 +394,9 @@ function createCandidateRow(candidate, index) {
     <div class="row-status">
       ${isSaved ? `<span class="saved-pill">Saved</span>` : ""}
       ${hasCandidateAccess ? "" : `<span class="locked-pill">Unlock</span>`}
-      <button type="button" class="row-chevron" data-action="view" data-id="${escapeAttribute(id)}" aria-label="View candidate">&gt;</button>
+      <button type="button" class="row-chevron" data-action="view" data-id="${escapeAttribute(id)}" aria-label="${escapeAttribute(hasCandidateAccess ? `View ${name}'s profile` : "Preview candidate profile")}">
+        <span aria-hidden="true">&rsaquo;</span>
+      </button>
     </div>
   `;
 
@@ -308,6 +422,14 @@ function createCandidateRow(candidate, index) {
     openCandidatePanel();
   });
 
+  row.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    selectedCandidateId = id;
+    renderCandidates();
+    openCandidatePanel();
+  });
+
   return row;
 }
 
@@ -330,89 +452,114 @@ function renderSelectedCandidateDetail() {
 function renderCandidateDetail(candidate) {
   const skills = getSplitValues(candidate.skills);
   const certifications = getSplitValues(candidate.certifications);
-  const isSaved = savedCandidates.has(String(candidate.id));
+  const candidateId = String(candidate.id);
+  const isSaved = isCandidateSaved(candidateId);
+  const isSaving = saveMutationIds.has(candidateId);
+  const name = formatDisplayValue(candidate.full_name, "Candidate");
+  const trade = formatDisplayValue(candidate.trade, "Trade not listed");
+  const location = formatDisplayValue(candidate.location, "Location not listed");
+  const availability = normalizeAvailabilityLabel(candidate.availability);
+  const experience = normalizeExperienceLabel(candidate.experience);
+  const bio = formatLongDisplayValue(candidate.bio, "No profile summary listed yet.");
+  const preferredContact = formatDisplayValue(candidate.contact_method || candidate.shown_contact_method, "Not listed");
+  const email = formatDisplayValue(candidate.email, "Email not listed");
+  const phone = formatDisplayValue(candidate.phone, "Phone not listed");
+  const hasResume = Boolean(normalizeText(candidate.resume_url));
+  const createdAt = formatDate(candidate.created_at);
 
   candidateDetailContent.innerHTML = `
-    <div class="detail-head">
-      <div class="avatar large">
-        ${
-          candidate.profile_photo_url
-            ? `<img src="${escapeAttribute(candidate.profile_photo_url)}" alt="Candidate photo">`
-            : `${escapeHTML(getInitials(candidate.full_name))}`
-        }
-      </div>
+    <div class="profile-drawer">
+      <div class="profile-drawer-header">
+        <div class="detail-head">
+          <div class="avatar large">
+            ${
+              candidate.profile_photo_url
+                ? `<img src="${escapeAttribute(candidate.profile_photo_url)}" alt="Candidate photo">`
+                : `${escapeHTML(getInitials(name))}`
+            }
+          </div>
 
-      <div>
-        <h2 class="detail-name">${escapeHTML(cleanFallback(candidate.full_name, "Candidate"))}</h2>
-        <div class="detail-trade">${escapeHTML(cleanFallback(candidate.trade, "Trade not listed"))}</div>
-      </div>
-    </div>
-
-    <div class="detail-quick-meta">
-      <span class="tag-row"><span>${escapeHTML(cleanFallback(candidate.location, "Location not listed"))}</span></span>
-      <span class="tag-row"><span>${escapeHTML(cleanFallback(candidate.availability, "Availability not listed"))}</span></span>
-      <span class="tag-row"><span>${escapeHTML(cleanFallback(candidate.experience, "Experience not listed"))}</span></span>
-    </div>
-
-    <p class="detail-bio">${escapeHTML(cleanFallback(candidate.bio, "Profile summary not listed."))}</p>
-
-    <div class="detail-section">
-      <h3>Profile details</h3>
-      <div class="detail-grid">
-        <div class="detail-item">
-          <span>Location</span>
-          <strong>${escapeHTML(cleanFallback(candidate.location, "Location not listed"))}</strong>
+          <div>
+            <h2 class="detail-name">${escapeHTML(name)}</h2>
+            <div class="detail-trade">${escapeHTML(trade)}</div>
+            <p class="drawer-location">${escapeHTML(location)}</p>
+          </div>
         </div>
 
-        <div class="detail-item">
-          <span>Experience</span>
-          <strong>${escapeHTML(cleanFallback(candidate.experience, "Experience not listed"))}</strong>
-        </div>
-
-        <div class="detail-item">
-          <span>Availability</span>
-          <strong>${escapeHTML(cleanFallback(candidate.availability, "Availability not listed"))}</strong>
+        <div class="detail-quick-meta">
+          <span>${escapeHTML(availability)}</span>
+          <span>${escapeHTML(experience)}</span>
         </div>
       </div>
-    </div>
 
-    <div class="detail-section">
-      <h3>Contact</h3>
-      <div class="contact-grid">
-        <div class="detail-item">
-          <span>Preferred Contact</span>
-          <strong>${escapeHTML(cleanFallback(candidate.contact_method, "Contact method not listed"))}</strong>
-        </div>
-
-        <div class="detail-item">
-          <span>Email</span>
-          <strong>${escapeHTML(cleanFallback(candidate.email, "Email not listed"))}</strong>
-        </div>
-
-        <div class="detail-item">
-          <span>Phone</span>
-          <strong>${escapeHTML(cleanFallback(candidate.phone, "Phone not listed"))}</strong>
-        </div>
+      <div class="drawer-action-bar">
+        <button
+          type="button"
+          class="row-action ${isSaved ? "saved" : ""}"
+          id="detailSaveBtn"
+          aria-pressed="${isSaved ? "true" : "false"}"
+          aria-label="${escapeAttribute(isSaved ? `Remove ${name} from saved talent` : `Save ${name} to saved talent`)}"
+          ${isSaving ? "disabled" : ""}
+        >${escapeHTML(getSaveButtonText(isSaved, isSaving))}</button>
+        <button type="button" class="row-action primary" id="detailMessageBtn">Message Candidate</button>
       </div>
-    </div>
 
-    <div class="detail-section">
-      <h3>Skills</h3>
-      <div class="tag-row">
-        ${skills.length ? skills.map((tag) => `<span>${escapeHTML(tag)}</span>`).join("") : `<span>Skills not listed</span>`}
-      </div>
-    </div>
+      <section class="profile-section about-section">
+        <div class="section-kicker">About</div>
+        <p class="profile-about" id="profileAboutText">${escapeHTML(bio)}</p>
+      </section>
 
-    <div class="detail-section">
-      <h3>Certifications</h3>
-      <div class="tag-row">
-        ${certifications.length ? certifications.map((tag) => `<span>${escapeHTML(tag)}</span>`).join("") : `<span>Certifications not listed</span>`}
-      </div>
-    </div>
+      <section class="profile-section">
+        <div class="section-kicker">Profile Snapshot</div>
+        <dl class="profile-snapshot">
+          ${renderSnapshotItem("Location", location)}
+          ${renderSnapshotItem("Experience", experience)}
+          ${renderSnapshotItem("Availability", availability)}
+          ${renderSnapshotItem("Preferred contact", preferredContact)}
+          ${createdAt !== "-" ? renderSnapshotItem("Joined", createdAt) : ""}
+        </dl>
+      </section>
 
-    <div class="detail-actions">
-      <button type="button" class="row-action ${isSaved ? "saved" : ""}" id="detailSaveBtn">${isSaved ? "Saved" : "Save Candidate"}</button>
-      <button type="button" class="row-action primary" id="detailMessageBtn">Message Candidate</button>
+      <section class="profile-section">
+        <div class="section-kicker">Contact</div>
+        <div class="profile-contact-list">
+          ${renderContactRow("Preferred contact", preferredContact)}
+          ${renderContactRow("Email", email)}
+          ${renderContactRow("Phone", phone)}
+        </div>
+      </section>
+
+      <section class="profile-section">
+        <div class="section-heading-row">
+          <div class="section-kicker">Skills</div>
+          ${skills.length > 8 ? `<button type="button" class="chip-toggle" data-chip-toggle="skills">Show all</button>` : ""}
+        </div>
+        <div class="drawer-chip-row" data-chip-list="skills">
+          ${renderDrawerChips(skills, "No skills listed")}
+        </div>
+      </section>
+
+      <section class="profile-section">
+        <div class="section-heading-row">
+          <div class="section-kicker">Certifications</div>
+          ${certifications.length > 8 ? `<button type="button" class="chip-toggle" data-chip-toggle="certifications">Show all</button>` : ""}
+        </div>
+        <div class="drawer-chip-row" data-chip-list="certifications">
+          ${renderDrawerChips(certifications, "No certifications listed")}
+        </div>
+      </section>
+
+      ${
+        hasResume
+          ? `<section class="profile-section resume-section">
+              <div>
+                <div class="section-kicker">Resume</div>
+                <p>Open the candidate's uploaded resume.</p>
+              </div>
+              <a class="row-action" href="${escapeAttribute(candidate.resume_url)}" target="_blank" rel="noopener">View resume</a>
+            </section>`
+          : ""
+      }
     </div>
   `;
 
@@ -424,9 +571,14 @@ function renderCandidateDetail(candidate) {
     startMessageWithCandidate(candidate);
   });
 
+  candidateDetailContent.querySelectorAll("[data-chip-toggle]").forEach((button) => {
+    button.addEventListener("click", () => toggleChipList(button));
+  });
+
   candidateDetailPanel.setAttribute("aria-hidden", "false");
   candidateDetailPanel.classList.add("open");
   panelOverlay.classList.add("open");
+  focusDrawer();
 }
 
 function renderLockedDetail() {
@@ -445,6 +597,7 @@ function renderLockedDetail() {
   candidateDetailPanel.setAttribute("aria-hidden", "false");
   candidateDetailPanel.classList.add("open");
   panelOverlay.classList.add("open");
+  focusDrawer();
 }
 
 function renderDetailEmpty() {
@@ -465,6 +618,10 @@ function closeCandidatePanel() {
   candidateDetailPanel.classList.remove("open");
   candidateDetailPanel.setAttribute("aria-hidden", "true");
   panelOverlay.classList.remove("open");
+  if (lastFocusedElement?.focus) {
+    lastFocusedElement.focus();
+    lastFocusedElement = null;
+  }
 }
 
 async function toggleSaveCandidate(candidate) {
@@ -479,32 +636,52 @@ async function toggleSaveCandidate(candidate) {
     return;
   }
 
+  if (saveMutationIds.has(id)) return;
+
   const savedDates = getSavedDates();
+  const previousSavedCandidates = new Set(savedCandidates);
+  const previousSavedRows = new Map(savedTalentRowsByCandidateId);
+  const wasSaved = isCandidateSaved(id);
 
-  if (savedCandidates.has(id)) {
-    const removed = await removeSavedTalentRecord(id);
-    if (!removed) return;
+  saveMutationIds.add(id);
+  renderSaveState(candidate);
 
+  if (wasSaved) {
     savedCandidates.delete(id);
-    delete savedDates[id];
-    showToast("Candidate removed from saved talent.");
+    savedTalentRowsByCandidateId.delete(id);
   } else {
-    const saved = await saveTalentRecord(id);
-    if (!saved) return;
-
     savedCandidates.add(id);
-    savedDates[id] = new Date().toISOString();
-    showToast("Candidate saved.");
   }
 
-  localStorage.setItem("placelySavedCandidates", JSON.stringify([...savedCandidates]));
-  localStorage.setItem("placelySavedCandidateDates", JSON.stringify(savedDates));
+  renderSaveState(candidate);
 
-  renderCandidates();
-  updateStats();
+  try {
+    if (wasSaved) {
+      const removed = await removeSavedTalentRecord(id, previousSavedRows.get(id));
+      if (!removed) throw new Error("No saved talent row was deleted.");
 
-  if (candidateDetailPanel.classList.contains("open")) {
-    renderSelectedCandidateDetail();
+      delete savedDates[id];
+      showToast("Candidate removed from saved talent.");
+    } else {
+      const savedRow = await saveTalentRecord(id);
+      if (!savedRow) throw new Error("Saved talent row was not returned.");
+
+      savedTalentRowsByCandidateId.set(id, savedRow);
+      savedCandidates.add(id);
+      savedDates[id] = savedRow.created_at || new Date().toISOString();
+      showToast("Candidate saved.");
+    }
+
+    localStorage.setItem("placelySavedCandidates", JSON.stringify([...savedCandidates]));
+    localStorage.setItem("placelySavedCandidateDates", JSON.stringify(savedDates));
+  } catch (error) {
+    console.error(wasSaved ? "Remove saved candidate error:" : "Save candidate error:", error);
+    savedCandidates = previousSavedCandidates;
+    savedTalentRowsByCandidateId = previousSavedRows;
+    showToast(wasSaved ? "Could not remove candidate." : "Could not save candidate.");
+  } finally {
+    saveMutationIds.delete(id);
+    renderSaveState(candidate);
   }
 }
 
@@ -536,21 +713,30 @@ async function getEmployerName(userId) {
 
 async function loadSavedCandidates() {
   savedCandidates = new Set(getLocalSavedCandidateIds());
+  savedTalentRowsByCandidateId = new Map();
 
   if (!currentUser) return;
 
-  const { data, error } = await employerSupabase
-    .from("saved_talent")
-    .select("candidate_id")
-    .eq("employer_id", currentUser.id);
+  try {
+    const { data, error } = await employerSupabase
+      .from("saved_talent")
+      .select("*")
+      .eq("employer_id", currentUser.id);
 
-  if (error) {
+    if (error) throw error;
+
+    savedTalentRowsByCandidateId = buildSavedTalentMap(data || []);
+    savedCandidates = new Set(savedTalentRowsByCandidateId.keys());
+    localStorage.setItem("placelySavedCandidates", JSON.stringify([...savedCandidates]));
+    savedRefreshWarningShown = false;
+  } catch (error) {
     console.warn("Saved talent table unavailable; using local saved candidate cache.", error);
+    if (!savedRefreshWarningShown) {
+      showToast("Saved candidates could not be refreshed.");
+      savedRefreshWarningShown = true;
+    }
     return;
   }
-
-  savedCandidates = new Set((data || []).map((row) => String(row.candidate_id)).filter(Boolean));
-  localStorage.setItem("placelySavedCandidates", JSON.stringify([...savedCandidates]));
 }
 
 function getLocalSavedCandidateIds() {
@@ -565,46 +751,71 @@ function getLocalSavedCandidateIds() {
 async function saveTalentRecord(candidateId) {
   const { data: existing, error: existingError } = await employerSupabase
     .from("saved_talent")
-    .select("id")
+    .select("*")
     .eq("employer_id", currentUser.id)
     .eq("candidate_id", candidateId)
-    .limit(1);
+    .limit(10);
 
   if (existingError) {
     console.error("Find saved talent record error:", existingError);
-    showToast("Could not save candidate.");
-    return false;
+    throw existingError;
   }
 
-  if (existing?.length) return true;
+  if (existing?.length) {
+    const map = buildSavedTalentMap(existing);
+    const row = map.get(String(candidateId)) || existing[0];
+    return row;
+  }
 
-  const { error } = await employerSupabase
+  const { data, error } = await employerSupabase
     .from("saved_talent")
-    .insert([{ employer_id: currentUser.id, candidate_id: candidateId }]);
+    .insert([{ employer_id: currentUser.id, candidate_id: candidateId }])
+    .select("*")
+    .maybeSingle();
 
   if (error) {
     console.error("Save candidate error:", error);
-    showToast("Could not save candidate.");
-    return false;
+    throw error;
   }
 
-  return true;
+  return data || {
+    employer_id: currentUser.id,
+    candidate_id: candidateId,
+    created_at: new Date().toISOString()
+  };
 }
 
-async function removeSavedTalentRecord(candidateId) {
-  const { error } = await employerSupabase
-    .from("saved_talent")
-    .delete()
-    .eq("employer_id", currentUser.id)
-    .eq("candidate_id", candidateId);
+async function removeSavedTalentRecord(candidateId, savedRowOverride = null) {
+  const id = String(candidateId);
+  const savedRow = savedRowOverride || savedTalentRowsByCandidateId.get(id);
 
-  if (error) {
-    console.error("Remove saved candidate error:", error);
-    showToast("Could not remove candidate.");
-    return false;
+  let deletedRows = [];
+
+  if (savedRow?.id) {
+    const { data, error } = await employerSupabase
+      .from("saved_talent")
+      .delete()
+      .eq("id", savedRow.id)
+      .eq("employer_id", currentUser.id)
+      .select("id, candidate_id, employer_id");
+
+    if (error) throw error;
+    deletedRows = data || [];
   }
 
-  return true;
+  if (!deletedRows.length) {
+    const { data, error } = await employerSupabase
+      .from("saved_talent")
+      .delete()
+      .eq("employer_id", currentUser.id)
+      .eq("candidate_id", id)
+      .select("id, candidate_id, employer_id");
+
+    if (error) throw error;
+    deletedRows = data || [];
+  }
+
+  return deletedRows.length > 0;
 }
 
 function clearFilters() {
@@ -614,29 +825,30 @@ function clearFilters() {
   experienceFilter.value = "";
   availabilityFilter.value = "";
   certificationFilter.value = "";
-  sortFilter.value = "newest";
+  sortFilter.value = "recommended";
+  activeSummaryFilter = "recommended";
+  visibleResultLimit = PAGE_SIZE;
 
   filteredCandidates = [...loadedCandidates];
 
   sortCandidates();
   renderCandidates();
   updateStats();
-  updateActiveFilterText();
+  renderActiveFilterChips();
+  updateSummaryPills();
 }
 
 function updateStats() {
-  totalCandidates.textContent = loadedCandidates.length;
-  resultCount.textContent = filteredCandidates.length;
+  if (recommendedSignal) recommendedSignal.textContent = "View";
+  const showCount = shouldShowResultCount();
+  if (resultCount?.parentElement) resultCount.parentElement.hidden = !showCount;
+  resultCount.textContent = showCount ? filteredCandidates.length : "";
   savedCount.textContent = savedCandidates.size;
 
-  fastStartCount.textContent = loadedCandidates.filter((candidate) => {
-    return clean(candidate.availability).includes("immediately");
-  }).length;
+  fastStartCount.textContent = "Ready";
 
   if (newThisWeekCount) {
-    newThisWeekCount.textContent = loadedCandidates.filter((candidate) => {
-      return isWithinLastDays(candidate.created_at, 7);
-    }).length;
+    newThisWeekCount.textContent = "New";
   }
 }
 
@@ -648,31 +860,535 @@ function renderAccessState() {
   }
 
   upgradeBanner.classList.remove("hidden");
-  accessStateText.textContent = "Locked preview: upgrade to view full profiles, save, or message";
+  accessStateText.textContent = "Candidate Network access required";
 }
 
-function showAccessDeniedRedirect() {
-  if (resultsText) resultsText.textContent = "Candidate access is not enabled for this account.";
-  if (accessStateText) accessStateText.textContent = "Redirecting to dashboard...";
-  showToast("Candidate search access is not enabled for this employer account.");
-  window.setTimeout(() => {
-    window.location.replace("employer-dashboard.html");
-  }, 900);
+function renderLockedNetworkState() {
+  loadedCandidates = [];
+  filteredCandidates = [];
+  savedCandidates = new Set();
+  savedTalentRowsByCandidateId = new Map();
+
+  candidatesGrid.innerHTML = "";
+  candidatesGrid.removeAttribute("aria-busy");
+  loadMoreWrap?.classList.add("hidden");
+  if (activeFilterChips) activeFilterChips.innerHTML = "";
+
+  if (resultCount?.parentElement) resultCount.parentElement.hidden = true;
+  resultsText.textContent = "Upgrade Candidate Network access to search and view candidate profiles.";
+  if (recommendedSignal) recommendedSignal.textContent = "Locked";
+  if (fastStartCount) fastStartCount.textContent = "Locked";
+  if (newThisWeekCount) newThisWeekCount.textContent = "Locked";
+  if (savedCount) savedCount.textContent = "0";
+
+  if (emptyState) {
+    emptyState.dataset.state = "locked";
+    emptyState.classList.remove("hidden");
+  }
+
+  const emptyTitle = emptyState?.querySelector("h3");
+  const emptyMessage = emptyState?.querySelector("p");
+
+  if (emptyTitle) emptyTitle.textContent = "Candidate Network access required";
+  if (emptyMessage) emptyMessage.textContent = "Upgrade access to search visible candidate profiles, save talent, and message candidates.";
+  if (emptyClearBtn) emptyClearBtn.textContent = "Back to Dashboard";
 }
 
-function updateActiveFilterText() {
-  const active = [
-    keywordInput.value && "keyword",
-    cityFilter.value && "location",
-    tradeFilter.value && "trade",
-    experienceFilter.value && "experience",
-    availabilityFilter.value && "availability",
-    certificationFilter.value && "skills/certifications"
+function setSummaryFilter(filter) {
+  activeSummaryFilter = filter || "recommended";
+  if (filter === "recommended" && sortFilter.value !== "recommended") {
+    sortFilter.value = "recommended";
+  }
+  applyFilters();
+}
+
+function updateSummaryPills() {
+  document.querySelectorAll(".summary-pill").forEach((button) => {
+    const isActive = button.dataset.summaryFilter === activeSummaryFilter;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+}
+
+function matchesSummaryFilter(candidate) {
+  if (activeSummaryFilter === "available") return candidateMatchesAvailability(candidate, "immediately");
+  if (activeSummaryFilter === "saved") return isCandidateSaved(candidate.id);
+  if (activeSummaryFilter === "new") return isWithinLastDays(candidate.created_at, 7);
+  return true;
+}
+
+function renderActiveFilterChips() {
+  if (!activeFilterChips) return;
+
+  const chips = [
+    keywordInput.value && { label: `Keyword: ${normalizeText(keywordInput.value)}`, action: () => (keywordInput.value = "") },
+    cityFilter.value && { label: `Location: ${normalizeText(cityFilter.value)}`, action: () => (cityFilter.value = "") },
+    tradeFilter.value && { label: `Trade: ${getSelectedLabel(tradeFilter)}`, action: () => (tradeFilter.value = "") },
+    experienceFilter.value && { label: `Experience: ${getSelectedLabel(experienceFilter)}`, action: () => (experienceFilter.value = "") },
+    availabilityFilter.value && { label: `Availability: ${getSelectedLabel(availabilityFilter)}`, action: () => (availabilityFilter.value = "") },
+    certificationFilter.value && { label: `Skills: ${normalizeText(certificationFilter.value)}`, action: () => (certificationFilter.value = "") },
+    activeSummaryFilter !== "recommended" && { label: `View: ${getSummaryFilterLabel(activeSummaryFilter)}`, action: () => (activeSummaryFilter = "recommended") }
   ].filter(Boolean);
 
-  activeFilterText.textContent = active.length
-    ? `${active.length} filter${active.length === 1 ? "" : "s"} applied`
-    : "No filters applied";
+  activeFilterChips.innerHTML = "";
+
+  chips.forEach((chip) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "filter-chip";
+    button.innerHTML = `<span>${escapeHTML(chip.label)}</span><span aria-hidden="true">&times;</span>`;
+    button.setAttribute("aria-label", `Remove ${chip.label} filter`);
+    button.addEventListener("click", () => {
+      chip.action();
+      applyFilters();
+    });
+    activeFilterChips.appendChild(button);
+  });
+
+  if (chips.length) {
+    const clearButton = document.createElement("button");
+    clearButton.type = "button";
+    clearButton.className = "filter-chip clear-chip";
+    clearButton.textContent = "Clear all";
+    clearButton.addEventListener("click", clearFilters);
+    activeFilterChips.appendChild(clearButton);
+  }
+}
+
+function renderSaveState(candidate) {
+  renderCandidates();
+  updateStats();
+  renderActiveFilterChips();
+  updateSummaryPills();
+
+  if (candidateDetailPanel.classList.contains("open")) {
+    renderSelectedCandidateDetail();
+  }
+}
+
+function shouldShowResultCount() {
+  return Boolean(
+    keywordInput.value ||
+    cityFilter.value ||
+    tradeFilter.value ||
+    experienceFilter.value ||
+    availabilityFilter.value ||
+    certificationFilter.value ||
+    activeSummaryFilter === "available" ||
+    activeSummaryFilter === "new" ||
+    activeSummaryFilter === "saved"
+  );
+}
+
+function getCandidateRecommendationRank(candidate) {
+  let rank = 0;
+
+  if (matchesActiveJobTrade(candidate)) rank += 40;
+  if (matchesActiveJobSkills(candidate)) rank += 28;
+  if (matchesActiveJobLocation(candidate)) rank += 20;
+  if (candidateMatchesAvailability(candidate, "immediately")) rank += 12;
+  if (isCandidateSaved(candidate.id)) rank += 8;
+  rank += getProfileCompletenessScore(candidate);
+  if (isWithinLastDays(candidate.created_at, 14)) rank += 4;
+  rank += Math.min(getExperienceYears(candidate.experience), 10);
+
+  const createdAt = new Date(candidate.created_at || 0).getTime();
+  return rank * 10000000000000 + (Number.isFinite(createdAt) ? createdAt : 0);
+}
+
+function getCandidateContextLabel(candidate) {
+  if (isCandidateSaved(candidate.id)) return "Saved";
+  if (matchesActiveJobTrade(candidate) || matchesActiveJobSkills(candidate)) return "Matches an active job";
+  if (matchesActiveJobLocation(candidate)) return "Near a job location";
+  if (candidateMatchesAvailability(candidate, "immediately")) return "Available now";
+  if (isWithinLastDays(candidate.created_at, 14)) return "Recently joined";
+  return "";
+}
+
+function matchesActiveJobTrade(candidate) {
+  const candidateTrade = clean(candidate.trade);
+  if (!candidateTrade) return false;
+
+  return activeJobs.some((job) => {
+    return clean([job.job_title, job.required_skills, job.experience_level].join(" ")).includes(candidateTrade) ||
+      candidateTrade.includes(clean(job.job_title));
+  }) || clean(employerProfile.main_hiring_industry || employerProfile.industry).includes(candidateTrade);
+}
+
+function matchesActiveJobSkills(candidate) {
+  const candidateSkills = getSplitValues(candidate.skills).map(clean);
+  const candidateCerts = getSplitValues(candidate.certifications).map(clean);
+  const candidateTerms = [...candidateSkills, ...candidateCerts].filter(Boolean);
+  if (!candidateTerms.length) return false;
+
+  return activeJobs.some((job) => {
+    const jobText = clean([job.required_skills, job.job_title].join(" "));
+    return candidateTerms.some((term) => term.length > 2 && jobText.includes(term));
+  });
+}
+
+function matchesActiveJobLocation(candidate) {
+  const candidateLocation = clean(candidate.location);
+  if (!candidateLocation) return false;
+
+  const jobLocations = [
+    ...activeJobs.map((job) => job.location),
+    employerProfile.company_location
+  ].map(clean).filter(Boolean);
+
+  return jobLocations.some((location) => locationsOverlap(candidateLocation, location));
+}
+
+function locationsOverlap(candidateLocation, jobLocation) {
+  if (!candidateLocation || !jobLocation) return false;
+  if (candidateLocation.includes(jobLocation) || jobLocation.includes(candidateLocation)) return true;
+
+  const candidateParts = candidateLocation.split(/[,/|-]/).map((part) => part.trim()).filter((part) => part.length > 2);
+  const jobParts = jobLocation.split(/[,/|-]/).map((part) => part.trim()).filter((part) => part.length > 2);
+
+  return candidateParts.some((part) => jobParts.includes(part));
+}
+
+function getProfileCompletenessScore(candidate) {
+  return [
+    candidate.full_name,
+    candidate.trade,
+    candidate.location,
+    candidate.experience,
+    candidate.availability,
+    candidate.bio,
+    getSplitValues(candidate.skills).length,
+    getSplitValues(candidate.certifications).length
+  ].filter((value) => {
+    if (typeof value === "number") return value > 0;
+    return Boolean(normalizeText(value));
+  }).length;
+}
+
+function normalizeJobStatus(status) {
+  const value = clean(status || "active");
+  return ["paused", "inactive", "closed"].includes(value) ? "paused" : "active";
+}
+
+function isCandidateSaved(candidateId) {
+  const id = String(candidateId || "");
+  return savedTalentRowsByCandidateId.has(id) || savedCandidates.has(id);
+}
+
+function getSaveButtonText(isSaved, isSaving) {
+  if (isSaving) return isSaved ? "Removing..." : "Saving...";
+  return isSaved ? "Saved" : "Save Candidate";
+}
+
+function buildSavedTalentMap(rows) {
+  const rowsByCandidateId = new Map();
+
+  (rows || []).forEach((row) => {
+    const candidateId = String(row?.candidate_id || "").trim();
+    if (!candidateId) return;
+
+    const existing = rowsByCandidateId.get(candidateId);
+    if (!existing) {
+      rowsByCandidateId.set(candidateId, row);
+      return;
+    }
+
+    const existingDate = new Date(existing.created_at || existing.saved_at || 0).getTime();
+    const rowDate = new Date(row.created_at || row.saved_at || 0).getTime();
+
+    if (rowDate > existingDate) rowsByCandidateId.set(candidateId, row);
+  });
+
+  return rowsByCandidateId;
+}
+
+function renderSnapshotItem(label, value) {
+  return `
+    <div>
+      <dt>${escapeHTML(label)}</dt>
+      <dd>${escapeHTML(value)}</dd>
+    </div>
+  `;
+}
+
+function renderContactRow(label, value) {
+  return `
+    <div class="profile-contact-row">
+      <span>${escapeHTML(label)}</span>
+      <strong>${escapeHTML(value)}</strong>
+    </div>
+  `;
+}
+
+function renderDrawerChips(values, emptyText) {
+  if (!values.length) return `<span class="drawer-empty-text">${escapeHTML(emptyText)}</span>`;
+
+  return values
+    .map((tag, index) => `<span class="${index >= 8 ? "is-extra" : ""}">${escapeHTML(tag)}</span>`)
+    .join("");
+}
+
+function toggleChipList(button) {
+  const listName = button.dataset.chipToggle;
+  const list = candidateDetailContent.querySelector(`[data-chip-list="${listName}"]`);
+  if (!list) return;
+
+  const isExpanded = list.classList.toggle("expanded");
+  button.textContent = isExpanded ? "Show fewer" : "Show all";
+}
+
+function getSelectedLabel(select) {
+  return select?.selectedOptions?.[0]?.textContent || select?.value || "";
+}
+
+function getSummaryFilterLabel(filter) {
+  if (filter === "available") return "Available now";
+  if (filter === "saved") return "Saved talent";
+  if (filter === "new") return "Recently joined";
+  return "Recommended";
+}
+
+function loadMoreCandidates() {
+  visibleResultLimit += PAGE_SIZE;
+  renderCandidates();
+}
+
+function renderLoadingRows() {
+  if (!candidatesGrid) return;
+
+  emptyState.dataset.state = "";
+  candidatesGrid.setAttribute("aria-busy", "true");
+  emptyState?.classList.add("hidden");
+  loadMoreWrap?.classList.add("hidden");
+  candidatesGrid.innerHTML = Array.from({ length: 6 }, () => `
+    <div class="candidate-row skeleton-row" aria-hidden="true">
+      <div class="candidate-identity">
+        <div class="avatar skeleton-block"></div>
+        <div class="skeleton-stack">
+          <span class="skeleton-line wide"></span>
+          <span class="skeleton-line"></span>
+          <span class="skeleton-line short"></span>
+        </div>
+      </div>
+      <span class="skeleton-line"></span>
+      <span class="skeleton-line"></span>
+      <span class="skeleton-line wide"></span>
+      <span class="skeleton-dot"></span>
+    </div>
+  `).join("");
+}
+
+function renderLoadError() {
+  candidatesGrid.innerHTML = "";
+  candidatesGrid.removeAttribute("aria-busy");
+  loadMoreWrap?.classList.add("hidden");
+
+  if (emptyState) {
+    emptyState.dataset.state = "error";
+    emptyState.classList.remove("hidden");
+  }
+
+  resultsText.textContent = "Could not load candidates.";
+
+  const emptyTitle = emptyState?.querySelector("h3");
+  const emptyMessage = emptyState?.querySelector("p");
+
+  if (emptyTitle) emptyTitle.textContent = "Could not load candidates";
+  if (emptyMessage) emptyMessage.textContent = "Something went wrong while loading the candidate network. Try again in a moment.";
+  if (emptyClearBtn) emptyClearBtn.textContent = "Retry";
+
+  showToast("Could not load candidates.");
+}
+
+function getResultsText() {
+  const count = filteredCandidates.length;
+  const parts = [];
+
+  if (keywordInput.value) parts.push(`matching "${normalizeText(keywordInput.value)}"`);
+  if (cityFilter.value) parts.push(`in ${normalizeText(cityFilter.value)}`);
+  if (activeSummaryFilter === "saved") parts.push("saved by you");
+  if (activeSummaryFilter === "available") parts.push("available now");
+  if (activeSummaryFilter === "new") parts.push("recently joined");
+
+  if (!shouldShowResultCount()) {
+    return activeJobs.length
+      ? "Recommended candidates based on your active jobs."
+      : "Recommended candidates from the visible talent network.";
+  }
+
+  return `${count} candidate${count === 1 ? "" : "s"}${parts.length ? ` ${parts.join(", ")}` : ""}`;
+}
+
+function getEmptyResultsText() {
+  const emptyTitle = emptyState?.querySelector("h3");
+  const emptyMessage = emptyState?.querySelector("p");
+
+  if (emptyTitle) emptyTitle.textContent = "No candidates found";
+  if (emptyMessage) emptyMessage.textContent = "Try clearing filters or searching a broader trade, city, skill, or certification.";
+  if (emptyClearBtn) emptyClearBtn.textContent = "Clear search";
+
+  if (activeSummaryFilter === "saved") {
+    return savedCandidates.size ? "No saved candidates match your filters." : "No saved talent yet.";
+  }
+  if (activeSummaryFilter === "available") return "No immediately available candidates match your filters.";
+  if (activeSummaryFilter === "new") return "No recently joined candidates match your filters.";
+  if (!loadedCandidates.length) return "No visible candidates are available yet.";
+  return "No candidates match your current search.";
+}
+
+function populateTradeFilter() {
+  if (!tradeFilter) return;
+
+  const current = tradeFilter.value;
+  const normalizedTrades = new Map();
+
+  loadedCandidates.forEach((candidate) => {
+    const trade = formatDisplayValue(candidate.trade, "");
+    if (!trade) return;
+    const key = clean(trade);
+    if (!normalizedTrades.has(key)) normalizedTrades.set(key, trade);
+  });
+
+  const trades = [...normalizedTrades.values()].sort((a, b) => a.localeCompare(b));
+
+  tradeFilter.innerHTML = `
+    <option value="">Any trade</option>
+    ${trades.map((trade) => `<option value="${escapeAttribute(clean(trade))}">${escapeHTML(trade)}</option>`).join("")}
+  `;
+
+  if (trades.some((trade) => clean(trade) === clean(current))) {
+    tradeFilter.value = clean(current);
+  }
+}
+
+function candidateMatchesExperience(candidate, filter) {
+  const years = getExperienceYears(candidate.experience);
+  const text = clean(candidate.experience);
+
+  if (filter === "entry") return years === 0 || text.includes("entry") || text.includes("no experience");
+  if (filter === "under-2") return years > 0 && years < 2;
+  if (filter === "2-5") return years >= 2 && years <= 5;
+  if (filter === "5-10") return years >= 5 && years <= 10;
+  if (filter === "10+") return years >= 10;
+  return true;
+}
+
+function candidateMatchesAvailability(candidate, filter) {
+  const category = getAvailabilityCategory(candidate.availability);
+  return category === filter;
+}
+
+function getAvailabilityCategory(value) {
+  const text = clean(value);
+
+  if (!text || isMalformedValue(text)) return "not-listed";
+  if (["immediate", "immediately", "available now", "asap", "right away", "now"].some((term) => text.includes(term))) return "immediately";
+  if (["1 week", "one week", "2 week", "two week", "soon", "month", "notice"].some((term) => text.includes(term))) return "soon";
+  if (["open", "opportunit", "exploring"].some((term) => text.includes(term))) return "open";
+  if (["employed", "working", "currently"].some((term) => text.includes(term))) return "employed";
+  return "not-listed";
+}
+
+function normalizeAvailabilityLabel(value) {
+  const category = getAvailabilityCategory(value);
+
+  if (category === "immediately") return "Available immediately";
+  if (category === "soon") return "Available soon";
+  if (category === "open") return "Open to opportunities";
+  if (category === "employed") return "Currently employed";
+  return NOT_LISTED;
+}
+
+function normalizeExperienceLabel(value) {
+  const text = normalizeText(value);
+  const years = getExperienceYears(text);
+
+  if (!text || isMalformedValue(text)) return NOT_LISTED;
+  if (clean(text).includes("entry") || clean(text).includes("no experience")) return "Entry level";
+  if (years >= 10) return "10+ years";
+  if (years >= 5) return "5-10 years";
+  if (years >= 3) return "3-5 years";
+  if (years >= 1) return `${years} year${years === 1 ? "" : "s"}`;
+  return toTitleCaseSafe(text);
+}
+
+function formatDisplayValue(value, fallback = NOT_LISTED) {
+  const text = normalizeText(value);
+  if (!text || isMalformedValue(text)) return fallback;
+  return truncateText(toTitleCaseSafe(text), 96);
+}
+
+function formatLongDisplayValue(value, fallback = NOT_LISTED) {
+  const text = normalizeText(value);
+  if (!text || isMalformedValue(text)) return fallback;
+  return text;
+}
+
+function truncateText(value, limit) {
+  const text = normalizeText(value);
+  if (text.length <= limit) return text;
+  return `${text.slice(0, limit).trim()}...`;
+}
+
+function getDisplayName(candidate, index = 0) {
+  return hasCandidateAccess
+    ? formatDisplayValue(candidate.full_name, "Candidate")
+    : getPreviewName(index);
+}
+
+function normalizeText(value) {
+  if (Array.isArray(value)) return value.join(", ");
+  if (value && typeof value === "object") return "";
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function toTitleCaseSafe(value) {
+  const text = normalizeText(value);
+  if (!text || /[A-Z]{2,}/.test(text)) return text;
+
+  return text.replace(/\b[a-z]/g, (letter) => letter.toUpperCase());
+}
+
+function isMalformedValue(value) {
+  const text = clean(value);
+  return !text || text === "null" || text === "undefined" || text === "[]" || text === "[object object]" || text === "{}";
+}
+
+function dedupeCandidates(candidates) {
+  const seen = new Set();
+
+  return candidates.filter((candidate) => {
+    const id = String(candidate.id || "").trim();
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}
+
+function focusDrawer() {
+  lastFocusedElement = document.activeElement;
+  window.setTimeout(() => {
+    const focusTarget = candidateDetailPanel.querySelector("button, a, input, select, textarea, [tabindex]:not([tabindex='-1'])");
+    focusTarget?.focus();
+  }, 0);
+}
+
+function trapDrawerFocus(event) {
+  const focusable = [...candidateDetailPanel.querySelectorAll("button, a, input, select, textarea, [tabindex]:not([tabindex='-1'])")]
+    .filter((element) => !element.disabled && element.offsetParent !== null);
+
+  if (!focusable.length) return;
+
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
 }
 
 function showUpgradeComingSoon() {
@@ -681,14 +1397,23 @@ function showUpgradeComingSoon() {
 }
 
 function getCandidateTags(candidate) {
-  return [...getSplitValues(candidate.skills), ...getSplitValues(candidate.certifications)].slice(0, 2);
+  return [...getSplitValues(candidate.skills), ...getSplitValues(candidate.certifications)].slice(0, 3);
 }
 
 function getSplitValues(value) {
-  return String(value || "")
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter(Boolean);
+  const rawValues = Array.isArray(value) ? value : String(value || "").split(",");
+  const seen = new Set();
+
+  return rawValues
+    .map((tag) => normalizeText(tag))
+    .filter((tag) => tag && !isMalformedValue(tag))
+    .map(toTitleCaseSafe)
+    .filter((tag) => {
+      const key = clean(tag);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 }
 
 function hasCandidateSearchAccess(profile) {
@@ -706,44 +1431,17 @@ function getExperienceYears(value) {
   const text = clean(value);
   if (text.includes("10")) return 10;
 
-  const match = text.match(/\d+/);
-  return match ? Number(match[0]) : 0;
+  const matches = text.match(/\d+/g);
+  return matches?.length ? Math.max(...matches.map(Number)) : 0;
 }
 
 function getAvailabilityRank(value) {
-  const text = clean(value);
-  if (text.includes("immediately")) return 0;
-  if (text.includes("1 week")) return 1;
-  if (text.includes("2 week")) return 2;
-  if (text.includes("month")) return 3;
-  if (text.includes("employed")) return 4;
+  const category = getAvailabilityCategory(value);
+  if (category === "immediately") return 0;
+  if (category === "soon") return 1;
+  if (category === "open") return 2;
+  if (category === "employed") return 3;
   return 5;
-}
-
-function getMatchScore(candidate) {
-  const keyword = clean(keywordInput.value);
-  const trade = clean(tradeFilter.value);
-  const city = clean(cityFilter.value);
-  const availability = clean(availabilityFilter.value);
-  const certification = clean(certificationFilter.value);
-  const searchable = clean([
-    candidate.full_name,
-    candidate.trade,
-    candidate.location,
-    candidate.experience,
-    candidate.availability,
-    candidate.bio,
-    candidate.skills,
-    candidate.certifications
-  ].join(" "));
-
-  return [
-    keyword && searchable.includes(keyword),
-    trade && clean(candidate.trade).includes(trade),
-    city && clean(candidate.location).includes(city),
-    availability && clean(candidate.availability).includes(availability),
-    certification && searchable.includes(certification)
-  ].filter(Boolean).length;
 }
 
 function getPreviewName(index) {
@@ -758,9 +1456,17 @@ function getSavedDates() {
   }
 }
 
-function cleanFallback(value, fallback) {
-  const text = String(value || "").trim();
-  return text || fallback;
+function formatDate(value) {
+  if (!value) return "-";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+
+  return date.toLocaleDateString("en-CA", {
+    month: "short",
+    day: "numeric",
+    year: "numeric"
+  });
 }
 
 function clean(value) {
