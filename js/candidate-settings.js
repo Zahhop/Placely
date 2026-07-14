@@ -1,7 +1,4 @@
-const settingsSupabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+const settingsSupabase = window.PlacelyAuth.client();
 
 let currentUser = null;
 let currentProfile = null;
@@ -180,7 +177,7 @@ async function handleDeleteProfile() {
     }
 
     sessionStorage.setItem("placelyCandidateDeletionMessage", "Your profile has been deleted.");
-    await settingsSupabase.auth.signOut();
+    await window.PlacelyAuth.clearAuthState();
     window.location.href = "candidate-login.html";
   } catch (error) {
     console.error("Delete profile error:", error);

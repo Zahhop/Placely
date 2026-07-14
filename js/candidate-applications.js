@@ -1,7 +1,4 @@
-const applicationsSupabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+const applicationsSupabase = window.PlacelyAuth.client();
 
 const applicationsList = document.getElementById("applications_list");
 const applicationSearch = document.getElementById("applicationSearch");

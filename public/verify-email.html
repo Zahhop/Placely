@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Forgot Password | Placely Talent</title>
+  <title>Verify Email | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/forgot-password.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -15,10 +15,10 @@
 <header>
   <div>
     <a href="../index.html" class="logo">PLACELY TALENT</a>
-    <div class="header-subtitle">Account Recovery</div>
+    <div class="header-subtitle">Email Verification</div>
   </div>
 
-  <a href="login.html" class="back-link">Back to Account Portal</a>
+  <a href="login.html" class="back-link" id="backToLoginLink">Back to Login</a>
 </header>
 
 <main class="page-container">
@@ -26,16 +26,16 @@
   <section class="login-layout">
 
     <div class="login-copy">
-      <div class="eyebrow">Account Recovery</div>
+      <div class="eyebrow">Check your inbox</div>
 
-      <h1>Reset your password</h1>
+      <h1>Verify your email to finish setup.</h1>
 
       <p>
-        Enter the email connected to your Placely account and we'll send you a secure link to reset your password.
+        We sent a confirmation link to the email address used during signup. Open that link to continue into your Placely account.
       </p>
 
       <p class="recovery-note">
-        This recovery page works for both candidate and employer accounts.
+        The verification link routes you back to the correct candidate or employer setup flow.
       </p>
     </div>
 
@@ -43,25 +43,29 @@
 
       <div class="card-top">
         <div>
-          <p class="small-label">Placely Account Recovery</p>
-          <h2>Recover access</h2>
+          <p class="small-label">Placely Account Verification</p>
+          <h2>Check your inbox</h2>
         </div>
 
-        <span class="secure-pill">Secure Reset</span>
+        <span class="secure-pill">Email Required</span>
       </div>
 
-      <form id="forgotPasswordForm">
-        <input type="hidden" id="accountType" value="candidate">
+      <form id="verifyEmailForm">
         <label for="email">Email Address</label>
         <input type="email" id="email" name="email" placeholder="you@example.com" required>
 
-        <button type="submit" class="submit-btn">Send Reset Link</button>
+        <button type="submit" class="submit-btn" id="resendBtn">Resend verification email</button>
         <p id="message" class="message"></p>
       </form>
 
       <p class="signup-note">
-        Remember your password?
-        <a href="login.html">Login here</a>
+        Need to use a different email?
+        <a href="#" id="changeEmailLink">Change email</a>
+      </p>
+
+      <p class="signup-note">
+        Already verified?
+        <a href="#" id="loginLink">Back to login</a>
       </p>
 
     </div>
@@ -73,7 +77,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/config.js"></script>
 <script src="../js/auth-utils.js"></script>
-<script src="../js/forgotpass.js"></script>
+<script src="../js/verify-email.js"></script>
 
 </body>
 </html>

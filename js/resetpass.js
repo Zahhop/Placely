@@ -1,45 +1,100 @@
-    const placelySupabase = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
-    );
+const placelySupabase = window.PlacelyAuth.client();
 
-    const form = document.getElementById("resetPasswordForm");
-    const message = document.getElementById("message");
+const form = document.getElementById("resetPasswordForm");
+const message = document.getElementById("message");
+const submitBtn = form?.querySelector(".submit-btn");
+const accountType = window.PlacelyAuth.getAccountTypeFromUrl();
 
-    form.addEventListener("submit", async function (e) {
-      e.preventDefault();
+let isSubmitting = false;
+let hasRecoverySession = false;
 
-      message.classList.remove("error");
-      message.textContent = "Updating password...";
+window.PlacelyAuth.setupPasswordToggles();
+initRecoverySession();
 
-      const newPassword = document.getElementById("newPassword").value;
-      const confirmPassword = document.getElementById("confirmPassword").value;
+form.addEventListener("submit", async function (e) {
+  e.preventDefault();
 
-      if (newPassword !== confirmPassword) {
-        message.classList.add("error");
-        message.textContent = "Passwords do not match.";
-        return;
-      }
+  if (isSubmitting) return;
 
-      if (newPassword.length < 6) {
-        message.classList.add("error");
-        message.textContent = "Password must be at least 6 characters.";
-        return;
-      }
+  setSubmitting(true);
+  setMessage("Updating password...", "");
 
-      const { error } = await placelySupabase.auth.updateUser({
-        password: newPassword
-      });
+  const newPassword = document.getElementById("newPassword").value;
+  const confirmPassword = document.getElementById("confirmPassword").value;
 
-      if (error) {
-        message.classList.add("error");
-        message.textContent = error.message;
-        return;
-      }
+  if (newPassword !== confirmPassword) {
+    setMessage("Passwords do not match.", "error");
+    setSubmitting(false);
+    return;
+  }
 
-      message.textContent = "Password updated successfully. Redirecting to login...";
+  if (newPassword.length < 6) {
+    setMessage("Password must be at least 6 characters.", "error");
+    setSubmitting(false);
+    return;
+  }
 
-      setTimeout(function () {
-        window.location.href = "login.html";
-      }, 1500);
+  try {
+    if (!hasRecoverySession) {
+      throw new Error("This reset link is invalid or expired. Please request a new reset email.");
+    }
+
+    const { error } = await placelySupabase.auth.updateUser({
+      password: newPassword
     });
+
+    if (error) throw error;
+
+    setMessage("Password updated successfully. Redirecting to login...", "success");
+
+    setTimeout(async function () {
+      await window.PlacelyAuth.clearAuthState();
+      window.location.href = window.PlacelyAuth.getLoginUrl(accountType);
+    }, 1500);
+  } catch (error) {
+    setMessage(error.message || "Could not update password.", "error");
+    setSubmitting(false);
+  }
+});
+
+async function initRecoverySession() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+
+    if (code) {
+      const { error } = await placelySupabase.auth.exchangeCodeForSession(code);
+      if (error) throw error;
+    }
+
+    const {
+      data: { session },
+      error
+    } = await placelySupabase.auth.getSession();
+
+    if (error) throw error;
+
+    hasRecoverySession = Boolean(session);
+
+    if (!hasRecoverySession) {
+      setMessage("This reset link is invalid or expired. Please request a new reset email.", "error");
+      submitBtn.disabled = true;
+    }
+  } catch (error) {
+    setMessage(error.message || "This reset link is invalid or expired.", "error");
+    if (submitBtn) submitBtn.disabled = true;
+  }
+}
+
+function setSubmitting(isBusy) {
+  isSubmitting = isBusy;
+  if (submitBtn && hasRecoverySession) {
+    submitBtn.disabled = isBusy;
+    submitBtn.textContent = isBusy ? "Updating..." : "Update Password";
+  }
+}
+
+function setMessage(text, type) {
+  message.textContent = text;
+  message.className = `message ${type || ""}`.trim();
+}

@@ -461,7 +461,7 @@ function setupLogout() {
   if (!logoutBtn) return;
 
   logoutBtn.addEventListener("click", async () => {
-    await employerSupabase.auth.signOut();
+    await window.PlacelyAuth.clearAuthState();
     window.location.href = "employer-login.html";
   });
 }

@@ -43,7 +43,7 @@
   }
 
   function ensureNavbarMarkup() {
-    if (!document.getElementById("employerCandidatesNav")) {
+    if (!document.getElementById("employerCandidatesNav") || nav.querySelector('a[href="hiring-requests.html"]')) {
       renderNavbarMarkup();
     }
 
@@ -249,15 +249,13 @@
   }
 
   async function handleLogout() {
-    const employerClient = window.employerSupabase;
-
-    if (!employerClient) {
+    if (!window.PlacelyAuth) {
       window.location.href = "employer-login.html";
       return;
     }
 
     try {
-      await employerClient.auth.signOut();
+      await window.PlacelyAuth.clearAuthState();
     } finally {
       window.location.href = "employer-login.html";
     }

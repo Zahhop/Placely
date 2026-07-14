@@ -1,7 +1,4 @@
-const savedSupabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+const savedSupabase = window.PlacelyAuth.client();
 
 let currentUser = null;
 let savedRows = [];
