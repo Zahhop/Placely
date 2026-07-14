@@ -6,9 +6,9 @@
 
   <title>Messages | Placely Talent</title>
 
-  <link rel="stylesheet" href="../css/candidate-messages.css" />
   <link rel="stylesheet" href="../css/candidate-header.css" />
   <link rel="stylesheet" href="../css/candidate-scale.css" />
+  <link rel="stylesheet" href="../css/candidate-messages.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
@@ -34,22 +34,21 @@
 
 <main class="page-shell">
 
-  <section class="hero-card">
+  <section class="hero-card compact-hero">
     <div>
-      <span class="eyebrow">Candidate Messages</span>
-      <h1>Employer conversations, organized.</h1>
+      <span class="eyebrow">CANDIDATE MESSAGES</span>
+      <h1>Employer conversations</h1>
       <p>Manage employer conversations, interview follow-ups, job questions, and opportunity updates in one clean inbox.</p>
     </div>
 
     <div class="hero-actions">
+      <a href="candidate-dashboard.html" class="secondary-link">Dashboard</a>
       <a href="../public/find-jobs.html?role=candidate" class="primary-link">Find Jobs</a>
-      <a href="candidate-dashboard.html" class="secondary-btn">Dashboard</a>
     </div>
   </section>
 
-  <section class="messages-layout" id="messagesLayout">
-
-    <aside class="conversations-panel">
+  <section class="messages-workspace" id="messagesLayout">
+    <aside class="conversations-panel" aria-label="Conversations">
       <div class="panel-header">
         <div>
           <span class="small-label">Inbox</span>
@@ -58,21 +57,21 @@
         <span class="count-pill" id="conversationCount">0</span>
       </div>
 
-      <div class="search-wrap">
-        <input id="conversationSearch" class="conversation-search" type="text" placeholder="Search employers..." />
-      </div>
+      <label class="search-wrap" for="conversationSearch">
+        <span class="sr-only">Search conversations</span>
+        <input id="conversationSearch" class="conversation-search" type="search" placeholder="Search employers" autocomplete="off" />
+      </label>
 
       <div class="conversation-list" id="conversationList"></div>
     </aside>
 
-    <section class="chat-panel">
-
+    <section class="chat-panel" aria-label="Selected conversation">
       <div class="chat-header">
         <div class="chat-user">
-          <div class="avatar large" id="chatAvatar"></div>
+          <div class="avatar large" id="chatAvatar" aria-hidden="true"></div>
 
-          <div>
-            <span class="small-label">Active Conversation</span>
+          <div class="chat-title">
+            <span class="small-label" id="chatEyebrow">Select a conversation</span>
             <h2 id="chatCompany">No conversation selected</h2>
             <p id="chatRole">Select an employer conversation to view messages.</p>
           </div>
@@ -86,42 +85,15 @@
 
       <div class="chat-messages" id="chatMessages"></div>
 
-      <form class="chat-input-area" id="messageForm">
-        <input id="messageInput" type="text" placeholder="Type your message..." autocomplete="off" />
-        <button class="primary-btn" type="submit">Send</button>
+      <form class="composer" id="messageForm">
+        <label class="sr-only" for="messageInput">Message</label>
+        <textarea id="messageInput" rows="2" placeholder="Write a message..." autocomplete="off"></textarea>
+        <div class="composer-footer">
+          <span class="composer-status" id="composerStatus"></span>
+          <button class="primary-btn" id="sendMessageBtn" type="submit" disabled>Send</button>
+        </div>
       </form>
-
     </section>
-
-    <aside class="context-panel" id="contextPanel">
-      <span class="small-label">Conversation Details</span>
-      <h2 id="contextCompany">No employer selected</h2>
-      <p id="contextRole"></p>
-
-      <div class="context-card">
-        <span>Recommended next step</span>
-        <strong id="nextStepTitle">Reply professionally</strong>
-        <p id="nextStepText">Keep your reply clear, confirm availability, and ask any job-specific questions.</p>
-      </div>
-
-      <div class="context-list">
-        <div>
-          <span>Status</span>
-          <strong id="detailStatus">—</strong>
-        </div>
-        <div>
-          <span>Response time</span>
-          <strong id="detailResponse">—</strong>
-        </div>
-        <div>
-          <span>Source</span>
-          <strong id="detailSource">—</strong>
-        </div>
-      </div>
-
-      <a href="candidate-applications.html" class="secondary-btn wide-btn">View Applications</a>
-    </aside>
-
   </section>
 
 </main>
