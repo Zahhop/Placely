@@ -1,98 +1,100 @@
-const placelySupabase = window.supabase.createClient(
-SUPABASE_URL,
-SUPABASE_ANON_KEY
-);
+const placelySupabase = window.PlacelyAuth.client();
 
 const form = document.getElementById("candidateSignupForm");
 const errorMessage = document.getElementById("errorMessage");
+const submitBtn = form?.querySelector(".signup-btn");
+
+let isSubmitting = false;
+
+window.PlacelyAuth.setupPasswordToggles();
 
 form.addEventListener("submit", async (e) => {
-e.preventDefault();
+  e.preventDefault();
 
-errorMessage.style.display = "none";
-errorMessage.textContent = "";
+  if (isSubmitting) return;
 
-const firstName = document.getElementById("firstName").value.trim();
-const lastName = document.getElementById("lastName").value.trim();
-const phone = document.getElementById("phone").value.trim();
-const city = document.getElementById("city").value.trim();
-const postalCode = document.getElementById("postalCode").value.trim();
-const email = document.getElementById("email").value.trim();
-const password = document.getElementById("password").value;
+  hideMessage();
 
-const { data, error } = await placelySupabase.auth.signUp({
-email,
-password,
-options: {
-data: {
-account_type: "candidate"
-}
-}
+  const firstName = value("firstName");
+  const lastName = value("lastName");
+  const phone = value("phone");
+  const city = value("city");
+  const postalCode = value("postalCode");
+  const email = value("email").toLowerCase();
+  const password = document.getElementById("password").value;
+  const confirmPassword = document.getElementById("confirmPassword").value;
+
+  if (password !== confirmPassword) {
+    showMessage("Passwords do not match.", "error");
+    return;
+  }
+
+  setSubmitting(true);
+
+  try {
+    const { data, error } = await placelySupabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: window.PlacelyAuth.getAuthCallbackUrl("candidate"),
+        data: {
+          account_type: "candidate",
+          first_name: firstName,
+          last_name: lastName,
+          phone,
+          city,
+          postal_code: postalCode
+        }
+      }
+    });
+
+    if (error) throw error;
+
+    localStorage.setItem(
+      "candidate_basic_info",
+      JSON.stringify({ firstName, lastName, phone, city, postalCode, email })
+    );
+
+    window.PlacelyAuth.rememberPendingVerification(email, "candidate");
+
+    if (data.session && data.user && window.PlacelyAuth.isEmailConfirmed(data.user)) {
+      await window.PlacelyAuth.ensureAccountProfiles(data.user, "candidate");
+      window.location.href = await window.PlacelyAuth.getPostAuthDestination("candidate");
+      return;
+    }
+
+    window.location.href = window.PlacelyAuth.getVerifyEmailUrl("candidate");
+  } catch (error) {
+    showMessage(error.message || "Could not create your account.", "error");
+    setSubmitting(false);
+  }
 });
 
-if (error) {
-errorMessage.textContent = error.message;
-errorMessage.style.display = "block";
-return;
+function value(id) {
+  return document.getElementById(id)?.value?.trim() || "";
 }
 
-const userId = data.user?.id;
+function setSubmitting(isBusy) {
+  isSubmitting = isBusy;
 
-if (!userId) {
-errorMessage.textContent =
-"Account created. Please check your email to confirm your account.";
-errorMessage.style.display = "block";
-return;
+  if (submitBtn) {
+    submitBtn.disabled = isBusy;
+    submitBtn.textContent = isBusy ? "Creating account..." : "Continue to Profile Setup";
+  }
 }
 
-const { error: profileError } = await placelySupabase
-.from("profiles")
-.insert({
-id: userId,
-email: email,
-role: "candidate"
-});
+function showMessage(message, type) {
+  if (!errorMessage) return;
 
-if (profileError) {
-console.error("profiles insert failed:", profileError);
-errorMessage.textContent =
-"Profile insert failed: " + profileError.message;
-errorMessage.style.display = "block";
-return;
+  errorMessage.textContent = message;
+  errorMessage.style.display = "block";
+  errorMessage.style.color = type === "success" ? "#047857" : "";
 }
 
-const { error: candidateProfileError } = await placelySupabase
-.from("candidate_profiles")
-.insert({
-id: userId,
-full_name: `${firstName} ${lastName}`,
-phone: phone,
-location: `${city}, ${postalCode}`
-});
+function hideMessage() {
+  if (!errorMessage) return;
 
-if (candidateProfileError) {
-console.error(
-"candidate_profiles insert failed:",
-candidateProfileError
-);
-errorMessage.textContent =
-"Candidate profile insert failed: " +
-candidateProfileError.message;
-errorMessage.style.display = "block";
-return;
+  errorMessage.textContent = "";
+  errorMessage.style.display = "none";
+  errorMessage.style.color = "";
 }
-
-localStorage.setItem(
-"candidate_basic_info",
-JSON.stringify({
-firstName,
-lastName,
-phone,
-city,
-postalCode,
-email
-})
-);
-
-window.location.href = "candidate-setup.html";
-});

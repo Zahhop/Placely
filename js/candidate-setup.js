@@ -1,7 +1,4 @@
-const placelySupabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+const placelySupabase = window.PlacelyAuth.client();
 
 const steps = document.querySelectorAll(".form-step");
 const sidebarSteps = document.querySelectorAll(".step-item");
@@ -11,6 +8,15 @@ const progressFill = document.getElementById("progressFill");
 const progressText = document.getElementById("progressText");
 
 let currentStep = 0;
+
+protectCandidateSetup();
+
+async function protectCandidateSetup() {
+  await verifyCandidateAccess(placelySupabase, {
+    loginPath: "candidate-login.html",
+    employerDashboardPath: "../employers/employer-dashboard.html"
+  });
+}
 
 function showStep(index) {
   steps.forEach((step, i) => {
@@ -176,9 +182,10 @@ sidebarSteps.forEach((step, index) => {
 });
 
 async function loadExistingProfile() {
-  const {
-    data: { user }
-  } = await placelySupabase.auth.getUser();
+  const user = await verifyCandidateAccess(placelySupabase, {
+    loginPath: "candidate-login.html",
+    employerDashboardPath: "../employers/employer-dashboard.html"
+  });
 
   if (!user) return;
 

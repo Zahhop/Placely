@@ -522,7 +522,7 @@ function renderDashboard() {
 }
 
 async function handleLogout() {
-  await placelySupabase.auth.signOut();
+  await window.PlacelyAuth.clearAuthState();
   window.location.href = ROUTES.mainLogin;
 }
 

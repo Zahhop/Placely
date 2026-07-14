@@ -99,7 +99,7 @@ jobForm.addEventListener("submit", async (event) => {
 
 if (logoutBtn) {
   logoutBtn.addEventListener("click", async () => {
-    await placelySupabase.auth.signOut();
+    await window.PlacelyAuth.clearAuthState();
     window.location.href = "employer-login.html";
   });
 }

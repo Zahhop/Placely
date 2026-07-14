@@ -25,14 +25,10 @@ async function initEmployerSetup() {
 }
 
 async function protectSetupPage() {
-  const {
-    data: { user },
-    error
-  } = await setupSupabase.auth.getUser();
-
-  if (error || !user) {
-    window.location.href = "employer-login.html";
-  }
+  await verifyEmployerAccess(setupSupabase, {
+    loginPath: "employer-login.html",
+    candidateDashboardPath: "../candidates/candidate-dashboard.html"
+  });
 }
 
 function setupStepClicks() {

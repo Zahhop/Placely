@@ -298,9 +298,9 @@ function setupLogout() {
   if (!logoutBtn) return;
 
   logoutBtn.addEventListener("click", async () => {
-    const { error } = await supabaseClient.auth.signOut();
-
-    if (error) {
+    try {
+      await window.PlacelyAuth.clearAuthState();
+    } catch (error) {
       console.error("Logout error:", error);
       alert("Logout failed. Try again.");
       return;

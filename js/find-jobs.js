@@ -1,7 +1,4 @@
-const jobsSupabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+const jobsSupabase = window.PlacelyAuth.client();
 
 const JOBS_TABLE = "jobs";
 

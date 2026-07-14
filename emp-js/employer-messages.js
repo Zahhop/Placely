@@ -330,7 +330,7 @@ function setupEvents() {
 
   if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {
-      await employerMessagesSupabase.auth.signOut();
+      await window.PlacelyAuth.clearAuthState();
       window.location.href = "employer-login.html";
     });
   }
