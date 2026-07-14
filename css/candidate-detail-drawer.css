@@ -1,0 +1,158 @@
+/* Shared employer candidate drawer polish for Applicants, Find Candidates, and Saved Talent. */
+.panel-overlay,
+.drawer-overlay {
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.candidate-detail-panel,
+.drawer-panel {
+  border: 1px solid #dbe3ef;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.18);
+}
+
+.candidate-detail-panel {
+  top: 24px;
+  bottom: 24px;
+  width: min(720px, calc(100% - 48px));
+  padding: 24px;
+}
+
+.candidate-detail-panel.open {
+  right: 24px;
+}
+
+.close-panel-btn,
+.icon-btn {
+  min-height: 38px;
+  border-radius: 11px;
+  font-size: 13px;
+}
+
+.candidate-detail-panel .detail-head,
+.drawer-panel .detail-head {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-right: 72px;
+}
+
+.candidate-detail-panel .avatar.large,
+.drawer-panel .avatar.large,
+.candidate-detail-panel .detail-photo {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  margin: 0;
+}
+
+.candidate-detail-panel .detail-name,
+.drawer-panel .detail-head h2,
+.drawer-panel .detail-name {
+  color: #0f172a;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.candidate-detail-panel .detail-trade,
+.drawer-panel .detail-trade {
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 900;
+  margin-top: 3px;
+}
+
+.candidate-detail-panel .detail-section,
+.drawer-panel .detail-section {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 14px;
+  margin-top: 14px;
+}
+
+.candidate-detail-panel .detail-section h3,
+.drawer-panel .detail-section h3 {
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 900;
+  margin-bottom: 9px;
+}
+
+.candidate-detail-panel .detail-grid,
+.candidate-detail-panel .detail-info-grid,
+.drawer-panel .detail-grid,
+.drawer-panel .timeline-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.candidate-detail-panel .detail-item,
+.drawer-panel .detail-row,
+.drawer-panel .timeline-row,
+.drawer-panel .summary-item {
+  border: 1px solid #dbe3ef;
+  border-radius: 13px;
+  background: #f8fafc;
+  padding: 11px 12px;
+}
+
+.candidate-detail-panel .detail-item span,
+.drawer-panel .detail-row span,
+.drawer-panel .timeline-row span,
+.drawer-panel .summary-item span {
+  display: block;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 900;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+
+.candidate-detail-panel .detail-item strong,
+.drawer-panel .detail-row strong,
+.drawer-panel .timeline-row strong,
+.drawer-panel .summary-item strong {
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.candidate-detail-panel .detail-bio,
+.drawer-panel .detail-message {
+  border: 1px solid #dbe3ef;
+  border-radius: 14px;
+  background: #f8fafc;
+  color: #475569;
+  padding: 13px;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.6;
+}
+
+@media (max-width: 980px) {
+  .candidate-detail-panel,
+  .drawer-panel {
+    inset: 16px;
+    width: auto;
+    padding: 20px;
+  }
+
+  .candidate-detail-panel.open {
+    right: 16px;
+  }
+}
+
+@media (max-width: 560px) {
+  .candidate-detail-panel .detail-grid,
+  .candidate-detail-panel .detail-info-grid,
+  .drawer-panel .detail-grid,
+  .drawer-panel .timeline-grid {
+    grid-template-columns: 1fr;
+  }
+}
