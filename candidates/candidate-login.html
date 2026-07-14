@@ -75,15 +75,27 @@
 
         <div class="form-group">
           <label for="password">Password</label>
-          <input type="password" id="password" placeholder="Enter your password" required>
+          <div class="password-field">
+            <input type="password" id="password" placeholder="Enter your password" required>
+            <button type="button" data-password-toggle="password">Show</button>
+          </div>
         </div>
 
+        <label class="check-row" for="keepSignedIn">
+          <input type="checkbox" id="keepSignedIn" checked>
+          <span>Keep me signed in</span>
+        </label>
+
         <div class="forgot-row">
-          <a href="../public/forgot-password.html" class="forgot-link">Forgot password?</a>
+          <a href="../public/forgot-password.html?type=candidate" class="forgot-link">Forgot password?</a>
         </div>
 
         <button type="submit" class="login-btn">
           Login to Candidate Account
+        </button>
+
+        <button type="button" class="secondary-auth-btn" id="resendVerificationBtn" hidden>
+          Resend verification email
         </button>
 
         <p class="error-message" id="errorMessage"></p>
@@ -102,6 +114,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/config.js"></script>
+<script src="../js/auth-utils.js"></script>
 <script src="../js/candidate-login.js"></script>
 
 </body>

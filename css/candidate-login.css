@@ -195,6 +195,42 @@ input:focus {
   box-shadow: 0 0 0 4px rgba(37,99,235,0.08);
 }
 
+.password-field {
+  display: flex;
+  align-items: stretch;
+}
+
+.password-field input {
+  border-radius: 12px 0 0 12px;
+  margin-bottom: 0;
+}
+
+.password-field button {
+  border: 1px solid #cbd5e1;
+  border-left: 0;
+  border-radius: 0 12px 12px 0;
+  background: #f8fafc;
+  color: #2563eb;
+  padding: 0 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 18px;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.check-row input {
+  width: auto;
+  margin: 0;
+}
+
 .forgot-row {
   display: flex;
   justify-content: flex-end;
@@ -226,6 +262,26 @@ input:focus {
 .login-btn:hover {
   background: #1d4ed8;
   transform: translateY(-2px);
+}
+
+.login-btn:disabled,
+.secondary-auth-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none;
+}
+
+.secondary-auth-btn {
+  width: 100%;
+  margin-top: 12px;
+  background: #e0f2fe;
+  color: #075985;
+  border: none;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
 }
 
 .signup-note {

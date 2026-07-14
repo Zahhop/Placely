@@ -1,66 +1,93 @@
-const placelySupabase = window.employerSupabase;
-
-if (!placelySupabase) {
-  console.error("Employer Supabase client was not initialized.");
-}
+const placelySupabase = window.PlacelyAuth.client();
 
 const form = document.getElementById("employerSignupForm");
+const errorMessage = document.getElementById("errorMessage");
+const submitBtn = form?.querySelector(".signup-btn");
+
+let isSubmitting = false;
+
+window.PlacelyAuth.setupPasswordToggles();
 
 form.addEventListener("submit", async function (e) {
   e.preventDefault();
 
-  const companyName = document.getElementById("companyName").value;
-  const contactName = document.getElementById("contactName").value;
-  const email = document.getElementById("email").value;
+  if (isSubmitting) return;
+
+  hideMessage();
+
+  const companyName = value("companyName");
+  const contactName = value("contactName");
+  const email = value("email").toLowerCase();
   const password = document.getElementById("password").value;
-  const phone = document.getElementById("phone").value;
-  const industry = document.getElementById("industry").value;
+  const confirmPassword = document.getElementById("confirmPassword").value;
+  const phone = value("phone");
+  const industry = value("industry");
 
-  const { data, error } = await placelySupabase.auth.signUp({
-    email: email,
-    password: password
-  });
-
-  if (error) {
-    alert(error.message);
+  if (password !== confirmPassword) {
+    showMessage("Passwords do not match.", "error");
     return;
   }
 
-  const userId = data.user.id;
+  setSubmitting(true);
 
-  const { error: profileError } = await placelySupabase
-    .from("profiles")
-    .insert([
-      {
-        id: userId,
-        email: email,
-        role: "employer"
+  try {
+    const { data, error } = await placelySupabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: window.PlacelyAuth.getAuthCallbackUrl("employer"),
+        data: {
+          account_type: "employer",
+          company_name: companyName,
+          contact_name: contactName,
+          phone,
+          industry
+        }
       }
-    ]);
+    });
 
-  if (profileError) {
-    alert(profileError.message);
-    return;
+    if (error) throw error;
+
+    window.PlacelyAuth.rememberPendingVerification(email, "employer");
+
+    if (data.session && data.user && window.PlacelyAuth.isEmailConfirmed(data.user)) {
+      await window.PlacelyAuth.ensureAccountProfiles(data.user, "employer");
+      window.location.href = await window.PlacelyAuth.getPostAuthDestination("employer");
+      return;
+    }
+
+    window.location.href = window.PlacelyAuth.getVerifyEmailUrl("employer");
+  } catch (error) {
+    showMessage(error.message || "Could not create your account.", "error");
+    setSubmitting(false);
   }
-
-  const { error: employerError } = await placelySupabase
-    .from("employer_profiles")
-    .insert([
-      {
-        id: userId,
-        company_name: companyName,
-        contact_name: contactName,
-        phone: phone,
-        industry: industry,
-        hiring_needs: ""
-      }
-    ]);
-
-  if (employerError) {
-    alert(employerError.message);
-    return;
-  }
-
-  alert("Employer account created successfully!");
-  window.location.href = "employer-setup.html";
 });
+
+function value(id) {
+  return document.getElementById(id)?.value?.trim() || "";
+}
+
+function setSubmitting(isBusy) {
+  isSubmitting = isBusy;
+
+  if (submitBtn) {
+    submitBtn.disabled = isBusy;
+    submitBtn.textContent = isBusy ? "Creating account..." : "Continue to Employer Setup";
+  }
+}
+
+function showMessage(message, type) {
+  if (!errorMessage) return;
+
+  errorMessage.textContent = message;
+  errorMessage.style.display = "block";
+  errorMessage.style.color = type === "success" ? "#047857" : "";
+}
+
+function hideMessage() {
+  if (!errorMessage) return;
+
+  errorMessage.textContent = "";
+  errorMessage.style.display = "none";
+  errorMessage.style.color = "";
+}

@@ -434,17 +434,12 @@ async function getUnreadCount(conversationId) {
   return count || 0;
 }
 
-function getFilteredConversations() {
-  const query = (conversationSearch?.value || "").trim().toLowerCase();
-  if (!query) return conversationsData;
-
-  return conversationsData.filter((conversation) => [
-    conversation.name,
-    conversation.role,
-    conversation.location,
-    conversation.source,
-    conversation.latestMessage
-  ].join(" ").toLowerCase().includes(query));
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      await window.PlacelyAuth.clearAuthState();
+      window.location.href = "employer-login.html";
+    });
+  }
 }
 
 function renderConversationList(list) {

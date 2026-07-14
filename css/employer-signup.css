@@ -199,6 +199,27 @@ input:focus {
   box-shadow: 0 0 0 4px rgba(37,99,235,0.08);
 }
 
+.password-field {
+  display: flex;
+  align-items: stretch;
+}
+
+.password-field input {
+  border-radius: 12px 0 0 12px;
+  width: 100%;
+}
+
+.password-field button {
+  border: 1px solid #cbd5e1;
+  border-left: 0;
+  border-radius: 0 12px 12px 0;
+  background: #f8fafc;
+  color: #2563eb;
+  padding: 0 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 .signup-btn {
   width: 100%;
   margin-top: 26px;
@@ -217,6 +238,12 @@ input:focus {
 .signup-btn:hover {
   background: #1d4ed8;
   transform: translateY(-2px);
+}
+
+.signup-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none;
 }
 
 .login-text {

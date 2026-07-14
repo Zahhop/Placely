@@ -1,7 +1,4 @@
-const candidateSupabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+const candidateSupabase = window.PlacelyAuth.client();
 
 let currentUser = null;
 let currentProfile = {};

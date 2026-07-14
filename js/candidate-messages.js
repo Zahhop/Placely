@@ -1,7 +1,4 @@
-const candidateMessagesSupabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+const candidateMessagesSupabase = window.PlacelyAuth.client();
 
 const messagesLayout = document.getElementById("messagesLayout");
 const conversationList = document.getElementById("conversationList");

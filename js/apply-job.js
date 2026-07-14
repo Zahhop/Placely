@@ -1,7 +1,4 @@
-const applySupabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+const applySupabase = window.PlacelyAuth.client();
 
 const jobSummary = document.getElementById("jobSummary");
 const candidateSummary = document.getElementById("candidateSummary");

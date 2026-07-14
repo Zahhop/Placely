@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Confirming Email | Placely Talent</title>
+  <link rel="stylesheet" href="../css/forgot-password.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<header>
+  <div>
+    <a href="../index.html" class="logo">PLACELY TALENT</a>
+    <div class="header-subtitle">Candidate Verification</div>
+  </div>
+</header>
+<main class="page-container">
+  <section class="login-layout">
+    <div class="login-copy">
+      <div class="eyebrow">Almost there</div>
+      <h1>Confirming your candidate account.</h1>
+      <p>We are checking your verification link and preparing your candidate setup.</p>
+    </div>
+    <div class="login-card">
+      <div class="card-top">
+        <div>
+          <p class="small-label">Placely Candidate Portal</p>
+          <h2>Confirming</h2>
+        </div>
+        <span class="secure-pill">Secure Link</span>
+      </div>
+      <p id="message" class="message">Processing verification link...</p>
+      <p class="signup-note"><a href="candidate-login.html">Back to candidate login</a></p>
+    </div>
+  </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
+<script src="../js/auth-utils.js"></script>
+<script src="../js/auth-callback.js"></script>
+</body>
+</html>

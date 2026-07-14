@@ -3,22 +3,15 @@
 
   if (
     !logoutBtn ||
-    !window.supabase ||
-    typeof SUPABASE_URL === "undefined" ||
-    typeof SUPABASE_ANON_KEY === "undefined"
+    !window.PlacelyAuth
   ) {
     return;
   }
 
-  const headerSupabase = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-  );
-
   logoutBtn.addEventListener("click", async () => {
-    const { error } = await headerSupabase.auth.signOut();
-
-    if (error) {
+    try {
+      await window.PlacelyAuth.clearAuthState();
+    } catch (error) {
       console.error("Candidate logout error:", error);
     }
 

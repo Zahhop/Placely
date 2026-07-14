@@ -1,7 +1,4 @@
-const candidateSupabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+const candidateSupabase = window.PlacelyAuth.client();
 
 const ROUTES = {
   login: "candidate-login.html",
@@ -355,11 +352,10 @@ function setText(id, value) {
 }
 
 async function handleLogout() {
-  const { error } = await candidateSupabase.auth.signOut();
-
-  if (error) {
+  try {
+    await window.PlacelyAuth.clearAuthState();
+  } catch (error) {
     console.error("Logout error:", error);
-    return;
   }
 
   window.location.href = ROUTES.login;

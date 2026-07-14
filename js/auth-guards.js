@@ -9,28 +9,24 @@ async function verifyCandidateAccess(supabaseClient, options = {}) {
     return null;
   }
 
-  const { data: candidateProfile, error: candidateError } = await supabaseClient
-    .from("candidate_profiles")
-    .select("id")
-    .eq("id", user.id)
-    .maybeSingle();
+  if (!window.PlacelyAuth.isEmailConfirmed(user)) {
+    window.PlacelyAuth.rememberPendingVerification(user.email, "candidate");
+    window.location.href = window.PlacelyAuth.getVerifyEmailUrl("candidate");
+    return null;
+  }
 
-  if (!candidateError && candidateProfile) {
+  const accountType = await window.PlacelyAuth.detectAccountType(user);
+
+  if (accountType === "candidate") {
     return user;
   }
 
-  const { data: employerProfile } = await supabaseClient
-    .from("employer_profiles")
-    .select("id")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (employerProfile) {
+  if (accountType === "employer") {
     window.location.href = employerDashboardPath;
     return null;
   }
 
-  await supabaseClient.auth.signOut();
+  await window.PlacelyAuth.clearAuthState();
   window.location.href = loginPath;
   return null;
 }
@@ -46,28 +42,24 @@ async function verifyEmployerAccess(supabaseClient, options = {}) {
     return null;
   }
 
-  const { data: employerProfile, error: employerError } = await supabaseClient
-    .from("employer_profiles")
-    .select("id")
-    .eq("id", user.id)
-    .maybeSingle();
+  if (!window.PlacelyAuth.isEmailConfirmed(user)) {
+    window.PlacelyAuth.rememberPendingVerification(user.email, "employer");
+    window.location.href = window.PlacelyAuth.getVerifyEmailUrl("employer");
+    return null;
+  }
 
-  if (!employerError && employerProfile) {
+  const accountType = await window.PlacelyAuth.detectAccountType(user);
+
+  if (accountType === "employer") {
     return user;
   }
 
-  const { data: candidateProfile } = await supabaseClient
-    .from("candidate_profiles")
-    .select("id")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (candidateProfile) {
+  if (accountType === "candidate") {
     window.location.href = candidateDashboardPath;
     return null;
   }
 
-  await supabaseClient.auth.signOut();
+  await window.PlacelyAuth.clearAuthState();
   window.location.href = loginPath;
   return null;
 }
