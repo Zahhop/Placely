@@ -115,7 +115,7 @@ async function hydrateApplications(applications) {
 
   if (employerIds.length) {
     const { data: employerProfiles, error: employerError } = await applicationsSupabase
-      .from("employer_profiles")
+      .from("public_employer_profiles")
       .select("*")
       .in("id", employerIds);
 
@@ -335,7 +335,7 @@ function renderApplicationDetail() {
             <div><span>Phone</span><strong>${escapeHTML(snapshot.phone || app.candidate_phone || "Not listed")}</strong></div>
             <div><span>Experience</span><strong>${escapeHTML(snapshot.experience || "Not listed")}</strong></div>
             <div><span>Availability</span><strong>${escapeHTML(snapshot.availability || "Not listed")}</strong></div>
-            <div><span>Resume</span><strong>${escapeHTML((snapshot.resume_url || app.resume_url) ? "Attached" : "Not uploaded")}</strong></div>
+            <div><span>Resume</span><strong>${escapeHTML((snapshot.resume_path || snapshot.resume_url || app.resume_path || app.resume_url) ? "Attached" : "Not uploaded")}</strong></div>
             <div><span>Location</span><strong>${escapeHTML(candidateLocation)}</strong></div>
           </div>
           <div class="tag-row">
@@ -392,7 +392,6 @@ async function confirmWithdrawApplication() {
   const updatePayload = {
     status: "withdrawn",
     candidate_status: "withdrawn",
-    employer_status: "candidate_withdrew",
     withdrawn_at: now,
     updated_at: now
   };

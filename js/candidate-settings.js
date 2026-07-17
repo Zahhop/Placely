@@ -271,6 +271,7 @@ async function anonymizeApplications() {
       phone: "",
       profile_visible: false,
       profile_photo_url: null,
+      resume_path: null,
       resume_url: null
     })
     .eq("id", currentUser.id);
@@ -322,6 +323,7 @@ async function anonymizeCandidateProfile() {
     profile_visible: false,
     profile_photo_url: null,
     resume_url: null,
+    resume_path: null,
     is_deleted: true,
     deleted_at: deletedAt
   };
@@ -351,6 +353,7 @@ async function anonymizeCandidateProfile() {
       contact_method: "",
       profile_visible: false,
       profile_photo_url: null,
+      resume_path: null,
       resume_url: null
     })
     .eq("id", currentUser.id);

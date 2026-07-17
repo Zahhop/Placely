@@ -434,14 +434,6 @@ async function getUnreadCount(conversationId) {
   return count || 0;
 }
 
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      await window.PlacelyAuth.clearAuthState();
-      window.location.href = "employer-login.html";
-    });
-  }
-}
-
 function renderConversationList(list) {
   if (!conversationList) return;
 
@@ -581,13 +573,13 @@ function renderContext(conversation) {
       </div>
     ` : ""}
 
-    ${(skills.length || certifications.length || profile.resume_url) ? `
+    ${(skills.length || certifications.length || profile.resume_path || profile.resume_url) ? `
       <div class="detail-section">
         <h3>Profile</h3>
         <div class="detail-grid">
           ${skills.length ? renderContextRow("Skills", skills.join(", ")) : ""}
           ${certifications.length ? renderContextRow("Certifications", certifications.join(", ")) : ""}
-          ${profile.resume_url ? renderContextRow("Resume", "Available") : ""}
+          ${(profile.resume_path || profile.resume_url) ? renderContextRow("Resume", "Available") : ""}
         </div>
       </div>
     ` : ""}

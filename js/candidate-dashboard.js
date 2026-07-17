@@ -66,6 +66,7 @@ async function loadProfile(user) {
     availability: "",
     phone: "",
     contact_method: "",
+    resume_path: "",
     resume_url: "",
     profile_photo_url: "",
     avatar_url: ""
@@ -162,8 +163,8 @@ async function getEmployerProfile(employerId) {
   if (!employerId) return null;
 
   const { data, error } = await candidateSupabase
-    .from("employer_profiles")
-    .select("company_name, contact_name")
+    .from("public_employer_profiles")
+    .select("company_name")
     .eq("id", employerId)
     .maybeSingle();
 
@@ -296,12 +297,15 @@ function calculateProfileCompletion(profile) {
     "availability",
     "phone",
     "email",
-    "resume_url",
+    "resume",
     "skills",
     "certifications"
   ];
 
-  const completed = fields.filter((field) => String(profile[field] || "").trim()).length;
+  const completed = fields.filter((field) => {
+    if (field === "resume") return String(profile.resume_path || profile.resume_url || "").trim();
+    return String(profile[field] || "").trim();
+  }).length;
   return Math.round((completed / fields.length) * 100);
 }
 

@@ -57,6 +57,19 @@ Deno.serve(async (req) => {
     }
 
     const admin = createClient(supabaseUrl, serviceRoleKey);
+
+    const { data: accountProfile, error: accountProfileError } = await admin
+      .from("profiles")
+      .select("id, role")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (accountProfileError) throw accountProfileError;
+
+    if (accountProfile?.role && accountProfile.role !== "employer") {
+      return json({ error: "Employer account required." }, 403, corsHeaders);
+    }
+
     const { data: employerProfile, error: profileError } = await admin
       .from("employer_profiles")
       .select("id, company_name, company_email, candidate_access, stripe_customer_id")
@@ -129,7 +142,7 @@ Deno.serve(async (req) => {
     console.error("Stripe checkout creation failed:", error);
     return json(
       {
-        error: error instanceof Error ? error.message : "Unable to start checkout."
+        error: getSafeCheckoutError(error)
       },
       500,
       corsHeaders
@@ -189,4 +202,16 @@ function json(body: Record<string, unknown>, status = 200, headers: Record<strin
     status,
     headers
   });
+}
+
+function getSafeCheckoutError(error: unknown) {
+  if (error instanceof Error && error.message === "Checkout origin is not allowed.") {
+    return error.message;
+  }
+
+  if (error instanceof Error && error.message === "Checkout app path is not allowed.") {
+    return error.message;
+  }
+
+  return "Unable to start checkout.";
 }

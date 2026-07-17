@@ -464,7 +464,7 @@ function renderCandidateDetail(candidate) {
   const preferredContact = formatDisplayValue(candidate.contact_method || candidate.shown_contact_method, "Not listed");
   const email = formatDisplayValue(candidate.email, "Email not listed");
   const phone = formatDisplayValue(candidate.phone, "Phone not listed");
-  const hasResume = Boolean(normalizeText(candidate.resume_url));
+  const hasResume = Boolean(normalizeText(candidate.resume_path || candidate.resume_url));
   const createdAt = formatDate(candidate.created_at);
 
   candidateDetailContent.innerHTML = `
@@ -556,7 +556,7 @@ function renderCandidateDetail(candidate) {
                 <div class="section-kicker">Resume</div>
                 <p>Open the candidate's uploaded resume.</p>
               </div>
-              <a class="row-action" href="${escapeAttribute(candidate.resume_url)}" target="_blank" rel="noopener">View resume</a>
+              <button class="row-action" type="button" data-resume-candidate-id="${escapeAttribute(candidate.id)}">View resume</button>
             </section>`
           : ""
       }
@@ -569,6 +569,10 @@ function renderCandidateDetail(candidate) {
 
   document.getElementById("detailMessageBtn").addEventListener("click", () => {
     startMessageWithCandidate(candidate);
+  });
+
+  candidateDetailContent.querySelector("[data-resume-candidate-id]")?.addEventListener("click", () => {
+    openCandidateResume(candidate.id);
   });
 
   candidateDetailContent.querySelectorAll("[data-chip-toggle]").forEach((button) => {
@@ -699,6 +703,32 @@ async function startMessageWithCandidate(candidate) {
   }
 
   window.location.href = `employer-messages.html?candidate_id=${encodeURIComponent(candidate.id)}`;
+}
+
+async function openCandidateResume(candidateId) {
+  if (!hasCandidateAccess) {
+    showUpgradeComingSoon();
+    return;
+  }
+
+  if (!candidateId) {
+    showToast("Resume could not be opened.");
+    return;
+  }
+
+  const { data, error } = await employerSupabase.functions.invoke("get-candidate-resume-url", {
+    body: {
+      candidate_id: candidateId
+    }
+  });
+
+  if (error || !data?.url) {
+    console.error("Candidate resume signed URL error:", error);
+    showToast(data?.error || "Resume could not be opened.");
+    return;
+  }
+
+  window.open(data.url, "_blank", "noopener");
 }
 
 async function getEmployerName(userId) {

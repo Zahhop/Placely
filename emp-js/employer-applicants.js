@@ -222,7 +222,8 @@ async function hydrateApplications(applications) {
       candidate_certifications: snapshot.certifications || candidate.certifications || "",
       candidate_bio: snapshot.bio || snapshot.biography || candidate.bio || candidate.biography || "",
       candidate_photo: snapshot.profile_photo_url || candidate.profile_photo_url || "",
-      resume_url: snapshot.resume_url || app.resume_url || candidate.resume_url || "",
+      resume_path: snapshot.resume_path || app.resume_path || candidate.resume_path || getResumePathFromLegacyUrl(snapshot.resume_url || app.resume_url || candidate.resume_url || ""),
+      resume_url: "",
       employer_notes: app.employer_notes || "",
       additional_notes: app.additional_notes || ""
     };
@@ -511,7 +512,7 @@ function renderApplicantCard(app) {
 function getCompactMeta(app) {
   const meta = [formatRelativeDate(app.created_at)];
   if (app.candidate_availability && app.candidate_availability !== "Availability not listed") meta.push(app.candidate_availability);
-  if (app.resume_url) meta.push("Resume");
+  if (hasResume(app)) meta.push("Resume");
   if (getNoteValue(app)) meta.push("Note");
   return meta.slice(0, 3);
 }
@@ -721,7 +722,7 @@ function getFilteredApplications(sourceApplications) {
   }
 
   if (requireResume) {
-    list = list.filter((app) => Boolean(app.resume_url));
+    list = list.filter((app) => hasResume(app));
   }
 
   if (requireNotes) {
@@ -997,7 +998,7 @@ function renderDetail() {
     <div class="drawer-summary-grid">
       <div class="summary-item"><span>Experience</span><strong>${escapeHTML(app.candidate_experience)}</strong></div>
       <div class="summary-item"><span>Availability</span><strong>${escapeHTML(app.candidate_availability)}</strong></div>
-      <div class="summary-item"><span>Resume</span><strong>${escapeHTML(app.resume_url ? "Uploaded" : "Not uploaded")}</strong></div>
+      <div class="summary-item"><span>Resume</span><strong>${escapeHTML(hasResume(app) ? "Uploaded" : "Not uploaded")}</strong></div>
       <div class="summary-item"><span>Contact</span><strong>${escapeHTML(app.candidate_contact_method || "Not listed")}</strong></div>
     </div>
 
@@ -1016,14 +1017,18 @@ function renderDetail() {
     <div class="drawer-sticky-actions">
       <button type="button" class="drawer-action primary" data-message-id="${escapeHTML(app.id)}" ${canAct ? "" : "disabled"}>Message</button>
       ${
-        app.resume_url
-          ? `<a class="drawer-action" href="${escapeHTML(app.resume_url)}" target="_blank" rel="noopener">Resume</a>`
+        hasResume(app)
+          ? `<button type="button" class="drawer-action" data-resume-candidate-id="${escapeHTML(app.candidate_id)}">Resume</button>`
           : `<span class="drawer-action disabled">No Resume</span>`
       }
     </div>
   `;
 
   bindDrawerActions(app);
+}
+
+function hasResume(app) {
+  return Boolean(app?.resume_path || app?.resume_url);
 }
 
 function renderDrawerTab(app) {
@@ -1143,6 +1148,10 @@ function bindDrawerActions(app) {
     button.addEventListener("click", () => messageCandidate(app.id));
   });
 
+  applicantDetail.querySelectorAll("[data-resume-candidate-id]").forEach((button) => {
+    button.addEventListener("click", () => openApplicantResume(button.dataset.resumeCandidateId));
+  });
+
   applicantDetail.querySelectorAll("[data-tab]").forEach((button) => {
     button.addEventListener("click", () => {
       preserveOpenNoteDraft(app.id);
@@ -1213,6 +1222,46 @@ async function messageCandidate(applicationId) {
   if (!app || app.normalized_status === "candidate_deleted") return;
 
   window.location.href = buildMessageFallbackUrl(app);
+}
+
+async function openApplicantResume(candidateId) {
+  if (!candidateId) {
+    showToast("Resume could not be opened.", "error");
+    return;
+  }
+
+  const { data, error } = await applicantsSupabase.functions.invoke("get-candidate-resume-url", {
+    body: {
+      candidate_id: candidateId
+    }
+  });
+
+  if (error || !data?.url) {
+    console.error("Applicant resume signed URL error:", error);
+    showToast(data?.error || "Resume could not be opened.", "error");
+    return;
+  }
+
+  window.open(data.url, "_blank", "noopener");
+}
+
+function getResumePathFromLegacyUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+
+  if (!/^https?:\/\//i.test(raw)) {
+    return raw.replace(/^\/+/, "");
+  }
+
+  try {
+    const url = new URL(raw);
+    const marker = "/candidate_resumes/";
+    const markerIndex = url.pathname.indexOf(marker);
+    if (markerIndex === -1) return "";
+    return decodeURIComponent(url.pathname.slice(markerIndex + marker.length));
+  } catch {
+    return "";
+  }
 }
 
 function buildMessageFallbackUrl(app) {

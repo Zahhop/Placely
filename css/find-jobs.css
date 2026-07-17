@@ -355,6 +355,13 @@ select:focus {
   padding: 24px;
 }
 
+.job-details-empty:has(.job-detail-content) {
+  min-height: 0;
+  align-content: start;
+  text-align: left;
+  padding: 0;
+}
+
 .job-detail-content {
   display: grid;
   gap: 18px;

@@ -131,6 +131,7 @@ async function loadCandidateProfile(userId) {
     availability: "",
     skills: "",
     certifications: "",
+    resume_path: "",
     resume_url: "",
     profile_photo_url: ""
   };
@@ -223,7 +224,6 @@ async function reapplyToJob() {
   const updatePayload = {
     status: "submitted",
     candidate_status: "submitted",
-    employer_status: "submitted",
     withdrawn_at: null,
     reapplied_at: now,
     updated_at: now
@@ -316,7 +316,7 @@ function renderCandidateSummary() {
         <div class="summary-item"><span>Phone</span><strong>${escapeHTML(candidateProfile.phone || "Not listed")}</strong></div>
         <div class="summary-item"><span>Experience</span><strong>${escapeHTML(candidateProfile.experience || "Not listed")}</strong></div>
         <div class="summary-item"><span>Availability</span><strong>${escapeHTML(candidateProfile.availability || "Not listed")}</strong></div>
-        <div class="summary-item"><span>Resume</span><strong>${escapeHTML(candidateProfile.resume_url ? "Attached" : "Not uploaded")}</strong></div>
+        <div class="summary-item"><span>Resume</span><strong>${escapeHTML(getResumePath(candidateProfile) ? "Attached" : "Not uploaded")}</strong></div>
         <div class="summary-item"><span>Location</span><strong>${escapeHTML(candidateProfile.location || "Not listed")}</strong></div>
       </div>
 
@@ -388,7 +388,8 @@ async function submitApplication(event) {
     candidate_email: snapshot.email,
     candidate_phone: snapshot.phone,
     candidate_role: snapshot.trade,
-    resume_url: snapshot.resume_url,
+    resume_path: snapshot.resume_path,
+    resume_url: null,
     updated_at: now
   };
 
@@ -532,9 +533,33 @@ function buildCandidateSnapshot() {
     availability: candidateProfile.availability || "",
     skills: candidateProfile.skills || "",
     certifications: candidateProfile.certifications || "",
-    resume_url: candidateProfile.resume_url || "",
+    resume_path: getResumePath(candidateProfile),
+    resume_url: "",
     profile_photo_url: candidateProfile.profile_photo_url || ""
   };
+}
+
+function getResumePath(profile = {}) {
+  return profile.resume_path || getResumePathFromLegacyUrl(profile.resume_url || "");
+}
+
+function getResumePathFromLegacyUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+
+  if (!/^https?:\/\//i.test(raw)) {
+    return raw.replace(/^\/+/, "");
+  }
+
+  try {
+    const url = new URL(raw);
+    const marker = "/candidate_resumes/";
+    const markerIndex = url.pathname.indexOf(marker);
+    if (markerIndex === -1) return "";
+    return decodeURIComponent(url.pathname.slice(markerIndex + marker.length));
+  } catch {
+    return "";
+  }
 }
 
 function showFatalState(title, text) {

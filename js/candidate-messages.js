@@ -115,7 +115,7 @@ async function getEmployerProfile(employerId) {
   if (!employerId) return null;
 
   const { data, error } = await candidateMessagesSupabase
-    .from("employer_profiles")
+    .from("public_employer_profiles")
     .select("*")
     .eq("id", employerId)
     .maybeSingle();
