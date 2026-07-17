@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
         await handleSubscriptionDeleted(admin, event.data.object as Stripe.Subscription, candidatePriceId);
         break;
       case "invoice.payment_failed":
-        await handleInvoicePaymentFailed(admin, event.data.object as Stripe.Invoice);
+        await handleInvoicePaymentFailed(admin, event.data.object as Stripe.Invoice, candidatePriceId);
         break;
       default:
         break;
@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     return json({ received: true });
   } catch (error) {
     console.error("Stripe webhook failed:", error);
-    return json({ error: error instanceof Error ? error.message : "Webhook failed." }, 400);
+    return json({ error: "Webhook verification or processing failed." }, 400);
   }
 });
 
@@ -90,7 +90,7 @@ async function handleSubscriptionUpdated(
   if (!employerId) return;
 
   const status = String(subscription.status || "unknown");
-  const accessAllowed = ["active", "trialing", "past_due"].includes(status);
+  const accessAllowed = ["active", "trialing"].includes(status);
 
   const { error } = await admin
     .from("employer_profiles")
@@ -130,7 +130,13 @@ async function handleSubscriptionDeleted(
   if (error) throw error;
 }
 
-async function handleInvoicePaymentFailed(admin: ReturnType<typeof createClient>, invoice: Stripe.Invoice) {
+async function handleInvoicePaymentFailed(
+  admin: ReturnType<typeof createClient>,
+  invoice: Stripe.Invoice,
+  candidatePriceId: string
+) {
+  if (!invoiceUsesCandidatePrice(invoice, candidatePriceId)) return;
+
   const invoiceWithReferences = invoice as Stripe.Invoice & {
     subscription?: string | Stripe.Subscription | null;
     customer?: string | Stripe.Customer | Stripe.DeletedCustomer | null;
@@ -141,6 +147,7 @@ async function handleInvoicePaymentFailed(admin: ReturnType<typeof createClient>
   let query = admin
     .from("employer_profiles")
     .update({
+      candidate_access: false,
       subscription_status: "past_due",
       subscription_plan: "candidate_access"
     });
@@ -186,6 +193,10 @@ async function checkoutSessionUsesCandidatePrice(stripe: Stripe, sessionId: stri
 
 function subscriptionUsesCandidatePrice(subscription: Stripe.Subscription, candidatePriceId: string) {
   return subscription.items.data.some((item) => item.price.id === candidatePriceId);
+}
+
+function invoiceUsesCandidatePrice(invoice: Stripe.Invoice, candidatePriceId: string) {
+  return invoice.lines.data.some((line) => line.price?.id === candidatePriceId);
 }
 
 function normalizeStripeId(value: unknown) {

@@ -309,6 +309,86 @@
     });
   }
 
+  const passwordRequirementText = "Use at least 10 characters, including a letter and a number.";
+
+  function validatePasswordRules(password) {
+    const value = String(password || "");
+
+    return {
+      valid: value.length >= 10 && /[A-Za-z]/.test(value) && /\d/.test(value),
+      hasValue: value.length > 0
+    };
+  }
+
+  function setupPasswordValidation(options = {}) {
+    const root = options.root || document;
+    const passwordInput = root.getElementById?.(options.passwordId) || document.getElementById(options.passwordId);
+    const confirmInput = options.confirmId
+      ? (root.getElementById?.(options.confirmId) || document.getElementById(options.confirmId))
+      : null;
+    const submitButton = options.submitButton || null;
+    const requirement = options.requirementId
+      ? (root.getElementById?.(options.requirementId) || document.getElementById(options.requirementId))
+      : null;
+    const matchMessage = options.matchId
+      ? (root.getElementById?.(options.matchId) || document.getElementById(options.matchId))
+      : null;
+
+    if (!passwordInput) {
+      return {
+        isValid: () => true,
+        update: () => true
+      };
+    }
+
+    passwordInput.minLength = 10;
+    if (confirmInput) confirmInput.minLength = 10;
+    if (requirement) requirement.textContent = passwordRequirementText;
+
+    function update() {
+      const password = passwordInput.value || "";
+      const confirmPassword = confirmInput?.value || "";
+      const rules = validatePasswordRules(password);
+      const matches = !confirmInput || !confirmPassword || password === confirmPassword;
+      const completeMatch = !confirmInput || (Boolean(confirmPassword) && password === confirmPassword);
+      const valid = rules.valid && completeMatch;
+
+      passwordInput.setCustomValidity(rules.hasValue && !rules.valid ? passwordRequirementText : "");
+      if (confirmInput) {
+        confirmInput.setCustomValidity(confirmPassword && !matches ? "Passwords do not match." : "");
+      }
+
+      if (requirement) {
+        requirement.classList.toggle("is-valid", rules.valid);
+        requirement.classList.toggle("is-invalid", rules.hasValue && !rules.valid);
+      }
+
+      if (matchMessage && confirmInput) {
+        matchMessage.textContent = confirmPassword
+          ? (matches ? "Passwords match." : "Passwords do not match.")
+          : "";
+        matchMessage.classList.toggle("is-valid", Boolean(confirmPassword) && matches);
+        matchMessage.classList.toggle("is-invalid", Boolean(confirmPassword) && !matches);
+      }
+
+      if (submitButton && !options.skipSubmitToggle) {
+        const canSubmit = typeof options.canSubmit === "function" ? options.canSubmit() : true;
+        submitButton.disabled = !valid || !canSubmit;
+      }
+
+      return valid;
+    }
+
+    passwordInput.addEventListener("input", update);
+    confirmInput?.addEventListener("input", update);
+    update();
+
+    return {
+      isValid: update,
+      requirementText: passwordRequirementText
+    };
+  }
+
   window.PlacelyAuth = {
     client,
     setPersistence,
@@ -328,6 +408,9 @@
     getPostAuthDestination,
     routeAuthenticatedUser,
     clearAuthState,
-    setupPasswordToggles
+    setupPasswordToggles,
+    validatePasswordRules,
+    setupPasswordValidation,
+    passwordRequirementText
   };
 })();

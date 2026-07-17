@@ -8,6 +8,8 @@ const progressFill = document.getElementById("progressFill");
 const progressText = document.getElementById("progressText");
 
 let currentStep = 0;
+const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024;
+const MAX_RESUME_SIZE_BYTES = 10 * 1024 * 1024;
 
 protectCandidateSetup();
 
@@ -50,7 +52,7 @@ function validateResumeFile(file) {
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
   ];
 
-  return allowedTypes.includes(file.type);
+  return allowedTypes.includes(file.type) && file.size <= MAX_RESUME_SIZE_BYTES;
 }
 
 function validatePhotoFile(file) {
@@ -58,7 +60,7 @@ function validatePhotoFile(file) {
 
   const allowedTypes = ["image/png", "image/jpeg"];
 
-  return allowedTypes.includes(file.type);
+  return allowedTypes.includes(file.type) && file.size <= MAX_PHOTO_SIZE_BYTES;
 }
 
 async function uploadFile(bucketName, userId, file) {
@@ -85,6 +87,28 @@ async function uploadFile(bucketName, userId, file) {
   return data.publicUrl;
 }
 
+async function uploadResume(userId, file) {
+  if (!file) return null;
+
+  const fileExt = file.name.split(".").pop();
+  const safeExt = String(fileExt || "pdf").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const filePath = `${userId}/${Date.now()}.${safeExt || "pdf"}`;
+
+  const { error: uploadError } = await placelySupabase.storage
+    .from("candidate_resumes")
+    .upload(filePath, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type
+    });
+
+  if (uploadError) {
+    throw uploadError;
+  }
+
+  return filePath;
+}
+
 async function saveCandidateProfile() {
   const {
     data: { user },
@@ -100,12 +124,12 @@ async function saveCandidateProfile() {
   const profilePhotoFile = document.getElementById("profilePhoto").files[0];
 
   if (!validateResumeFile(resumeFile)) {
-    alert("Resume must be a PDF or DOCX file.");
+    alert("Resume must be a PDF or DOCX file and 10 MB or smaller.");
     return;
   }
 
   if (!validatePhotoFile(profilePhotoFile)) {
-    alert("Profile photo must be PNG, JPG, or JPEG.");
+    alert("Profile photo must be PNG, JPG, or JPEG and 5 MB or smaller.");
     return;
   }
 
@@ -113,7 +137,7 @@ async function saveCandidateProfile() {
   nextBtn.textContent = "Saving...";
 
   try {
-    const resumeUrl = await uploadFile("candidate_resumes", user.id, resumeFile);
+    const resumePath = await uploadResume(user.id, resumeFile);
     const profilePhotoUrl = await uploadFile("candidate_photos", user.id, profilePhotoFile);
 
     const profileData = {
@@ -131,8 +155,9 @@ async function saveCandidateProfile() {
       profile_visible: document.getElementById("profileVisible").checked
     };
 
-    if (resumeUrl) {
-      profileData.resume_url = resumeUrl;
+    if (resumePath) {
+      profileData.resume_path = resumePath;
+      profileData.resume_url = null;
     }
 
     if (profilePhotoUrl) {

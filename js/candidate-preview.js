@@ -62,7 +62,7 @@
   }
 
   function getResumeStatus(profile) {
-    return profile?.resume_url ? "Resume uploaded" : "No resume uploaded";
+    return profile?.resume_path || profile?.resume_url ? "Resume uploaded" : "No resume uploaded";
   }
 
   function buildDetailHTML(profileInput) {

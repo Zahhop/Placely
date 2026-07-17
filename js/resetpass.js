@@ -9,6 +9,14 @@ let isSubmitting = false;
 let hasRecoverySession = false;
 
 window.PlacelyAuth.setupPasswordToggles();
+const passwordValidator = window.PlacelyAuth.setupPasswordValidation({
+  passwordId: "newPassword",
+  confirmId: "confirmPassword",
+  requirementId: "passwordRequirement",
+  matchId: "passwordMatch",
+  submitButton: submitBtn,
+  canSubmit: () => hasRecoverySession && !isSubmitting
+});
 initRecoverySession();
 
 form.addEventListener("submit", async function (e) {
@@ -22,14 +30,14 @@ form.addEventListener("submit", async function (e) {
   const newPassword = document.getElementById("newPassword").value;
   const confirmPassword = document.getElementById("confirmPassword").value;
 
-  if (newPassword !== confirmPassword) {
-    setMessage("Passwords do not match.", "error");
+  if (!passwordValidator.isValid()) {
+    setMessage(window.PlacelyAuth.passwordRequirementText, "error");
     setSubmitting(false);
     return;
   }
 
-  if (newPassword.length < 6) {
-    setMessage("Password must be at least 6 characters.", "error");
+  if (newPassword !== confirmPassword) {
+    setMessage("Passwords do not match.", "error");
     setSubmitting(false);
     return;
   }
@@ -75,6 +83,7 @@ async function initRecoverySession() {
     if (error) throw error;
 
     hasRecoverySession = Boolean(session);
+    passwordValidator.isValid();
 
     if (!hasRecoverySession) {
       setMessage("This reset link is invalid or expired. Please request a new reset email.", "error");
@@ -89,7 +98,7 @@ async function initRecoverySession() {
 function setSubmitting(isBusy) {
   isSubmitting = isBusy;
   if (submitBtn && hasRecoverySession) {
-    submitBtn.disabled = isBusy;
+    submitBtn.disabled = isBusy || !passwordValidator.isValid();
     submitBtn.textContent = isBusy ? "Updating..." : "Update Password";
   }
 }
