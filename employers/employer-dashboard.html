@@ -1,235 +1,287 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dashboard-booting">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Employer Dashboard | Placely Talent</title>
 
-  <link rel="stylesheet" href="../css/employer-dashboard.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/employer-dashboard-candidate-access.css" />
-  <link rel="stylesheet" href="../css/employer-consistency.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/employer-dashboard.css" />
 </head>
 
-<body>
+<body data-plan="loading">
 
-<header>
-  <div class="logo-wrapper">
-    <a href="employer-dashboard.html" class="logo">PLACELY TALENT</a>
-    <div class="logo-subtitle">Employer Platform</div>
+<div class="dashboard-shell">
+  <aside class="dashboard-sidebar" id="dashboardSidebar" aria-label="Employer navigation">
+    <div class="sidebar-brand">
+      <a href="employer-dashboard.html" class="brand-mark" aria-label="Placely Talent dashboard">P</a>
+      <div>
+        <a href="employer-dashboard.html" class="brand-name">PLACELY TALENT</a>
+        <span>Employer Platform</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav" data-employer-nav aria-label="Employer sections">
+      <div class="nav-group">
+        <span class="nav-label">Overview</span>
+        <a href="employer-dashboard.html" class="employer-nav-link nav-item active">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h7V4H4v9Zm9 7h7v-7h-7v7ZM4 20h7v-5H4v5Zm9-9h7V4h-7v7Z"/></svg>
+          <span>Dashboard</span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <span class="nav-label">Hiring</span>
+        <a href="manage-jobs.html" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6V5a3 3 0 0 1 3-3h1a3 3 0 0 1 3 3v1h3a2 2 0 0 1 2 2v10.5A2.5 2.5 0 0 1 18.5 21h-13A2.5 2.5 0 0 1 3 18.5V8a2 2 0 0 1 2-2h4Zm2 0h3V5a1 1 0 0 0-1-1h-1a1 1 0 0 0-1 1v1Zm9 5H4v7.5c0 .28.22.5.5.5h15c.28 0 .5-.22.5-.5V11Z"/></svg>
+          <span>Jobs</span>
+        </a>
+        <a href="employer-applicants.html" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.33 0-8 2.03-8 4.43V20a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1.57C20 16.03 16.33 14 12 14Z"/></svg>
+          <span>Applicants</span>
+        </a>
+        <a href="employer-applicants.html?stage=interview" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h10a2 2 0 0 1 2 2v18l-7-3-7 3V4a2 2 0 0 1 2-2Zm0 17 5-2.14L17 19V4H7v15Zm2-9h6v2H9v-2Zm0-4h6v2H9V6Z"/></svg>
+          <span>Interviews</span>
+        </a>
+        <a href="employer-messages.html" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H9.8l-4.1 3.08A1.05 1.05 0 0 1 4 19.24V17a3 3 0 0 1-2-2.83V7a3 3 0 0 1 3-3Zm0 2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1v2.25L9.13 15H19a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5Z"/></svg>
+          <span>Messages</span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <span class="nav-label">Talent</span>
+        <a href="find-candidates.html" id="employerCandidatesNav" class="employer-nav-link employer-candidates-nav nav-item" data-plan-gated="candidate-network">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.97 12.04l3.25 3.24a1 1 0 0 1-1.42 1.42l-3.24-3.25A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/></svg>
+          <span>Candidates</span>
+          <span class="nav-lock" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h1Zm2 0h6V8a3 3 0 0 0-6 0v2Z"/></svg></span>
+          <span class="nav-pro-badge">Pro</span>
+        </a>
+        <a href="saved-talent.html" id="employerSavedTalentNav" class="employer-nav-link nav-item" data-plan-gated="candidate-network">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a2 2 0 0 1 2 2v16a1 1 0 0 1-1.55.83L12 17.53l-6.45 4.3A1 1 0 0 1 4 21V5a2 2 0 0 1 2-2Zm0 2v14.13l5.45-3.63a1 1 0 0 1 1.1 0L18 19.13V5H6Z"/></svg>
+          <span>Saved Talent</span>
+          <span class="nav-lock" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h1Zm2 0h6V8a3 3 0 0 0-6 0v2Z"/></svg></span>
+          <span class="nav-pro-badge">Pro</span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <span class="nav-label">Company</span>
+        <a href="employer-profile.html" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3h2a2 2 0 0 1 2 2v11h-6v-4H10v4H4Zm2-2h2v-4h8v4h2v-9h-4V5H6v14Zm2-11h2v2H8V8Zm0 4h2v2H8v-2Zm4-4h2v2h-2V8Zm0 4h2v2h-2v-2Z"/></svg>
+          <span>Company Profile</span>
+        </a>
+      </div>
+
+    </nav>
+
+    <div class="sidebar-footer">
+      <section class="sidebar-plan-card" id="sidebarPlanCard" aria-live="polite"></section>
+
+      <a href="employer-profile.html" class="sidebar-account" aria-label="Open company profile">
+        <span class="account-avatar" id="sidebarCompanyAvatar">PT</span>
+        <span class="account-copy">
+          <strong id="sidebarCompanyName">Employer</strong>
+          <span>Employer account</span>
+        </span>
+      </a>
+      <button type="button" id="logoutBtn" class="logout-btn nav-logout">Logout</button>
+    </div>
+  </aside>
+
+  <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+
+  <div class="dashboard-workspace">
+    <header class="utility-bar">
+      <button type="button" class="mobile-menu-btn" id="sidebarToggle" aria-controls="dashboardSidebar" aria-expanded="false">
+        <span class="sr-only">Open navigation</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v2H4V7Zm0 4h16v2H4v-2Zm0 4h16v2H4v-2Z"/></svg>
+      </button>
+
+      <form class="utility-search" id="dashboardSearchForm" role="search">
+        <label class="sr-only" for="dashboardSearchInput">Search candidates, jobs, or messages</label>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.97 12.04l3.25 3.24a1 1 0 0 1-1.42 1.42l-3.24-3.25A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/></svg>
+        <input id="dashboardSearchInput" type="search" placeholder="Search candidates, jobs, or messages..." autocomplete="off" />
+        <span class="search-shortcut" aria-hidden="true">/</span>
+      </form>
+
+      <div class="utility-actions">
+        <a href="employer-messages.html" class="utility-icon-link" aria-label="Open messages">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H9.8l-4.1 3.08A1.05 1.05 0 0 1 4 19.24V17a3 3 0 0 1-2-2.83V7a3 3 0 0 1 3-3Zm0 2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1v2.25L9.13 15H19a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5Z"/></svg>
+          <span id="topUnreadBadge" class="utility-badge" hidden>0</span>
+        </a>
+        <a href="employer-applicants.html?stage=new" class="utility-icon-link pro-notification-link" aria-label="Open new applicant notifications">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5-6.71V3a2 2 0 1 0-4 0v1.29A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg>
+          <span id="topNotificationBadge" class="utility-badge" hidden>0</span>
+        </a>
+        <a href="employer-profile.html" class="top-account">
+          <span class="account-avatar small" id="topCompanyAvatar">PT</span>
+          <span id="topCompanyName">Employer</span>
+        </a>
+      </div>
+    </header>
+
+    <main class="employer-shell">
+      <section class="dashboard-briefing" aria-labelledby="dashboardTitle">
+        <div class="briefing-copy">
+          <h1 id="dashboardTitle"><span id="dashboardGreeting">Good day</span>, <span id="companyNameTitle">Employer</span></h1>
+          <p id="heroSummary" aria-live="polite">Loading your hiring workspace...</p>
+        </div>
+
+        <div class="briefing-actions" aria-label="Primary dashboard actions">
+          <a href="employer-applicants.html" id="primaryDashboardAction" class="primary-btn">Review Applicants</a>
+          <a href="manage-jobs.html" id="secondaryDashboardAction" class="secondary-btn">Manage Jobs</a>
+        </div>
+      </section>
+
+      <section class="kpi-strip" aria-label="Hiring overview">
+        <a href="manage-jobs.html" class="kpi-item jobs-kpi" id="activeJobsMetric">
+          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6V5a3 3 0 0 1 3-3h1a3 3 0 0 1 3 3v1h3a2 2 0 0 1 2 2v10.5A2.5 2.5 0 0 1 18.5 21h-13A2.5 2.5 0 0 1 3 18.5V8a2 2 0 0 1 2-2h4Zm2 0h3V5a1 1 0 0 0-1-1h-1a1 1 0 0 0-1 1v1Z"/></svg></span>
+          <span class="kpi-copy">
+            <span class="kpi-label">Active jobs</span>
+            <strong id="activeJobsCount" aria-live="polite">...</strong>
+            <span id="activeJobsContext" class="kpi-context">Loading job posts</span>
+          </span>
+        </a>
+
+        <a href="employer-applicants.html" class="kpi-item review-kpi" id="applicantsMetric">
+          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2 1.8 20h20.4L12 2Zm1 15h-2v-2h2v2Zm0-4h-2V8h2v5Z"/></svg></span>
+          <span class="kpi-copy">
+            <span class="kpi-label">Needs review</span>
+            <strong id="applicationsCount" aria-live="polite">...</strong>
+            <span id="applicationsContext" class="kpi-context">Loading applicants</span>
+          </span>
+        </a>
+
+        <a href="employer-applicants.html?stage=interview" class="kpi-item interview-kpi" id="interviewMetric">
+          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 2h10a2 2 0 0 1 2 2v18l-7-3-7 3V4a2 2 0 0 1 2-2Zm0 17 5-2.14L17 19V4H7v15Zm2-9h6v2H9v-2Zm0-4h6v2H9V6Z"/></svg></span>
+          <span class="kpi-copy">
+            <span class="kpi-label">Interviews</span>
+            <strong id="interviewsCount" aria-live="polite">...</strong>
+            <span id="interviewsContext" class="kpi-context">Loading interviews</span>
+          </span>
+        </a>
+
+        <a href="employer-messages.html" class="kpi-item conversations-kpi" id="messagesMetric">
+          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h14a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H9.8l-4.1 3.08A1.05 1.05 0 0 1 4 19.24V17a3 3 0 0 1-2-2.83V7a3 3 0 0 1 3-3Z"/></svg></span>
+          <span class="kpi-copy">
+            <span class="kpi-label">Conversations</span>
+            <strong id="messagesCount" aria-live="polite">...</strong>
+            <span id="messagesContext" class="kpi-context">Loading inbox</span>
+          </span>
+        </a>
+      </section>
+
+      <section class="dashboard-main-grid" aria-label="Employer dashboard workspace">
+        <section class="workspace-panel pipeline-panel" id="pipeline" aria-labelledby="pipelineTitle">
+          <div class="section-heading">
+            <div>
+              <h2 id="pipelineTitle">Hiring pipeline</h2>
+              <p>Applicants in active hiring stages across your jobs.</p>
+            </div>
+
+            <a href="employer-applicants.html" class="panel-link">Open all applicants</a>
+          </div>
+
+          <div class="pipeline-row" id="pipelineStageOverview" aria-label="Application stages">
+            <a href="employer-applicants.html?stage=new" class="stage-summary stage-new">
+              <strong id="newApplicantsCount">...</strong>
+              <span>New</span>
+            </a>
+            <a href="employer-applicants.html?stage=reviewing" class="stage-summary stage-reviewing">
+              <strong id="reviewingCount">...</strong>
+              <span>Reviewing</span>
+            </a>
+            <a href="employer-applicants.html?stage=interview" class="stage-summary stage-interview">
+              <strong id="interviewCount">...</strong>
+              <span>Interview</span>
+            </a>
+            <a href="employer-applicants.html?stage=offer" class="stage-summary stage-offer">
+              <strong id="offerCount">...</strong>
+              <span>Offer</span>
+            </a>
+            <a href="employer-applicants.html?stage=hired" class="stage-summary stage-hired">
+              <strong id="hiredCount">...</strong>
+              <span>Hired</span>
+            </a>
+          </div>
+
+          <p class="pipeline-muted" id="rejectedCountText"></p>
+          <h3 class="list-heading" id="pipelineQueueText">Loading applicants...</h3>
+
+          <div id="pipelineList" class="dashboard-list pipeline-list" aria-live="polite">
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row"></div>
+          </div>
+        </section>
+
+        <section class="activity-panel" aria-labelledby="activityTitle">
+          <div class="section-heading compact">
+            <div>
+              <h2 id="activityTitle">Recent activity</h2>
+              <p>Latest employer activity from applications, messages, and jobs.</p>
+            </div>
+          </div>
+
+          <div id="recentActivityList" class="activity-list" aria-live="polite">
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line short"></div>
+          </div>
+        </section>
+
+        <aside class="candidate-network-panel" id="candidateNetworkPanel" aria-labelledby="candidateNetworkTitle" hidden>
+          <div class="section-heading compact">
+            <div>
+              <div class="panel-eyebrow">Pro</div>
+              <h2 id="candidateNetworkTitle">Candidate network</h2>
+              <p>Browse and connect with pre-screened candidates.</p>
+            </div>
+          </div>
+          <ul class="candidate-network-features">
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.97 12.04l3.25 3.24a1 1 0 0 1-1.42 1.42l-3.24-3.25A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/></svg><span>Advanced search and filters</span></li>
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H9.8l-4.1 3.08A1.05 1.05 0 0 1 4 19.24V17a3 3 0 0 1-2-2.83V7a3 3 0 0 1 3-3Z"/></svg><span>Direct messaging</span></li>
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2.8 2.9 5.88 6.5.95-4.7 4.58 1.1 6.47L12 17.62l-5.8 3.06 1.1-6.47-4.7-4.58 6.5-.95L12 2.8Z"/></svg><span>Save top candidates</span></li>
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h16v2H4v-2Zm1-3.5 4.2-4.2 3 3L19 7.5V12h2V4h-8v2h4.5l-5.3 5.3-3-3L3.5 14 5 15.5Z"/></svg><span>Build your talent pipeline</span></li>
+          </ul>
+          <a href="find-candidates.html" class="primary-btn network-action">Search Candidates</a>
+        </aside>
+      </section>
+
+      <section class="dashboard-lower-grid" aria-label="Active jobs and plan tools">
+        <aside class="free-upgrade-panel" id="freeUpgradePanel" hidden>
+          <span class="upgrade-kicker">GET PRO ACCESS</span>
+          <h2>Access the full candidate network</h2>
+          <p>Browse, connect, save, and message pre-screened candidates.</p>
+          <button type="button" class="secondary-btn light" data-upgrade-action>GET ACCESS</button>
+        </aside>
+
+        <section class="workspace-panel jobs-panel" id="active-jobs" aria-labelledby="activeJobsTitle">
+          <div class="section-heading">
+            <div>
+              <h2 id="activeJobsTitle">Active jobs</h2>
+              <p>Live postings, applicant counts, and quick actions.</p>
+            </div>
+
+            <a href="manage-jobs.html" class="panel-link">Manage all jobs</a>
+          </div>
+
+          <div id="activeJobsList" class="dashboard-list job-list" aria-live="polite">
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row"></div>
+          </div>
+        </section>
+      </section>
+    </main>
   </div>
+</div>
 
-  <nav data-employer-nav>
-    <a href="employer-dashboard.html" class="employer-nav-link">Dashboard</a>
-    <a href="manage-jobs.html" class="employer-nav-link">Jobs</a>
-    <a href="employer-applicants.html" class="employer-nav-link">Applicants</a>
-    <a href="find-candidates.html" id="employerCandidatesNav" class="employer-nav-link employer-candidates-nav" hidden>Candidates</a>
-    <a href="saved-talent.html" class="employer-nav-link">Saved Talent</a>
-    <a href="employer-messages.html" class="employer-nav-link">Messages</a>
-    <a href="employer-profile.html" class="employer-nav-link">Company</a>
-    <button type="button" id="logoutBtn" class="logout-btn">Logout</button>
-  </nav>
-</header>
-
-<main class="employer-shell">
-
-  <section class="hero-card" aria-labelledby="dashboardTitle">
-    <div>
-      <span class="eyebrow">EMPLOYER DASHBOARD</span>
-      <h1 id="dashboardTitle">Welcome back, <span id="companyNameTitle">Employer</span></h1>
-      <p id="heroSummary">Loading your hiring workspace...</p>
-    </div>
-
-    <div class="hero-actions">
-      <a href="employer-applicants.html" class="primary-btn">Review Applicants</a>
-      <a href="manage-jobs.html" class="secondary-btn">Manage Jobs</a>
-    </div>
-  </section>
-
-  <section class="metric-grid">
-    <a href="manage-jobs.html" class="metric-card">
-      <span>Active Jobs</span>
-      <strong id="activeJobsCount">0</strong>
-      <p>Open postings</p>
-    </a>
-
-    <a href="employer-applicants.html" class="metric-card">
-      <span>Applicants</span>
-      <strong id="applicationsCount">0</strong>
-      <p>Needs review</p>
-    </a>
-
-    <a href="saved-talent.html" class="metric-card">
-      <span>Saved Talent</span>
-      <strong id="savedCandidatesCount">0</strong>
-      <p>Shortlisted candidates</p>
-    </a>
-
-    <a href="employer-messages.html" class="metric-card">
-      <span>Messages</span>
-      <strong id="messagesCount">0</strong>
-      <p>Conversations</p>
-    </a>
-  </section>
-
-  <section class="dashboard-layout" aria-label="Employer dashboard workspace">
-
-    <section class="main-stack">
-
-      <section class="panel" id="pipeline">
-        <div class="panel-heading">
-          <div>
-            <span class="eyebrow">APPLICANT REVIEW</span>
-            <h2>Hiring pipeline</h2>
-            <p>Prioritize new applications, interviews, and next decisions from one focused queue.</p>
-          </div>
-
-          <a href="employer-applicants.html" class="panel-link">Open Applicants</a>
-        </div>
-
-        <div class="pipeline-row">
-          <div>
-            <strong id="newApplicantsCount">0</strong>
-            <span>New</span>
-          </div>
-
-          <div>
-            <strong id="reviewingCount">0</strong>
-            <span>Reviewing</span>
-          </div>
-
-          <div>
-            <strong id="interviewCount">0</strong>
-            <span>Interview</span>
-          </div>
-
-          <div>
-            <strong id="offerCount">0</strong>
-            <span>Offer</span>
-          </div>
-
-          <div>
-            <strong id="hiredCount">0</strong>
-            <span>Hired</span>
-          </div>
-        </div>
-
-        <p class="pipeline-muted" id="rejectedCountText"></p>
-
-        <div id="pipelineList" class="stack-list pipeline-list"></div>
-      </section>
-
-      <section class="panel" id="active-jobs">
-        <div class="panel-heading">
-          <div>
-            <span class="eyebrow">ACTIVE JOBS</span>
-            <h2>Active jobs</h2>
-            <p>Live roles currently visible to candidates, with quick access to manage each post.</p>
-          </div>
-
-          <a href="manage-jobs.html" class="panel-link">Manage Jobs</a>
-        </div>
-
-        <div id="activeJobsList" class="stack-list job-list"></div>
-      </section>
-
-      <section class="panel recruiter-panel" id="candidate-access">
-        <div class="panel-heading recruiter-heading">
-          <div>
-            <span class="eyebrow">CANDIDATE NETWORK</span>
-            <h2 id="candidateAccessTitle">Unlock Candidate Network</h2>
-            <p id="candidateAccessCopy">Upgrade to search verified trades candidates, view full profiles, save talent, and message candidates.</p>
-          </div>
-
-          <button type="button" class="primary-btn recruiter-btn" id="candidateAccessCta">Upgrade Access</button>
-        </div>
-
-        <div class="network-premium-card">
-          <div class="network-feature-grid" id="candidateAccessFeatures">
-            <div class="network-feature locked">
-              <span>Candidate database</span>
-            </div>
-
-            <div class="network-feature locked">
-              <span>Full profiles</span>
-            </div>
-
-            <div class="network-feature locked">
-              <span>Contact + messaging</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-    </section>
-
-    <aside class="side-stack">
-
-      <section class="company-card" aria-label="Company account">
-        <div class="company-top">
-          <div class="company-mark" id="companyInitials">PT</div>
-
-          <div class="company-info">
-            <span>Company Account</span>
-            <h2 id="companyNameSidebar">Company</h2>
-            <p id="industrySidebar">Industry not completed</p>
-            <small id="emailSidebar">Loading...</small>
-          </div>
-        </div>
-
-        <a href="employer-profile.html" class="secondary-btn full">Edit Company Profile</a>
-      </section>
-
-      <section class="panel quick-actions-panel">
-        <span class="eyebrow">EMPLOYER TOOLS</span>
-        <h2>Quick actions</h2>
-        <p class="side-copy">Jump into the hiring tasks employers use most.</p>
-
-        <div class="quick-action-list">
-          <a href="manage-jobs.html">
-            <strong>Manage job posts</strong>
-            <span>Create, edit, pause, and review active roles.</span>
-          </a>
-
-          <a href="employer-applicants.html">
-            <strong>Review applicants</strong>
-            <span>Open your applicant queue and hiring stages.</span>
-          </a>
-
-          <a href="find-candidates.html" id="dashboardFindCandidatesAction">
-            <strong>Find candidates</strong>
-            <span>Search skilled trades profiles.</span>
-          </a>
-
-          <a href="employer-messages.html">
-            <strong>Open messages</strong>
-            <span>Reply to candidate conversations.</span>
-          </a>
-
-        </div>
-      </section>
-
-      <section class="panel side-panel">
-        <div class="panel-heading compact">
-          <div>
-            <span class="eyebrow">SAVED TALENT</span>
-            <h2>Shortlist</h2>
-          </div>
-
-          <a href="saved-talent.html" class="panel-link">Open</a>
-        </div>
-
-        <div id="savedCandidatesList" class="stack-list shortlist-list"></div>
-      </section>
-
-    </aside>
-
-  </section>
-
-</main>
-
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/config.js"></script>

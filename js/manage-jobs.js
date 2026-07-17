@@ -13,6 +13,7 @@ const activeJobsCount = document.getElementById("activeJobsCount");
 const pausedJobsCount = document.getElementById("pausedJobsCount");
 const applicationsCount = document.getElementById("applicationsCount");
 const reviewCount = document.getElementById("reviewCount");
+const interviewsCount = document.getElementById("interviewsCount");
 
 const filterButtons = document.querySelectorAll(".filter-btn");
 const jobSearchInput = document.getElementById("jobSearchInput");
@@ -22,6 +23,7 @@ const logoutBtn = document.getElementById("logoutBtn");
 let allJobs = [];
 let applicationCountsByJob = {};
 let reviewCountsByJob = {};
+let interviewCountsByJob = {};
 let currentFilter = "all";
 let currentUserId = null;
 
@@ -32,6 +34,7 @@ async function initManageJobs() {
   setupLogout();
   setupFilters();
   setupSearchAndSort();
+  setupDashboardShell();
 
   const user = await requireEmployerLogin();
   if (!user) return;
@@ -98,11 +101,13 @@ async function loadApplicationCounts(userId) {
     console.warn("Could not load job application counts:", error);
     applicationCountsByJob = {};
     reviewCountsByJob = {};
+    interviewCountsByJob = {};
     return;
   }
 
   applicationCountsByJob = {};
   reviewCountsByJob = {};
+  interviewCountsByJob = {};
 
   (data || []).forEach((application) => {
     const jobId = String(application.job_id || "");
@@ -110,8 +115,14 @@ async function loadApplicationCounts(userId) {
 
     applicationCountsByJob[jobId] = (applicationCountsByJob[jobId] || 0) + 1;
 
-    if (["new", "submitted", "applied"].includes(String(application.status || "submitted").toLowerCase())) {
+    const status = String(application.status || "submitted").toLowerCase();
+
+    if (["new", "submitted", "applied"].includes(status)) {
       reviewCountsByJob[jobId] = (reviewCountsByJob[jobId] || 0) + 1;
+    }
+
+    if (["interview", "interviewing", "scheduled"].includes(status)) {
+      interviewCountsByJob[jobId] = (interviewCountsByJob[jobId] || 0) + 1;
     }
   });
 }
@@ -183,41 +194,45 @@ function createJobCard(job) {
   const applicationCount = applicationCountsByJob[String(job.id)] || 0;
 
   card.innerHTML = `
-    <div class="job-top">
-      <div>
+    <div class="job-main">
+      <div class="job-title-row">
         <h3>${escapeHTML(title)}</h3>
-        <p>${escapeHTML(company)} &middot; ${escapeHTML(location)}</p>
+        <span class="status ${status}">${escapeHTML(capitalize(status))}</span>
       </div>
+      <p class="job-company">${escapeHTML(company)}</p>
+    </div>
 
-      <div class="job-meta">
-        <span>${escapeHTML(type)}</span>
-        <span>${escapeHTML(pay)}</span>
-        <span>${escapeHTML(experience)}</span>
+    <div class="job-detail-grid">
+      <div class="job-detail">
+        <span>Location</span>
+        <strong>${escapeHTML(location)}</strong>
+      </div>
+      <div class="job-detail">
+        <span>Employment type</span>
+        <strong>${escapeHTML(type)}</strong>
+      </div>
+      <div class="job-detail">
+        <span>Pay</span>
+        <strong>${escapeHTML(pay)}</strong>
+      </div>
+      <div class="job-detail">
+        <span>Experience</span>
+        <strong>${escapeHTML(experience)}</strong>
       </div>
     </div>
 
-    <div>
-      <p class="job-description">${escapeHTML(truncateText(description, 170))}</p>
-      <div class="tag-row">
-        ${skills.map((skill) => `<span>${escapeHTML(skill)}</span>`).join("")}
-      </div>
-    </div>
-
-    <div>
-      <span class="status ${status}">${escapeHTML(capitalize(status))}</span>
+    <div class="job-activity">
       <p class="posted-date">${escapeHTML(posted)}</p>
-      <div class="job-meta">
-        <span>${applicationCount} applicant${applicationCount === 1 ? "" : "s"}</span>
-      </div>
+      <strong class="applicant-count">${applicationCount} applicant${applicationCount === 1 ? "" : "s"}</strong>
     </div>
 
     <div class="job-actions">
-      <a class="primary" href="edit-jobs.html?id=${encodeURIComponent(job.id)}">Edit</a>
-      <a class="secondary" href="employer-applicants.html?job=${encodeURIComponent(job.id)}">Applicants</a>
+      <a class="primary" href="employer-applicants.html?job=${encodeURIComponent(job.id)}">Applicants</a>
+      <a class="secondary" href="edit-jobs.html?id=${encodeURIComponent(job.id)}">Edit</a>
       ${
         status === "paused"
-          ? `<button class="success" data-id="${escapeHTML(job.id)}" data-status="active">Activate</button>`
-          : `<button class="danger" data-id="${escapeHTML(job.id)}" data-status="paused">Pause</button>`
+          ? `<button class="more-action" type="button" aria-label="Activate ${escapeHTML(title)}" title="Activate" data-id="${escapeHTML(job.id)}" data-status="active">...</button>`
+          : `<button class="more-action" type="button" aria-label="Pause ${escapeHTML(title)}" title="Pause" data-id="${escapeHTML(job.id)}" data-status="paused">...</button>`
       }
     </div>
   `;
@@ -262,14 +277,23 @@ function updateStats() {
   const activeJobs = allJobs.filter((job) => normalizeStatus(job.status) === "active");
   const pausedJobs = allJobs.filter((job) => normalizeStatus(job.status) === "paused");
 
-  activeJobsCount.textContent = activeJobs.length;
-  pausedJobsCount.textContent = pausedJobs.length;
+  if (activeJobsCount) activeJobsCount.textContent = activeJobs.length;
+  if (pausedJobsCount) pausedJobsCount.textContent = pausedJobs.length;
 
-  applicationsCount.textContent = Object.values(applicationCountsByJob)
-    .reduce((sum, count) => sum + count, 0);
+  if (applicationsCount) {
+    applicationsCount.textContent = Object.values(applicationCountsByJob)
+      .reduce((sum, count) => sum + count, 0);
+  }
 
-  reviewCount.textContent = Object.values(reviewCountsByJob)
-    .reduce((sum, count) => sum + count, 0);
+  if (reviewCount) {
+    reviewCount.textContent = Object.values(reviewCountsByJob)
+      .reduce((sum, count) => sum + count, 0);
+  }
+
+  if (interviewsCount) {
+    interviewsCount.textContent = Object.values(interviewCountsByJob)
+      .reduce((sum, count) => sum + count, 0);
+  }
 }
 
 function setupFilters() {
@@ -310,6 +334,36 @@ function setupLogout() {
   });
 }
 
+function setupDashboardShell() {
+  const body = document.body;
+  const sidebar = document.getElementById("dashboardSidebar");
+  const toggle = document.getElementById("sidebarToggle");
+  const backdrop = document.getElementById("sidebarBackdrop");
+  const globalSearch = document.querySelector(".utility-search");
+
+  const closeSidebar = () => {
+    body.classList.remove("sidebar-open");
+    if (toggle) toggle.setAttribute("aria-expanded", "false");
+    if (backdrop) backdrop.hidden = true;
+  };
+
+  toggle?.addEventListener("click", () => {
+    const opening = !body.classList.contains("sidebar-open");
+    body.classList.toggle("sidebar-open", opening);
+    toggle.setAttribute("aria-expanded", String(opening));
+    if (backdrop) backdrop.hidden = !opening;
+  });
+
+  backdrop?.addEventListener("click", closeSidebar);
+  sidebar?.addEventListener("click", (event) => {
+    if (event.target.closest("a")) closeSidebar();
+  });
+
+  globalSearch?.addEventListener("submit", (event) => {
+    event.preventDefault();
+  });
+}
+
 function parseSkills(skills) {
   if (!skills) return ["Trades"];
 
@@ -326,6 +380,10 @@ function parseSkills(skills) {
 
 function normalizeStatus(status) {
   const clean = String(status || "active").toLowerCase().trim();
+
+  if (["draft", "drafts"].includes(clean)) {
+    return "draft";
+  }
 
   if (["paused", "inactive", "closed"].includes(clean)) {
     return "paused";
