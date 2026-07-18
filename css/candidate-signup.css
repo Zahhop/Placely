@@ -225,6 +225,26 @@ input:focus {
   cursor: pointer;
 }
 
+.password-requirement {
+  margin-top: 7px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.password-requirement.is-valid {
+  color: #047857;
+}
+
+.password-requirement.is-invalid {
+  color: #dc2626;
+}
+
+.password-match {
+  min-height: 17px;
+}
+
 .signup-btn {
   width: 100%;
   margin-top: 26px;

@@ -95,7 +95,7 @@ async function loadEmployerLogos(jobs) {
   }
 
   const { data, error } = await jobsSupabase
-    .from("employer_profiles")
+    .from("public_employer_profiles")
     .select("*")
     .in("id", employerIds);
 

@@ -26,6 +26,7 @@ const profileSections = document.querySelectorAll(".profile-section");
 const scoreList = document.getElementById("scoreList");
 
 const PHOTO_BUCKET = "employer-logos";
+const MAX_LOGO_SIZE_BYTES = 5 * 1024 * 1024;
 
 let currentLogoUrl = "";
 let isLogoUploading = false;
@@ -163,6 +164,12 @@ function setupLogoUpload() {
       return;
     }
 
+    if (file.size > MAX_LOGO_SIZE_BYTES) {
+      showToast("Logo must be 5 MB or smaller.");
+      logoFileInput.value = "";
+      return;
+    }
+
     const {
       data: { user },
       error: userError
@@ -212,6 +219,10 @@ async function uploadCompanyLogo(userId, file) {
 
   if (!file.type.startsWith("image/")) {
     throw new Error("Please upload an image file.");
+  }
+
+  if (file.size > MAX_LOGO_SIZE_BYTES) {
+    throw new Error("Logo must be 5 MB or smaller.");
   }
 
   const safeName = file.name

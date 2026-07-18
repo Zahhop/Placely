@@ -6,28 +6,25 @@ const conversationSearch = document.getElementById("conversationSearch");
 const conversationCount = document.getElementById("conversationCount");
 
 const chatAvatar = document.getElementById("chatAvatar");
+const chatEyebrow = document.getElementById("chatEyebrow");
 const chatCompany = document.getElementById("chatCompany");
 const chatRole = document.getElementById("chatRole");
 const chatMessages = document.getElementById("chatMessages");
 const chatActions = document.getElementById("chatActions");
 const replyHelpBtn = document.getElementById("replyHelpBtn");
 
-const contextCompany = document.getElementById("contextCompany");
-const contextRole = document.getElementById("contextRole");
-const detailStatus = document.getElementById("detailStatus");
-const detailResponse = document.getElementById("detailResponse");
-const detailSource = document.getElementById("detailSource");
-const nextStepTitle = document.getElementById("nextStepTitle");
-const nextStepText = document.getElementById("nextStepText");
-
 const form = document.getElementById("messageForm");
 const input = document.getElementById("messageInput");
+const sendMessageBtn = document.getElementById("sendMessageBtn");
+const composerStatus = document.getElementById("composerStatus");
 
 let currentUser = null;
 let conversationsData = [];
+let activeMessages = [];
 let activeConversationId = null;
 let activeRealtimeChannel = null;
 let refreshTimer = null;
+let isSendingMessage = false;
 
 document.addEventListener("DOMContentLoaded", initMessages);
 
@@ -43,7 +40,7 @@ async function initMessages() {
 
   setupEvents();
   await loadConversations();
-  await renderConversationList(conversationsData);
+  renderConversationList(getFilteredConversations());
 
   if (activeConversationId) {
     await openConversation(activeConversationId);
@@ -88,6 +85,7 @@ async function loadConversations() {
         "";
 
       const latest = await getLatestMessage(conversation.id);
+      const unreadCount = await getUnreadCount(conversation.id);
 
       return {
         id: conversation.id,
@@ -100,7 +98,8 @@ async function loadConversations() {
         status: conversation.status || "Active",
         response: conversation.response || "New",
         latestMessage: latest?.message || "",
-        latestAt: latest?.created_at || conversation.created_at
+        latestAt: latest?.created_at || conversation.created_at,
+        unreadCount
       };
     })
   );
@@ -116,7 +115,7 @@ async function getEmployerProfile(employerId) {
   if (!employerId) return null;
 
   const { data, error } = await candidateMessagesSupabase
-    .from("employer_profiles")
+    .from("public_employer_profiles")
     .select("*")
     .eq("id", employerId)
     .maybeSingle();
@@ -130,347 +129,299 @@ async function getEmployerProfile(employerId) {
 }
 
 function setupEvents() {
-  if (conversationSearch) {
-    conversationSearch.addEventListener("input", async () => {
-      const query = conversationSearch.value.toLowerCase().trim();
+  conversationSearch?.addEventListener("input", () => {
+    renderConversationList(getFilteredConversations());
 
-      const filtered = conversationsData.filter((conversation) =>
-        [
-          conversation.employerName,
-          conversation.role,
-          conversation.source,
-          conversation.status
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(query)
-      );
+    if (getFilteredConversations().length === 0 && conversationsData.length > 0) {
+      showSearchEmptyState();
+    }
+  });
 
-      await renderConversationList(filtered);
+  replyHelpBtn?.addEventListener("click", () => {
+    const conversation = getActiveConversation();
+    if (!conversation || !input) return;
 
-      if (filtered.length === 0 && conversationsData.length > 0) {
-        showSearchEmptyState();
-      }
-    });
-  }
+    input.focus();
 
-  if (replyHelpBtn) {
-    replyHelpBtn.addEventListener("click", () => {
-      const conversation = getActiveConversation();
-      if (!conversation || !input) return;
+    if (!input.value.trim()) {
+      input.value =
+        "Hi, thanks for reaching out. I'm interested and available to discuss the opportunity. What would be the best next step?";
+      updateSendAvailability();
+    }
+  });
 
-      input.focus();
+  input?.addEventListener("input", updateSendAvailability);
+  input?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      form?.requestSubmit();
+    }
+  });
 
-      if (!input.value.trim()) {
-        input.value =
-          "Hi, thanks for reaching out. I’m interested and available to discuss the opportunity. What would be the best next step?";
-      }
-    });
-  }
-
-  if (form) {
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const text = input.value.trim();
-      if (!text || !activeConversationId) return;
-
-      const conversation = getActiveConversation();
-      if (!conversation) return;
-
-      const optimisticMessage = {
-        sender_type: "candidate",
-        message: text,
-        created_at: new Date().toISOString()
-      };
-
-      appendMessageBubble(optimisticMessage);
-      input.value = "";
-
-      const { data: sentMessage, error } = await candidateMessagesSupabase
-        .from("messages")
-        .insert([
-          {
-            conversation_id: activeConversationId,
-            sender_type: "candidate",
-            message: text,
-            employer_id: conversation.employerId,
-            candidate_id: currentUser.id,
-            candidate_name: currentUser.email,
-            candidate_role: conversation.role
-          }
-        ])
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Send message error:", error);
-        alert("Message failed to send. Check console.");
-        await openConversation(activeConversationId);
-        return;
-      }
-
-      conversation.latestMessage = sentMessage?.message || text;
-      conversation.latestAt = sentMessage?.created_at || optimisticMessage.created_at;
-      conversationsData.sort(sortByLatestActivity);
-      await renderConversationList(conversationsData);
-      await refreshActiveConversation();
-    });
-  }
+  form?.addEventListener("submit", sendMessage);
 }
 
-async function renderConversationList(list) {
+function getFilteredConversations() {
+  const query = (conversationSearch?.value || "").toLowerCase().trim();
+
+  if (!query) return conversationsData;
+
+  return conversationsData.filter((conversation) =>
+    [
+      conversation.employerName,
+      conversation.role,
+      conversation.source,
+      conversation.status,
+      conversation.latestMessage
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(query)
+  );
+}
+
+function renderConversationList(list) {
   if (!conversationList) return;
+
+  const unreadTotal = conversationsData.reduce((total, conversation) => total + (conversation.unreadCount || 0), 0);
+  if (conversationCount) {
+    conversationCount.textContent = unreadTotal ? `${unreadTotal} unread` : String(conversationsData.length);
+  }
 
   conversationList.innerHTML = "";
 
-  if (conversationCount) {
-    conversationCount.textContent = conversationsData.length;
-  }
-
-  if (!list || list.length === 0) {
+  if (!list.length) {
     conversationList.innerHTML = `
       <div class="empty-list-state">
-        <div class="empty-list-inner">
-          <strong>No conversations yet</strong>
-          <p>Employer messages and interview follow-ups will appear here.</p>
-        </div>
+        <strong>${conversationsData.length ? "No matches" : "No conversations yet"}</strong>
+        <p>${conversationsData.length ? "Try another employer, role, or message." : "When an employer contacts you or you follow up on an application, your messages will appear here."}</p>
       </div>
     `;
     return;
   }
 
-  for (const conversation of list) {
-    const row = document.createElement("div");
-    row.className = `conversation ${conversation.id === activeConversationId ? "active" : ""}`;
-
+  list.forEach((conversation) => {
+    const row = document.createElement("button");
+    row.type = "button";
+    row.className = `conversation-row${String(conversation.id) === String(activeConversationId) ? " active" : ""}${conversation.unreadCount ? " unread" : ""}`;
     row.innerHTML = `
-      <div class="avatar">
+      <span class="avatar">
         ${renderAvatar(conversation.logoUrl, conversation.initials, "Company logo")}
-      </div>
-
-      <div class="conversation-info">
-        <div class="conversation-top">
-          <h3>${escapeHTML(conversation.employerName)}</h3>
+      </span>
+      <span class="conversation-copy">
+        <span class="conversation-top">
+          <strong>${escapeHTML(conversation.employerName)}</strong>
           <span>${escapeHTML(formatConversationTime(conversation.latestAt, "New"))}</span>
-        </div>
-
-        <p>${escapeHTML(conversation.latestMessage || `${conversation.role} opportunity`)}</p>
-      </div>
+        </span>
+        <span class="conversation-meta">${escapeHTML(conversation.role)}${conversation.source ? ` - ${escapeHTML(conversation.source)}` : ""}</span>
+        <span class="conversation-preview">${escapeHTML(conversation.latestMessage || "No messages yet.")}</span>
+      </span>
+      ${conversation.unreadCount ? `<span class="unread-dot">${conversation.unreadCount}</span>` : ""}
     `;
 
     row.addEventListener("click", async () => {
-      activeConversationId = conversation.id;
-      await renderConversationList(conversationsData);
-      await openConversation(conversation.id);
+      await openConversation(conversation.id, { updateUrl: true });
     });
 
     conversationList.appendChild(row);
-  }
+  });
 }
 
-async function openConversation(id) {
-  const conversation = conversationsData.find((c) => c.id === id);
+async function openConversation(id, options = {}) {
+  const conversation = conversationsData.find((item) => String(item.id) === String(id));
 
   if (!conversation) {
     showNoConversationState();
     return;
   }
 
+  activeConversationId = conversation.id;
   setConversationMode();
+  renderConversationChrome(conversation);
+  renderThreadLoading();
+  renderConversationList(getFilteredConversations());
 
+  const messages = await loadMessages(conversation.id);
+  activeMessages = messages;
+  renderMessages(messages, conversation);
+  await markConversationRead(conversation);
+  conversation.unreadCount = 0;
+  renderConversationList(getFilteredConversations());
+  subscribeToMessages(conversation.id);
+
+  if (options.updateUrl) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("conversation", conversation.id);
+    window.history.replaceState({}, "", url);
+  }
+}
+
+function renderConversationChrome(conversation) {
   if (chatAvatar) {
-    chatAvatar.innerHTML = renderAvatar(
-      conversation.logoUrl,
-      conversation.initials,
-      "Company logo"
-    );
+    chatAvatar.innerHTML = renderAvatar(conversation.logoUrl, conversation.initials, "Company logo");
   }
 
+  if (chatEyebrow) chatEyebrow.textContent = conversation.source ? `${conversation.source} conversation` : "Employer conversation";
   if (chatCompany) chatCompany.textContent = conversation.employerName;
-  if (chatRole) chatRole.textContent = `${conversation.role} opportunity`;
+  if (chatRole) chatRole.textContent = conversation.role;
+}
 
-  if (contextCompany) contextCompany.textContent = conversation.employerName;
-  if (contextRole) contextRole.textContent = conversation.role;
-  if (detailStatus) detailStatus.textContent = conversation.status;
-  if (detailResponse) detailResponse.textContent = conversation.response;
-  if (detailSource) detailSource.textContent = conversation.source;
-
-  if (nextStepTitle) nextStepTitle.textContent = "Confirm interview availability";
-  if (nextStepText) {
-    nextStepText.textContent =
-      "Reply with a clear time window and your preferred contact method.";
-  }
-
+async function loadMessages(conversationId) {
   const { data, error } = await candidateMessagesSupabase
     .from("messages")
     .select("*")
-    .eq("conversation_id", id)
+    .eq("conversation_id", conversationId)
     .order("created_at", { ascending: true });
 
   if (error) {
     console.error("Message load error:", error);
     chatMessages.innerHTML = `
       <div class="empty-message">
-        <div class="empty-card">
-          <div class="empty-icon">!</div>
-          <h3>Could not load messages</h3>
-          <p>Please refresh the page and try again.</p>
-        </div>
+        <h3>Could not load messages</h3>
+        <p>Please refresh the page and try again.</p>
       </div>
     `;
-    return;
+    return [];
   }
 
-  await candidateMessagesSupabase
-    .from("messages")
-    .update({ read_by_candidate: true })
-    .eq("conversation_id", id)
-    .eq("candidate_id", currentUser.id)
-    .eq("sender_type", "employer");
+  return data || [];
+}
+
+function renderMessages(messages, conversation) {
+  if (!chatMessages) return;
 
   chatMessages.innerHTML = "";
 
-  if (!data || data.length === 0) {
+  if (!messages.length) {
     chatMessages.innerHTML = `
       <div class="empty-message">
-        <div class="empty-card">
-          <div class="empty-icon">✉</div>
-          <h3>No messages yet</h3>
-          <p>When ${escapeHTML(conversation.employerName)} sends a message, it will appear here.</p>
-        </div>
+        <h3>No messages yet</h3>
+        <p>When ${escapeHTML(conversation.employerName)} sends a message, it will appear here.</p>
       </div>
     `;
-  } else {
-    data.forEach((message) => {
-      const bubble = document.createElement("div");
-      bubble.className = `message ${message.sender_type === "candidate" ? "sent" : "received"}`;
-
-      bubble.innerHTML = `
-        ${escapeHTML(message.message)}
-        <span>${formatMessageTime(message.created_at)}</span>
-      `;
-
-      chatMessages.appendChild(bubble);
-    });
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    return;
   }
 
+  let previousDate = "";
+  messages.forEach((message) => {
+    const dateLabel = formatDateSeparator(message.created_at);
+    if (dateLabel !== previousDate) {
+      previousDate = dateLabel;
+      const separator = document.createElement("div");
+      separator.className = "date-separator";
+      separator.textContent = dateLabel;
+      chatMessages.appendChild(separator);
+    }
+
+    appendMessageBubble(message);
+  });
+
   chatMessages.scrollTop = chatMessages.scrollHeight;
-  subscribeToMessages(id);
 }
 
 function appendMessageBubble(message) {
   if (!chatMessages) return;
 
+  if (message.id && chatMessages.querySelector(`[data-message-id="${escapeSelectorValue(message.id)}"]`)) {
+    return;
+  }
+
   const emptyMessage = chatMessages.querySelector(".empty-message");
   if (emptyMessage) chatMessages.innerHTML = "";
 
   const bubble = document.createElement("div");
-  bubble.className = `message ${message.sender_type === "candidate" ? "sent" : "received"}`;
+  const isSent = message.sender_type === "candidate";
+  bubble.className = `message ${isSent ? "sent" : "received"}${message.pending ? " pending" : ""}`;
+  bubble.dataset.messageId = message.id || "";
   bubble.innerHTML = `
-    ${escapeHTML(message.message)}
-    <span>${formatMessageTime(message.created_at)}</span>
+    <div class="bubble-text">${escapeHTML(message.message)}</div>
+    <span>${escapeHTML(formatMessageTime(message.created_at))}</span>
   `;
 
   chatMessages.appendChild(bubble);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-async function refreshActiveConversation() {
-  const currentId = activeConversationId;
-  await loadConversations();
-  await renderConversationList(conversationsData);
-  if (currentId) await openConversation(currentId);
-}
+async function markConversationRead(conversation) {
+  const { error } = await candidateMessagesSupabase
+    .from("messages")
+    .update({ read_by_candidate: true })
+    .eq("conversation_id", conversation.id)
+    .eq("candidate_id", currentUser.id)
+    .eq("sender_type", "employer");
 
-function startConversationPolling() {
-  if (refreshTimer) {
-    clearInterval(refreshTimer);
-  }
-
-  refreshTimer = setInterval(async () => {
-    const currentId = activeConversationId;
-
-    await loadConversations();
-    await renderConversationList(conversationsData);
-
-    if (currentId && conversationsData.some((conversation) => conversation.id === currentId)) {
-      activeConversationId = currentId;
-      await renderConversationList(conversationsData);
-    }
-  }, 30000);
-}
-
-function showNoConversationState() {
-  activeConversationId = null;
-
-  if (activeRealtimeChannel) {
-    candidateMessagesSupabase.removeChannel(activeRealtimeChannel);
-    activeRealtimeChannel = null;
-  }
-
-  setEmptyMode();
-
-  if (chatAvatar) chatAvatar.innerHTML = "";
-  if (chatCompany) chatCompany.textContent = "No conversation selected";
-  if (chatRole) chatRole.textContent = "Employer messages will appear here.";
-
-  if (contextCompany) contextCompany.textContent = "No employer selected";
-  if (contextRole) contextRole.textContent = "";
-  if (detailStatus) detailStatus.textContent = "—";
-  if (detailResponse) detailResponse.textContent = "—";
-  if (detailSource) detailSource.textContent = "—";
-
-  if (nextStepTitle) nextStepTitle.textContent = "Wait for employer follow-up";
-  if (nextStepText) {
-    nextStepText.textContent =
-      "When an employer messages you about a role, you can respond from this inbox.";
-  }
-
-  if (chatMessages) {
-    chatMessages.innerHTML = `
-      <div class="empty-message">
-        <div class="empty-card">
-          <div class="empty-icon">✉</div>
-          <h3>No conversations yet</h3>
-          <p>Your candidate inbox will show employer messages, interview follow-ups, and job opportunity updates.</p>
-
-          <div class="empty-actions">
-            <a href="../public/find-jobs.html?role=candidate" class="primary-link">Find Jobs</a>
-            <a href="candidate-applications.html" class="secondary-btn">View Applications</a>
-          </div>
-        </div>
-      </div>
-    `;
+  if (error) {
+    console.error("Mark read error:", error);
   }
 }
 
-function showSearchEmptyState() {
-  setEmptyMode();
+async function sendMessage(event) {
+  event.preventDefault();
 
-  if (chatMessages) {
-    chatMessages.innerHTML = `
-      <div class="empty-message">
-        <div class="empty-card">
-          <div class="empty-icon">⌕</div>
-          <h3>No matching conversations</h3>
-          <p>Try another employer name, role, or conversation source.</p>
-        </div>
-      </div>
-    `;
+  const conversation = getActiveConversation();
+  const text = input?.value.trim();
+  if (!conversation || !text || isSendingMessage) return;
+
+  setSendingState(true);
+  const tempMessage = {
+    id: `temp-${Date.now()}`,
+    conversation_id: conversation.id,
+    sender_type: "candidate",
+    message: text,
+    created_at: new Date().toISOString(),
+    pending: true
+  };
+
+  if (!activeMessages.length && chatMessages?.querySelector(".empty-message")) {
+    chatMessages.innerHTML = "";
   }
-}
 
-function setEmptyMode() {
-  if (messagesLayout) messagesLayout.classList.add("no-conversation");
-  if (chatActions) chatActions.classList.add("disabled-area");
-  if (form) form.classList.add("disabled-area");
-}
+  activeMessages.push(tempMessage);
+  appendMessageBubble(tempMessage);
+  input.value = "";
+  updateSendAvailability();
 
-function setConversationMode() {
-  if (messagesLayout) messagesLayout.classList.remove("no-conversation");
-  if (chatActions) chatActions.classList.remove("disabled-area");
-  if (form) form.classList.remove("disabled-area");
+  const { data, error } = await candidateMessagesSupabase
+    .from("messages")
+    .insert([
+      {
+        conversation_id: conversation.id,
+        sender_type: "candidate",
+        message: text,
+        employer_id: conversation.employerId,
+        candidate_id: currentUser.id,
+        candidate_name: currentUser.email,
+        candidate_role: conversation.role,
+        read_by_candidate: true,
+        read_by_employer: false
+      }
+    ])
+    .select()
+    .single();
+
+  setSendingState(false);
+
+  if (error) {
+    console.error("Send message error:", error);
+    activeMessages = activeMessages.filter((message) => message.id !== tempMessage.id);
+    await openConversation(conversation.id);
+    if (composerStatus) composerStatus.textContent = "Message could not be sent.";
+    input.focus();
+    return;
+  }
+
+  activeMessages = activeMessages.map((message) => message.id === tempMessage.id ? data : message);
+  conversation.latestMessage = data?.message || text;
+  conversation.latestAt = data?.created_at || tempMessage.created_at;
+  conversationsData.sort(sortByLatestActivity);
+  renderConversationList(getFilteredConversations());
+
+  const pendingBubble = chatMessages.querySelector(`[data-message-id="${escapeSelectorValue(tempMessage.id)}"]`);
+  if (pendingBubble) {
+    pendingBubble.dataset.messageId = data?.id || "";
+    pendingBubble.classList.remove("pending");
+  }
 }
 
 function subscribeToMessages(conversationId) {
@@ -488,11 +439,141 @@ function subscribeToMessages(conversationId) {
         table: "messages",
         filter: `conversation_id=eq.${conversationId}`
       },
-      async () => {
-        await refreshActiveConversation();
+      async (payload) => {
+        const message = payload.new;
+        if (!message || activeMessages.some((item) => String(item.id) === String(message.id))) return;
+
+        const pendingMatch = activeMessages.find((item) => (
+          item.pending &&
+          item.sender_type === message.sender_type &&
+          item.message === message.message
+        ));
+
+        if (pendingMatch) {
+          const pendingId = pendingMatch.id;
+          Object.assign(pendingMatch, message, { pending: false });
+          const pendingBubble = chatMessages.querySelector(`[data-message-id="${escapeSelectorValue(pendingId)}"]`);
+          if (pendingBubble) {
+            pendingBubble.dataset.messageId = message.id || "";
+            pendingBubble.classList.remove("pending");
+          }
+          return;
+        }
+
+        activeMessages.push(message);
+        appendMessageBubble(message);
+
+        const conversation = getActiveConversation();
+        if (conversation) {
+          conversation.latestMessage = message.message || conversation.latestMessage;
+          conversation.latestAt = message.created_at || conversation.latestAt;
+          if (message.sender_type === "employer") {
+            await markConversationRead(conversation);
+          }
+          renderConversationList(getFilteredConversations());
+        }
       }
     )
     .subscribe();
+}
+
+function startConversationPolling() {
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+  }
+
+  refreshTimer = setInterval(async () => {
+    const currentId = activeConversationId;
+
+    await loadConversations();
+    if (currentId && conversationsData.some((conversation) => String(conversation.id) === String(currentId))) {
+      activeConversationId = currentId;
+    }
+
+    renderConversationList(getFilteredConversations());
+  }, 30000);
+}
+
+function showNoConversationState() {
+  activeConversationId = null;
+  activeMessages = [];
+  setComposerEnabled(false);
+
+  if (activeRealtimeChannel) {
+    candidateMessagesSupabase.removeChannel(activeRealtimeChannel);
+    activeRealtimeChannel = null;
+  }
+
+  if (chatAvatar) chatAvatar.innerHTML = "";
+  if (chatEyebrow) chatEyebrow.textContent = "Select a conversation";
+  if (chatCompany) chatCompany.textContent = "No conversation selected";
+  if (chatRole) chatRole.textContent = "Employer messages will appear here.";
+
+  if (chatMessages) {
+    chatMessages.innerHTML = `
+      <div class="empty-message">
+        <h3>No conversations yet</h3>
+        <p>When an employer contacts you or you follow up on an application, your messages will appear here.</p>
+        <div class="empty-actions">
+          <a href="../public/find-jobs.html?role=candidate" class="primary-link">Find Jobs</a>
+          <a href="candidate-applications.html" class="secondary-link">Applications</a>
+        </div>
+      </div>
+    `;
+  }
+}
+
+function showSearchEmptyState() {
+  if (chatMessages) {
+    chatMessages.innerHTML = `
+      <div class="empty-message">
+        <h3>No matching conversations</h3>
+        <p>Try another employer name, role, or conversation source.</p>
+      </div>
+    `;
+  }
+}
+
+function renderThreadLoading() {
+  if (!chatMessages) return;
+
+  chatMessages.innerHTML = `
+    <div class="empty-message">
+      <h3>Loading conversation</h3>
+      <p>Getting the latest employer messages.</p>
+    </div>
+  `;
+}
+
+function setConversationMode() {
+  if (messagesLayout) messagesLayout.classList.remove("empty");
+  if (chatActions) chatActions.classList.remove("disabled-area");
+  setComposerEnabled(true);
+}
+
+function setComposerEnabled(enabled) {
+  if (input) input.disabled = !enabled;
+  updateSendAvailability();
+  if (composerStatus) composerStatus.textContent = "";
+}
+
+function setSendingState(isSending) {
+  isSendingMessage = isSending;
+  if (input) input.disabled = isSending;
+  if (sendMessageBtn) {
+    sendMessageBtn.disabled = isSending || !input?.value.trim();
+    sendMessageBtn.textContent = isSending ? "Sending" : "Send";
+  }
+  if (composerStatus) {
+    composerStatus.textContent = isSending ? "Sending message..." : "";
+  }
+}
+
+function updateSendAvailability() {
+  if (!sendMessageBtn) return;
+
+  const canSend = Boolean(activeConversationId && input?.value.trim() && !isSendingMessage && !input.disabled);
+  sendMessageBtn.disabled = !canSend;
 }
 
 async function getLatestMessage(conversationId) {
@@ -512,16 +593,33 @@ async function getLatestMessage(conversationId) {
   return data;
 }
 
+async function getUnreadCount(conversationId) {
+  const { count, error } = await candidateMessagesSupabase
+    .from("messages")
+    .select("*", { count: "exact", head: true })
+    .eq("conversation_id", conversationId)
+    .eq("candidate_id", currentUser.id)
+    .eq("sender_type", "employer")
+    .neq("read_by_candidate", true);
+
+  if (error) {
+    console.error("Unread count error:", error);
+    return 0;
+  }
+
+  return count || 0;
+}
+
 function renderAvatar(url, initials, altText) {
   if (url) {
-    return `<img src="${escapeHTML(url)}" class="message-avatar-img" alt="${escapeHTML(altText || "Avatar")}">`;
+    return `<img src="${escapeAttribute(url)}" class="message-avatar-img" alt="${escapeAttribute(altText || "Avatar")}">`;
   }
 
   return `<span>${escapeHTML(initials || "PT")}</span>`;
 }
 
 function getActiveConversation() {
-  return conversationsData.find((item) => item.id === activeConversationId);
+  return conversationsData.find((item) => String(item.id) === String(activeConversationId));
 }
 
 function formatMessageTime(value) {
@@ -553,6 +651,24 @@ function formatConversationTime(value, fallback) {
   });
 }
 
+function formatDateSeparator(value) {
+  if (!value) return "";
+
+  const date = new Date(value);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+
+  if (date.toDateString() === today.toDateString()) return "Today";
+  if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+
+  return date.toLocaleDateString([], {
+    month: "short",
+    day: "numeric",
+    year: date.getFullYear() === today.getFullYear() ? undefined : "numeric"
+  });
+}
+
 function sortByLatestActivity(a, b) {
   const aTime = new Date(a?.latestAt || 0).getTime();
   const bTime = new Date(b?.latestAt || 0).getTime();
@@ -578,4 +694,15 @@ function escapeHTML(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function escapeAttribute(value) {
+  return escapeHTML(value).replaceAll("`", "&#096;");
+}
+
+function escapeSelectorValue(value) {
+  const stringValue = String(value || "");
+  if (window.CSS?.escape) return window.CSS.escape(stringValue);
+
+  return stringValue.replace(/["\\]/g, "\\$&");
 }

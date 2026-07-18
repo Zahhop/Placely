@@ -2,11 +2,20 @@ const candidateSupabase = window.PlacelyAuth.client();
 
 let currentUser = null;
 let currentProfile = {};
-let removeResume = false;
 let selectedPhotoPreviewUrl = "";
+let isDeletingResume = false;
+let isUploadingResume = false;
 
 const PHOTO_BUCKET = "candidate_photos";
 const RESUME_BUCKET = "candidate_resumes";
+const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024;
+const MAX_RESUME_SIZE_BYTES = 10 * 1024 * 1024;
+const ALLOWED_PHOTO_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
+const ALLOWED_RESUME_TYPES = new Set([
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+]);
+const RESUME_SIGNED_URL_SECONDS = 10 * 60;
 
 function getEl(id) {
   return document.getElementById(id);
@@ -111,7 +120,8 @@ function getPreviewProfileFromForm() {
       currentProfile.avatar_url ||
       "",
     avatar_url: currentProfile.avatar_url || "",
-    resume_url: removeResume ? "" : currentProfile.resume_url || ""
+    resume_path: getResumePath(currentProfile),
+    resume_url: ""
   };
 }
 
@@ -162,12 +172,7 @@ async function loadCandidateProfile() {
     currentProfile.avatar_url ||
     "https://placehold.co/180x180";
 
-  if (currentProfile.resume_url) {
-    const fileName = currentProfile.resume_url.split("/").pop();
-
-    getEl("resume_preview").style.display = "flex";
-    getEl("resume_file_name").textContent = decodeURIComponent(fileName);
-  }
+  renderResumeManager();
 
   getEl("full_name").value = currentProfile.full_name || "";
   getEl("trade").value = currentProfile.trade || "";
@@ -186,6 +191,8 @@ async function loadCandidateProfile() {
 }
 
 async function uploadFile(bucket, file, userId) {
+  validateUploadFile(bucket, file);
+
   const cleanName = file.name.replace(/\s+/g, "-").toLowerCase();
   const path = `${userId}/${Date.now()}-${cleanName}`;
 
@@ -204,6 +211,321 @@ async function uploadFile(bucket, file, userId) {
   return data.publicUrl;
 }
 
+async function uploadResume(file, userId) {
+  validateUploadFile(RESUME_BUCKET, file);
+
+  const cleanName = file.name
+    .toLowerCase()
+    .replace(/[^a-z0-9.\-_]/g, "-")
+    .replace(/-+/g, "-");
+  const path = `${userId}/${Date.now()}-${cleanName}`;
+
+  const { error } = await candidateSupabase.storage
+    .from(RESUME_BUCKET)
+    .upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type
+    });
+
+  if (error) throw error;
+  console.log("Uploaded resume path:", path);
+  return path;
+}
+
+function validateUploadFile(bucket, file) {
+  if (!file) return;
+
+  if (bucket === PHOTO_BUCKET) {
+    if (!ALLOWED_PHOTO_TYPES.has(file.type)) {
+      throw new Error("Profile photo must be PNG, JPG, or WEBP.");
+    }
+
+    if (file.size > MAX_PHOTO_SIZE_BYTES) {
+      throw new Error("Profile photo must be 5 MB or smaller.");
+    }
+  }
+
+  if (bucket === RESUME_BUCKET) {
+    if (!ALLOWED_RESUME_TYPES.has(file.type)) {
+      throw new Error("Resume must be a PDF or DOCX file.");
+    }
+
+    if (file.size > MAX_RESUME_SIZE_BYTES) {
+      throw new Error("Resume must be 10 MB or smaller.");
+    }
+  }
+}
+
+function getResumePath(profile = currentProfile) {
+  return profile.resume_path || getResumePathFromLegacyUrl(profile.resume_url || "");
+}
+
+function getResumePathFromLegacyUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+
+  if (!/^https?:\/\//i.test(raw)) {
+    return normalizeResumePath(raw);
+  }
+
+  try {
+    const url = new URL(raw);
+    const marker = "/candidate_resumes/";
+    const markerIndex = url.pathname.indexOf(marker);
+    if (markerIndex === -1) return "";
+    return normalizeResumePath(url.pathname.slice(markerIndex + marker.length));
+  } catch {
+    return "";
+  }
+}
+
+function normalizeResumePath(value) {
+  const path = safeDecodeURIComponent(String(value || "").trim())
+    .replace(/^\/+/, "")
+    .replace(/^candidate_resumes\/+/, "");
+
+  return path;
+}
+
+function safeDecodeURIComponent(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function isOwnResumePath(path, userId) {
+  return Boolean(path && userId && path.startsWith(`${userId}/`));
+}
+
+function getResumeFileName(path) {
+  const fileName = String(path || "").split("/").pop() || "Resume uploaded";
+  return decodeURIComponent(fileName);
+}
+
+function renderResumeManager(profile = currentProfile) {
+  const resumePreview = getEl("resume_preview");
+  const resumeFileName = getEl("resume_file_name");
+  const resumePath = getResumePath(profile);
+
+  if (!resumePreview || !resumeFileName) return;
+
+  console.log("Stored candidate resume_path:", profile.resume_path || null);
+  console.log("Resolved candidate resume path:", resumePath || null);
+
+  if (resumePath) {
+    resumePreview.style.display = "flex";
+    resumeFileName.textContent = getResumeFileName(resumePath);
+  } else {
+    resumePreview.style.display = "none";
+    resumeFileName.textContent = "";
+  }
+}
+
+async function refreshResumeManager() {
+  if (!currentUser) return;
+
+  const { data, error } = await candidateSupabase
+    .from("candidate_profiles")
+    .select("id, resume_path, resume_url")
+    .eq("id", currentUser.id)
+    .single();
+
+  if (error) throw error;
+
+  currentProfile = {
+    ...currentProfile,
+    resume_path: data.resume_path || null,
+    resume_url: data.resume_url || null
+  };
+
+  renderResumeManager();
+}
+
+async function removeResumeObject(path) {
+  if (!path) return;
+
+  const { error } = await candidateSupabase.storage
+    .from(RESUME_BUCKET)
+    .remove([path]);
+
+  if (error) {
+    console.warn("Could not remove previous resume object:", error);
+  }
+}
+
+async function deleteCurrentResume() {
+  if (isDeletingResume) return;
+
+  const supabaseClient = candidateSupabase;
+  const removeResumeBtn = getEl("remove_resume_btn");
+  const resumeInput = getEl("resume_file");
+  const originalText = removeResumeBtn?.textContent || "Remove";
+
+  if (!window.confirm("Remove this resume?")) return;
+
+  isDeletingResume = true;
+  if (removeResumeBtn) {
+    removeResumeBtn.disabled = true;
+    removeResumeBtn.textContent = "Removing...";
+  }
+
+  try {
+    const {
+      data: { user },
+      error: userError
+    } = await supabaseClient.auth.getUser();
+
+    if (userError || !user) {
+      throw userError || new Error("You must be signed in to remove your resume.");
+    }
+
+    const { data: profile, error: profileError } = await supabaseClient
+      .from("candidate_profiles")
+      .select("id, resume_path, resume_url")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError) throw profileError;
+
+    const resumePath = getResumePath(profile);
+    console.log("Deleting resume path:", resumePath);
+
+    if (!resumePath) {
+      throw new Error("No stored resume path was found. The resume could not be deleted.");
+    }
+
+    if (!isOwnResumePath(resumePath, user.id)) {
+      throw new Error("Stored resume path does not belong to the signed-in candidate.");
+    }
+
+    const { data, error } = await supabaseClient.storage
+      .from("candidate_resumes")
+      .remove([resumePath]);
+
+    console.log("Resume delete result:", data);
+    if (error) {
+      console.error("Resume delete error:", error);
+    }
+
+    if (error) throw error;
+
+    const { data: updatedProfile, error: updateError } = await supabaseClient
+      .from("candidate_profiles")
+      .update({
+        resume_path: null,
+        resume_url: null
+      })
+      .eq("id", user.id)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    currentUser = user;
+    currentProfile = updatedProfile;
+    if (resumeInput) resumeInput.value = "";
+
+    updateStrength();
+    updatePreview();
+    await refreshResumeManager();
+    showToast("Resume removed.");
+  } catch (error) {
+    console.error("Resume delete flow error:", error);
+    showToast("Error removing resume: " + (error?.message || "Unknown error"));
+  } finally {
+    isDeletingResume = false;
+    if (removeResumeBtn) {
+      removeResumeBtn.disabled = false;
+      removeResumeBtn.textContent = originalText;
+    }
+  }
+}
+
+async function uploadSelectedResume(file) {
+  if (isUploadingResume) return;
+
+  const resumeInput = getEl("resume_file");
+  const removeResumeBtn = getEl("remove_resume_btn");
+  const previousResumePath = getResumePath(currentProfile);
+
+  isUploadingResume = true;
+  if (removeResumeBtn) removeResumeBtn.disabled = true;
+
+  try {
+    const {
+      data: { user },
+      error: userError
+    } = await candidateSupabase.auth.getUser();
+
+    if (userError || !user) {
+      throw userError || new Error("You must be signed in to upload your resume.");
+    }
+
+    currentUser = user;
+
+    const resumePath = await uploadResume(file, user.id);
+
+    const { data: updatedProfile, error: updateError } = await candidateSupabase
+      .from("candidate_profiles")
+      .update({
+        resume_path: resumePath,
+        resume_url: null
+      })
+      .eq("id", user.id)
+      .select()
+      .single();
+
+    if (updateError) {
+      await removeResumeObject(resumePath);
+      throw updateError;
+    }
+
+    currentProfile = updatedProfile;
+    if (resumeInput) resumeInput.value = "";
+
+    if (previousResumePath && previousResumePath !== resumePath) {
+      await removeResumeObject(previousResumePath);
+    }
+
+    await refreshResumeManager();
+    updateStrength();
+    updatePreview();
+    showToast("Resume uploaded.");
+  } catch (error) {
+    console.error("Resume upload error:", error);
+    if (resumeInput) resumeInput.value = "";
+    renderResumeManager();
+    showToast("Error uploading resume: " + (error?.message || "Unknown error"));
+  } finally {
+    isUploadingResume = false;
+    if (removeResumeBtn) removeResumeBtn.disabled = false;
+  }
+}
+
+async function openOwnResume() {
+  const path = getResumePath(currentProfile);
+
+  if (!path) {
+    showToast("No resume is uploaded yet.");
+    return;
+  }
+
+  const { data, error } = await candidateSupabase.storage
+    .from(RESUME_BUCKET)
+    .createSignedUrl(path, RESUME_SIGNED_URL_SECONDS);
+
+  if (error || !data?.signedUrl) {
+    console.error("Resume signed URL error:", error);
+    showToast("Could not open resume.");
+    return;
+  }
+
+  window.open(data.signedUrl, "_blank", "noopener");
+}
+
 async function saveCandidateProfile() {
   if (!currentUser) {
     showToast("User not loaded yet.");
@@ -218,21 +540,11 @@ async function saveCandidateProfile() {
 
   try {
     let profilePhotoUrl = currentProfile.profile_photo_url || null;
-    let resumeUrl = currentProfile.resume_url || null;
 
     const photoFile = getEl("profile_photo_file")?.files[0];
-    const resumeFile = getEl("resume_file")?.files[0];
 
     if (photoFile) {
       profilePhotoUrl = await uploadFile(PHOTO_BUCKET, photoFile, currentUser.id);
-    }
-
-    if (resumeFile) {
-      resumeUrl = await uploadFile(RESUME_BUCKET, resumeFile, currentUser.id);
-    }
-
-    if (removeResume) {
-      resumeUrl = null;
     }
 
     const updates = {
@@ -249,8 +561,7 @@ async function saveCandidateProfile() {
       phone: value("phone"),
       contact_method: value("contact_method"),
       profile_visible: getEl("profile_visible").checked,
-      profile_photo_url: profilePhotoUrl,
-      resume_url: resumeUrl
+      profile_photo_url: profilePhotoUrl
     };
 
     const { data, error } = await candidateSupabase
@@ -263,8 +574,12 @@ async function saveCandidateProfile() {
       throw error;
     }
 
-    currentProfile = data;
-    removeResume = false;
+    currentProfile = {
+      ...data,
+      resume_path: currentProfile.resume_path || null,
+      resume_url: currentProfile.resume_url || null
+    };
+
     selectedPhotoPreviewUrl = "";
 
     showToast("Profile saved successfully.");
@@ -286,6 +601,7 @@ function setupEvents() {
   const resumeDrop = getEl("resumeDrop");
   const resumeInput = getEl("resume_file");
   const removeResumeBtn = getEl("remove_resume_btn");
+  const downloadResumeBtn = getEl("download_resume_btn");
 
   if (uploadPhotoBtn && photoInput) {
     uploadPhotoBtn.addEventListener("click", () => {
@@ -313,26 +629,21 @@ function setupEvents() {
   }
 
   if (resumeInput) {
-    resumeInput.addEventListener("change", () => {
+    resumeInput.addEventListener("change", async () => {
       const file = resumeInput.files[0];
 
       if (!file) return;
 
-      removeResume = false;
-      getEl("resume_preview").style.display = "flex";
-      getEl("resume_file_name").textContent = file.name;
-      updateStrength();
+      await uploadSelectedResume(file);
     });
   }
 
   if (removeResumeBtn) {
-    removeResumeBtn.addEventListener("click", () => {
-      removeResume = true;
-      resumeInput.value = "";
-      getEl("resume_preview").style.display = "none";
-      getEl("resume_file_name").textContent = "";
-      updateStrength();
-    });
+    removeResumeBtn.addEventListener("click", deleteCurrentResume);
+  }
+
+  if (downloadResumeBtn) {
+    downloadResumeBtn.addEventListener("click", openOwnResume);
   }
 
   document.querySelectorAll(".save-profile-btn, .save-top-btn").forEach(button => {

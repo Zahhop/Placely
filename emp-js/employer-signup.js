@@ -7,6 +7,13 @@ const submitBtn = form?.querySelector(".signup-btn");
 let isSubmitting = false;
 
 window.PlacelyAuth.setupPasswordToggles();
+const passwordValidator = window.PlacelyAuth.setupPasswordValidation({
+  passwordId: "password",
+  confirmId: "confirmPassword",
+  requirementId: "passwordRequirement",
+  matchId: "passwordMatch",
+  submitButton: submitBtn
+});
 
 form.addEventListener("submit", async function (e) {
   e.preventDefault();
@@ -22,6 +29,11 @@ form.addEventListener("submit", async function (e) {
   const confirmPassword = document.getElementById("confirmPassword").value;
   const phone = value("phone");
   const industry = value("industry");
+
+  if (!passwordValidator.isValid()) {
+    showMessage(window.PlacelyAuth.passwordRequirementText, "error");
+    return;
+  }
 
   if (password !== confirmPassword) {
     showMessage("Passwords do not match.", "error");
@@ -71,7 +83,7 @@ function setSubmitting(isBusy) {
   isSubmitting = isBusy;
 
   if (submitBtn) {
-    submitBtn.disabled = isBusy;
+    submitBtn.disabled = isBusy || !passwordValidator.isValid();
     submitBtn.textContent = isBusy ? "Creating account..." : "Continue to Employer Setup";
   }
 }

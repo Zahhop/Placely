@@ -22,6 +22,15 @@ Deno.serve(async (req) => {
     return json({ error: "Method not allowed." }, 405, corsHeaders);
   }
 
+  if (!isAllowedRequestOrigin(req)) {
+    return json({ error: "Origin is not allowed." }, 403, corsHeaders);
+  }
+
+  const contentLength = Number(req.headers.get("content-length") || 0);
+  if (contentLength > 25_000) {
+    return json({ error: "Email request is too large." }, 413, corsHeaders);
+  }
+
   const hiringEmail = Deno.env.get("PLACELY_HIRING_EMAIL");
   const supportEmail = Deno.env.get("PLACELY_SUPPORT_EMAIL");
   const resendApiKey = Deno.env.get("RESEND_API_KEY");
@@ -284,6 +293,11 @@ function getCorsHeaders(req: Request) {
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Content-Type": "application/json"
   };
+}
+
+function isAllowedRequestOrigin(req: Request) {
+  const origin = req.headers.get("Origin");
+  return !origin || allowedOrigins.has(origin);
 }
 
 function json(body: Record<string, unknown>, status = 200, headers: Record<string, string> = {}) {
