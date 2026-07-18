@@ -36,6 +36,8 @@ let currentUser = null;
 let openRequestToken = 0;
 let activeMessages = [];
 let isSendingMessage = false;
+let savedTalentRowsByCandidateId = new Map();
+let saveMutationIds = new Set();
 
 document.addEventListener("DOMContentLoaded", initMessages);
 
@@ -65,6 +67,7 @@ async function initMessages() {
   }
 
   await loadConversations();
+  await loadSavedCandidates();
 
   if (!activeConversationId && route.conversationId && conversationsData.some((item) => String(item.id) === String(route.conversationId))) {
     activeConversationId = route.conversationId;
@@ -136,10 +139,10 @@ function setupEvents() {
 function getMessageRoute() {
   const params = new URLSearchParams(window.location.search);
   return {
-    candidateId: cleanParam(params.get("candidate_id")),
+    candidateId: cleanParam(params.get("candidate_id") || params.get("candidate")),
     conversationId: cleanParam(params.get("conversation_id") || params.get("conversation")),
-    jobId: cleanParam(params.get("job_id")),
-    applicationId: cleanParam(params.get("application_id"))
+    jobId: cleanParam(params.get("job_id") || params.get("job")),
+    applicationId: cleanParam(params.get("application_id") || params.get("application"))
   };
 }
 
@@ -434,6 +437,29 @@ async function getUnreadCount(conversationId) {
   return count || 0;
 }
 
+function getFilteredConversations() {
+  const keyword = String(conversationSearch?.value || "").trim().toLowerCase();
+  const source = Array.isArray(conversationsData) ? conversationsData : [];
+
+  if (!keyword) return [...source];
+
+  return source.filter((conversation) => {
+    const searchable = [
+      conversation?.name,
+      conversation?.role,
+      conversation?.location,
+      conversation?.latestMessage,
+      conversation?.source,
+      conversation?.status,
+      conversation?.application?.job_title
+    ]
+      .map((value) => String(value || "").toLowerCase())
+      .join(" ");
+
+    return searchable.includes(keyword);
+  });
+}
+
 function renderConversationList(list) {
   if (!conversationList) return;
 
@@ -528,72 +554,78 @@ function renderConversationChrome(conversation) {
 function renderContext(conversation) {
   const profile = conversation.profile || {};
   const application = conversation.application || {};
-  const overviewRows = [
+  const name = conversation.name || "Candidate";
+  const tradeLine = [conversation.role, conversation.location].filter(Boolean).join(" - ");
+  const about = pickFirst(profile.bio, profile.about, profile.summary, "No bio available");
+  const experience = pickFirst(profile.experience, profile.experience_level, profile.years_experience, "Experience not provided");
+  const education = pickFirst(profile.education, profile.school, profile.training, "");
+  const skills = normalizeList(pickFirst(profile.skills, profile.skill_tags, ""));
+  const quickRows = [
     ["Source", conversation.source],
-    ["Experience", pickFirst(profile.experience_level, profile.years_experience, profile.experience, "")],
-    ["Availability", pickFirst(profile.availability, application.availability, "")],
+    ["Availability", pickFirst(profile.availability, application.availability, "Not provided")],
+    ["Applied role", pickFirst(application.job_title, conversation.jobTitle, "Not linked")],
+    ["Application status", application.status],
     ["Email", pickFirst(profile.email, application.candidate_email, "")],
     ["Phone", pickFirst(profile.phone, profile.phone_number, application.candidate_phone, "")]
   ].filter(([, value]) => value);
+  const isSaved = isCandidateSaved(conversation.candidateId);
+  const isSaving = saveMutationIds.has(String(conversation.candidateId || ""));
 
-  const skills = normalizeList(pickFirst(profile.skills, profile.skill_tags, ""));
-  const certifications = normalizeList(pickFirst(profile.certifications, profile.tickets, ""));
-  const applicationRows = [
-    ["Applied role", pickFirst(application.job_title, conversation.jobTitle, "")],
-    ["Application status", application.status],
-    ["Applied", formatFullDate(application.created_at || application.submitted_at)],
-    ["Application ID", application.id]
-  ].filter(([, value]) => value);
-
-  if (drawerTitle) drawerTitle.textContent = conversation.name;
+  if (drawerTitle) drawerTitle.textContent = name;
   candidateContextContent.innerHTML = `
-    <div class="detail-head">
-      <div class="avatar large">
+    <div class="profile-card">
+      <div class="avatar context-avatar">
         ${renderAvatar(conversation)}
       </div>
-      <div>
-        <h2>${escapeHTML(conversation.name)}</h2>
-        <p class="detail-trade">${escapeHTML([conversation.role, conversation.location].filter(Boolean).join(" - "))}</p>
-      </div>
+      <h2>${escapeHTML(name)}</h2>
+      <p>${escapeHTML(conversation.role || "Trade not listed")}</p>
+      <p>${escapeHTML(conversation.location || "Location not listed")}</p>
+      <button type="button" class="drawer-action primary" data-drawer-action="profile">View Full Profile</button>
     </div>
 
     <div class="detail-section">
-      <h3>Overview</h3>
+      <h3>About this candidate</h3>
+      <p class="detail-text">${escapeHTML(about)}</p>
+    </div>
+
+    <div class="detail-section">
+      <h3>Experience</h3>
+      <p class="detail-text">${escapeHTML(experience)}</p>
+    </div>
+
+    ${education ? `
+      <div class="detail-section">
+        <h3>Education</h3>
+        <p class="detail-text">${escapeHTML(education)}</p>
+      </div>
+    ` : ""}
+
+    <div class="detail-section">
+      <h3>Skills</h3>
+      ${skills.length
+        ? `<div class="skill-list">${skills.map((skill) => `<span class="skill-pill">${escapeHTML(skill)}</span>`).join("")}</div>`
+        : `<p class="detail-text">Skills not provided</p>`}
+    </div>
+
+    <div class="detail-section">
+      <h3>Details</h3>
       <div class="detail-grid">
-        ${overviewRows.map(([label, value]) => renderContextRow(label, value)).join("")}
+        ${quickRows.map(([label, value]) => renderContextRow(label, value)).join("")}
       </div>
     </div>
 
-    ${applicationRows.length ? `
-      <div class="detail-section">
-        <h3>Application</h3>
-        <div class="timeline-grid">
-          ${applicationRows.map(([label, value]) => renderContextRow(label, value)).join("")}
-        </div>
-      </div>
-    ` : ""}
-
-    ${(skills.length || certifications.length || profile.resume_path || profile.resume_url) ? `
-      <div class="detail-section">
-        <h3>Profile</h3>
-        <div class="detail-grid">
-          ${skills.length ? renderContextRow("Skills", skills.join(", ")) : ""}
-          ${certifications.length ? renderContextRow("Certifications", certifications.join(", ")) : ""}
-          ${(profile.resume_path || profile.resume_url) ? renderContextRow("Resume", "Available") : ""}
-        </div>
-      </div>
-    ` : ""}
-
     <div class="detail-section">
-      <h3>Conversation</h3>
-      <p class="detail-message">${escapeHTML(conversation.latestMessage || "No messages have been sent yet.")}</p>
-    </div>
-
-    <div class="detail-section">
-      <h3>Actions</h3>
+      <h3>Quick Actions</h3>
       <div class="drawer-actions">
-        <button type="button" class="drawer-action primary" data-drawer-action="profile">View Full Profile</button>
-        ${applicationRows.length ? `<button type="button" class="drawer-action" data-drawer-action="application">View Application</button>` : ""}
+        <button type="button" class="drawer-action" data-drawer-action="profile">View Profile</button>
+        <button
+          type="button"
+          class="drawer-action ${isSaved ? "saved" : ""}"
+          data-drawer-action="save"
+          aria-pressed="${isSaved ? "true" : "false"}"
+          ${isSaving || !conversation.candidateId ? "disabled" : ""}
+        >${escapeHTML(getSaveButtonText(isSaved, isSaving))}</button>
+        ${application?.id || conversation.jobId ? `<button type="button" class="drawer-action" data-drawer-action="application">View Application</button>` : ""}
       </div>
     </div>
   `;
@@ -608,6 +640,10 @@ function renderContext(conversation) {
     window.location.href = jobId
       ? `employer-applicants.html?job=${encodeURIComponent(jobId)}`
       : "employer-applicants.html";
+  });
+
+  candidateContextContent.querySelector("[data-drawer-action='save']")?.addEventListener("click", () => {
+    toggleSaveCandidate(conversation);
   });
 
   const hasApplicationLink = Boolean(conversation.application?.id || conversation.jobId);
@@ -703,6 +739,129 @@ async function markConversationRead(conversation) {
   if (error) {
     console.error("Mark read error:", error);
   }
+}
+
+async function loadSavedCandidates() {
+  savedTalentRowsByCandidateId = new Map();
+  const localSavedIds = getLocalSavedCandidateIds();
+  localSavedIds.forEach((id) => {
+    savedTalentRowsByCandidateId.set(id, { candidate_id: id, local: true });
+  });
+
+  if (!currentUser) return;
+
+  const { data, error } = await employerMessagesSupabase
+    .from("saved_talent")
+    .select("*")
+    .eq("employer_id", currentUser.id);
+
+  if (error) {
+    console.warn("Saved talent table load failed; using local saved candidate cache.", error);
+    return;
+  }
+
+  savedTalentRowsByCandidateId = buildSavedTalentMap(data || []);
+  localStorage.setItem("placelySavedCandidates", JSON.stringify([...savedTalentRowsByCandidateId.keys()]));
+}
+
+async function toggleSaveCandidate(conversation) {
+  const candidateId = String(conversation?.candidateId || "");
+  if (!candidateId || !currentUser || saveMutationIds.has(candidateId)) return;
+
+  const wasSaved = isCandidateSaved(candidateId);
+  const previousRows = new Map(savedTalentRowsByCandidateId);
+  const savedDates = getSavedDates();
+
+  saveMutationIds.add(candidateId);
+  if (wasSaved) {
+    savedTalentRowsByCandidateId.delete(candidateId);
+  } else {
+    savedTalentRowsByCandidateId.set(candidateId, { candidate_id: candidateId, employer_id: currentUser.id });
+  }
+  renderContext(conversation);
+
+  try {
+    if (wasSaved) {
+      await removeSavedTalentRecord(candidateId, previousRows.get(candidateId));
+      delete savedDates[candidateId];
+      showToast("Candidate removed from saved talent.");
+    } else {
+      const savedRow = await saveTalentRecord(candidateId);
+      savedTalentRowsByCandidateId.set(candidateId, savedRow);
+      savedDates[candidateId] = savedRow.created_at || new Date().toISOString();
+      showToast("Candidate saved.");
+    }
+
+    localStorage.setItem("placelySavedCandidates", JSON.stringify([...savedTalentRowsByCandidateId.keys()]));
+    localStorage.setItem("placelySavedCandidateDates", JSON.stringify(savedDates));
+  } catch (error) {
+    console.error(wasSaved ? "Remove saved candidate error:" : "Save candidate error:", error);
+    savedTalentRowsByCandidateId = previousRows;
+    showToast(wasSaved ? "Could not remove candidate." : "Could not save candidate.", "error");
+  } finally {
+    saveMutationIds.delete(candidateId);
+    renderContext(conversation);
+  }
+}
+
+async function saveTalentRecord(candidateId) {
+  const { data: existing, error: existingError } = await employerMessagesSupabase
+    .from("saved_talent")
+    .select("*")
+    .eq("employer_id", currentUser.id)
+    .eq("candidate_id", candidateId)
+    .limit(10);
+
+  if (existingError) throw existingError;
+
+  if (existing?.length) {
+    const existingMap = buildSavedTalentMap(existing);
+    return existingMap.get(String(candidateId)) || existing[0];
+  }
+
+  const { data, error } = await employerMessagesSupabase
+    .from("saved_talent")
+    .insert([{ employer_id: currentUser.id, candidate_id: candidateId }])
+    .select("*")
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data || {
+    employer_id: currentUser.id,
+    candidate_id: candidateId,
+    created_at: new Date().toISOString()
+  };
+}
+
+async function removeSavedTalentRecord(candidateId, savedRow = null) {
+  let deletedRows = [];
+
+  if (savedRow?.id) {
+    const { data, error } = await employerMessagesSupabase
+      .from("saved_talent")
+      .delete()
+      .eq("id", savedRow.id)
+      .eq("employer_id", currentUser.id)
+      .select("id, candidate_id, employer_id");
+
+    if (error) throw error;
+    deletedRows = data || [];
+  }
+
+  if (!deletedRows.length) {
+    const { data, error } = await employerMessagesSupabase
+      .from("saved_talent")
+      .delete()
+      .eq("employer_id", currentUser.id)
+      .eq("candidate_id", candidateId)
+      .select("id, candidate_id, employer_id");
+
+    if (error) throw error;
+    deletedRows = data || [];
+  }
+
+  return deletedRows.length > 0;
 }
 
 async function sendMessage(event) {
@@ -976,6 +1135,49 @@ function normalizeList(value) {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function isCandidateSaved(candidateId) {
+  const id = String(candidateId || "");
+  return Boolean(id && savedTalentRowsByCandidateId.has(id));
+}
+
+function getSaveButtonText(isSaved, isSaving) {
+  if (isSaving) return isSaved ? "Removing..." : "Saving...";
+  return isSaved ? "Saved" : "Save Candidate";
+}
+
+function buildSavedTalentMap(rows) {
+  const map = new Map();
+
+  (rows || []).forEach((row) => {
+    const candidateId = String(row.candidate_id || "").trim();
+    if (!candidateId) return;
+
+    const existing = map.get(candidateId);
+    const existingDate = new Date(existing?.created_at || existing?.saved_at || 0).getTime();
+    const rowDate = new Date(row.created_at || row.saved_at || 0).getTime();
+    if (!existing || rowDate >= existingDate) map.set(candidateId, row);
+  });
+
+  return map;
+}
+
+function getLocalSavedCandidateIds() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("placelySavedCandidates")) || [];
+    return saved.map(String).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function getSavedDates() {
+  try {
+    return JSON.parse(localStorage.getItem("placelySavedCandidateDates")) || {};
+  } catch {
+    return {};
+  }
 }
 
 function formatConversationTime(value) {

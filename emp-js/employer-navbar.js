@@ -5,6 +5,7 @@
     { label: "Dashboard", href: "employer-dashboard.html", section: "dashboard" },
     { label: "Jobs", href: "manage-jobs.html", section: "jobs" },
     { label: "Applicants", href: "employer-applicants.html", section: "applicants" },
+    { label: "Interviews", href: "employer-applicants.html?stage=interview", section: "applicants" },
     {
       label: "Candidates",
       href: "find-candidates.html",
@@ -13,7 +14,7 @@
       id: "employerCandidatesNav",
       className: "employer-candidates-nav"
     },
-    { label: "Saved Talent", href: "saved-talent.html", section: "saved" },
+    { label: "Saved Talent", href: "saved-talent.html", section: "saved", id: "employerSavedTalentNav", requiresCandidateAccess: true },
     { label: "Messages", href: "employer-messages.html", section: "messages" },
     { label: "Company", href: "employer-profile.html", section: "company" }
   ];
@@ -62,7 +63,7 @@
       anchor.classList.add("employer-nav-link");
       if (link.className) anchor.classList.add(...link.className.split(" "));
       if (link.section === activeSection) anchor.classList.add("active");
-      if (link.requiresCandidateAccess) anchor.hidden = true;
+      if (link.requiresCandidateAccess) anchor.dataset.planGated = "candidate-network";
       fragment.appendChild(anchor);
     });
 
@@ -146,21 +147,18 @@
 
   function applyCandidateNavbarUI(hasAccess) {
     const candidatesNav = document.getElementById("employerCandidatesNav");
+    const savedTalentNav = document.getElementById("employerSavedTalentNav");
     console.log("Candidates nav element:", candidatesNav);
 
     if (candidatesNav) {
-      if (hasAccess) {
-        candidatesNav.hidden = false;
-        candidatesNav.removeAttribute("hidden");
-        candidatesNav.classList.remove("is-hidden");
-        candidatesNav.style.removeProperty("display");
-        candidatesNav.style.removeProperty("visibility");
-        candidatesNav.style.removeProperty("opacity");
-      } else {
-        candidatesNav.hidden = true;
-        candidatesNav.setAttribute("hidden", "");
-        candidatesNav.classList.add("is-hidden");
-      }
+      candidatesNav.hidden = false;
+      candidatesNav.removeAttribute("hidden");
+      candidatesNav.classList.remove("is-hidden");
+      candidatesNav.classList.toggle("is-locked", !hasAccess);
+      candidatesNav.setAttribute("aria-disabled", hasAccess ? "false" : "true");
+      candidatesNav.style.removeProperty("display");
+      candidatesNav.style.removeProperty("visibility");
+      candidatesNav.style.removeProperty("opacity");
 
       console.log("Candidates nav final state:", {
         exists: Boolean(candidatesNav),
@@ -169,6 +167,11 @@
         classes: candidatesNav.className,
         display: getComputedStyle(candidatesNav).display
       });
+    }
+
+    if (savedTalentNav) {
+      savedTalentNav.classList.toggle("is-locked", !hasAccess);
+      savedTalentNav.setAttribute("aria-disabled", hasAccess ? "false" : "true");
     }
   }
 
@@ -192,11 +195,11 @@
     if (copy) {
       copy.textContent = hasAccess
         ? "Search the full candidate network, save talent, and message candidates from your recruiter workspace."
-        : "Upgrade to search verified trades candidates, view full profiles, save talent, and message candidates.";
+        : "Get Pro access to search verified trades candidates, view full profiles, save talent, and message candidates.";
     }
 
     if (cta) {
-      cta.textContent = hasAccess ? "Find Candidates" : "Upgrade Access";
+      cta.textContent = hasAccess ? "SEARCH CANDIDATES" : "GET ACCESS";
       cta.disabled = false;
       cta.classList.remove("is-loading");
       cta.onclick = hasAccess

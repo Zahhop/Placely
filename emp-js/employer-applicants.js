@@ -5,7 +5,7 @@ if (!applicantsSupabase) {
 }
 
 const STAGES = [
-  { id: "new", label: "New", empty: "No applicants" },
+  { id: "new", label: "Applied", empty: "No applicants" },
   { id: "reviewing", label: "Reviewing", empty: "Drag applicants here" },
   { id: "interview", label: "Interview", empty: "No interviews yet" },
   { id: "offer", label: "Offer", empty: "No offers yet" },
@@ -28,6 +28,7 @@ const jobList = document.getElementById("jobList");
 const jobSearchInput = document.getElementById("jobSearchInput");
 const applicantDetail = document.getElementById("applicantDetail");
 const searchInput = document.getElementById("searchInput");
+const globalApplicantsSearch = document.getElementById("globalApplicantsSearch");
 const jobFilter = document.getElementById("jobFilter");
 const sortFilter = document.getElementById("sortFilter");
 const availabilityFilter = document.getElementById("availabilityFilter");
@@ -42,6 +43,8 @@ const logoutBtn = document.getElementById("logoutBtn");
 const applicantDrawer = document.getElementById("applicantDrawer");
 const drawerOverlay = document.getElementById("drawerOverlay");
 const closeDrawerBtn = document.getElementById("closeDrawerBtn");
+const sidebarToggle = document.getElementById("sidebarToggle");
+const sidebarBackdrop = document.getElementById("sidebarBackdrop");
 const viewButtons = document.querySelectorAll(".view-btn");
 
 let currentUser = null;
@@ -63,16 +66,31 @@ const noteDrafts = new Map();
 document.addEventListener("DOMContentLoaded", initApplicants);
 
 async function initApplicants() {
-  const user = await verifyEmployerAccess(applicantsSupabase, {
-    loginPath: "employer-login.html",
-    candidateDashboardPath: "../candidates/candidate-dashboard.html"
-  });
+  try {
+    setupEvents();
+    normalizeApplicantsNavState();
 
-  if (!user) return;
-  currentUser = user;
+    if (!applicantsSupabase) {
+      renderLoadError("Could not initialize Applicants", "The Supabase client is unavailable. Check the network connection and config script.");
+      return;
+    }
 
-  setupEvents();
-  await loadApplicants();
+    const user = await verifyEmployerAccess(applicantsSupabase, {
+      loginPath: "employer-login.html",
+      candidateDashboardPath: "../candidates/candidate-dashboard.html"
+    });
+
+    if (!user) return;
+    currentUser = user;
+
+    await loadEmployerShellProfile();
+    await loadApplicants();
+  } catch (error) {
+    console.error("Applicants page failed to initialize.", error);
+    renderLoadError("Could not load Applicants", "Refresh the page or check the browser console for details.");
+  } finally {
+    document.documentElement.classList.remove("dashboard-booting");
+  }
 }
 
 function setupEvents() {
@@ -81,6 +99,13 @@ function setupEvents() {
     el.addEventListener("input", debounce(renderApplicants, 120));
     el.addEventListener("change", renderApplicants);
   });
+
+  if (globalApplicantsSearch) {
+    globalApplicantsSearch.addEventListener("input", debounce(() => {
+      if (searchInput) searchInput.value = globalApplicantsSearch.value;
+      renderApplicants();
+    }, 120));
+  }
 
   if (jobSearchInput) jobSearchInput.addEventListener("input", debounce(renderJobNavigation, 120));
   if (jobFilter) jobFilter.addEventListener("change", () => selectJob(jobFilter.value));
@@ -94,6 +119,8 @@ function setupEvents() {
   if (clearFiltersBtn) clearFiltersBtn.addEventListener("click", clearFilters);
   if (drawerOverlay) drawerOverlay.addEventListener("click", closeApplicantDrawer);
   if (closeDrawerBtn) closeDrawerBtn.addEventListener("click", closeApplicantDrawer);
+  if (sidebarToggle) sidebarToggle.addEventListener("click", toggleSidebar);
+  if (sidebarBackdrop) sidebarBackdrop.addEventListener("click", closeSidebar);
 
   if (filtersMenuBtn) {
     filtersMenuBtn.addEventListener("click", (event) => {
@@ -136,6 +163,105 @@ function setupEvents() {
   }
 }
 
+async function loadEmployerShellProfile() {
+  const fallbackName = currentUser?.user_metadata?.company_name || currentUser?.email || "Employer";
+  let profile = null;
+
+  try {
+    const { data, error } = await applicantsSupabase
+      .from("employer_profiles")
+      .select("*")
+      .eq("id", currentUser.id)
+      .maybeSingle();
+
+    if (error) {
+      console.warn("Employer shell profile unavailable.", error);
+    } else {
+      profile = data;
+    }
+  } catch (error) {
+    console.warn("Employer shell profile unavailable.", error);
+  }
+
+  const companyName = profile?.company_name || fallbackName;
+  const initials = getInitials(companyName);
+  const logoUrl = profile?.company_logo_url || profile?.company_logo || profile?.company_logo_preview || "";
+  const hasCandidateAccess = profile?.candidate_access === true;
+
+  document.body.dataset.plan = hasCandidateAccess ? "pro" : "free";
+  document.querySelector(".applicants-shell")?.setAttribute("data-plan", hasCandidateAccess ? "pro" : "free");
+
+  setText("sidebarCompanyName", companyName);
+  setText("topCompanyName", companyName);
+  renderCompanyAvatar("sidebarCompanyAvatar", companyName, initials, logoUrl);
+  renderCompanyAvatar("topCompanyAvatar", companyName, initials, logoUrl);
+  renderSidebarPlanCard(hasCandidateAccess);
+
+  if (typeof window.applyCandidateAccessUI === "function") {
+    window.applyCandidateAccessUI(hasCandidateAccess);
+  }
+}
+
+function renderSidebarPlanCard(hasCandidateAccess) {
+  const card = document.getElementById("sidebarPlanCard");
+  if (!card) return;
+
+  card.className = `sidebar-plan-card ${hasCandidateAccess ? "pro" : "free"}`;
+  card.innerHTML = hasCandidateAccess
+    ? `
+      <span class="plan-kicker">PRO ACCESS</span>
+      <h2>Full candidate network</h2>
+      <p>Browse, message, save, and connect with pre-screened candidates.</p>
+    `
+    : `
+      <span class="plan-kicker">GET PRO ACCESS</span>
+      <h2>Unlock candidate search</h2>
+      <p>Find, save, and message pre-screened talent from your employer workspace.</p>
+      <a class="plan-card-action" href="employer-dashboard.html#candidate-access">GET ACCESS</a>
+    `;
+}
+
+function renderCompanyAvatar(elementId, companyName, initials, logoUrl) {
+  const avatar = document.getElementById(elementId);
+  if (!avatar) return;
+
+  if (logoUrl) {
+    avatar.innerHTML = `<img src="${escapeHTML(logoUrl)}" alt="${escapeHTML(companyName)} logo" />`;
+    return;
+  }
+
+  avatar.textContent = initials;
+}
+
+function setText(id, value) {
+  const element = document.getElementById(id);
+  if (element) element.textContent = value;
+}
+
+function normalizeApplicantsNavState() {
+  const params = new URLSearchParams(window.location.search);
+  const stage = params.get("stage");
+
+  document.querySelectorAll(".sidebar-nav .nav-item").forEach((link) => {
+    const href = link.getAttribute("href") || "";
+    const isInterviewLink = href.includes("stage=interview");
+    const isApplicantsLink = href.endsWith("employer-applicants.html");
+    link.classList.toggle("active", stage === "interview" ? isInterviewLink : isApplicantsLink);
+  });
+}
+
+function toggleSidebar() {
+  const isOpen = document.body.classList.toggle("sidebar-open");
+  if (sidebarToggle) sidebarToggle.setAttribute("aria-expanded", String(isOpen));
+  if (sidebarBackdrop) sidebarBackdrop.hidden = !isOpen;
+}
+
+function closeSidebar() {
+  document.body.classList.remove("sidebar-open");
+  if (sidebarToggle) sidebarToggle.setAttribute("aria-expanded", "false");
+  if (sidebarBackdrop) sidebarBackdrop.hidden = true;
+}
+
 async function loadApplicants(options = {}) {
   setLoading(true, options.refreshing ? "Refreshing applicants" : "Loading applicants");
 
@@ -151,7 +277,7 @@ async function loadApplicants(options = {}) {
     return;
   }
 
-  employerJobs = jobs || [];
+  employerJobs = (jobs || []).filter((job) => normalizeJobStatus(job.status) === "active");
   setInitialSelectedJob();
   populateJobFilter();
 
@@ -331,8 +457,8 @@ function renderJobNavigation() {
   if (!employerJobs.length) {
     jobList.innerHTML = `
       <div class="job-empty">
-        <strong>No jobs posted</strong>
-        <p>Create a job to start receiving applicants.</p>
+        <strong>No active jobs</strong>
+        <p>Publish or reactivate a job to start receiving applicants.</p>
       </div>
     `;
     return;
@@ -365,7 +491,7 @@ function renderJobNavButton(job) {
       <span class="job-nav-meta">${escapeHTML(job.location || "Location not listed")} &middot; ${escapeHTML(capitalize(status))}</span>
       <span class="job-nav-counts">
         <span>${counts.active} active</span>
-        <span>${counts.newCount} new</span>
+        <span>${counts.newCount} applied</span>
         <span>${counts.archived} archived</span>
       </span>
     </button>
@@ -379,6 +505,7 @@ function renderApplicants() {
 
   const selectedApps = getSelectedJobApplications();
   const filtered = getFilteredApplications(selectedApps);
+  renderSummary(filtered);
   renderJobNavigation();
 
   const activeApplications = filtered.filter((app) => !ARCHIVED_STATUSES.includes(app.normalized_status));
@@ -414,7 +541,7 @@ function renderSelectedJobContext() {
   selectedJobContext.innerHTML = `
     <span class="selected-job-title">${escapeHTML(job.job_title || "Untitled Job")}</span>
     <span class="selected-job-subtitle">${escapeHTML(job.location || "Location not listed")} &middot; ${escapeHTML(job.employment_type || "Type not listed")} &middot; ${escapeHTML(capitalize(normalizeJobStatus(job.status)))}</span>
-    <span class="selected-job-counts">${counts.active} active &middot; ${counts.newCount} new</span>
+    <span class="selected-job-counts">${counts.active} active &middot; ${counts.newCount} applied</span>
   `;
   if (selectedJobManageLink) selectedJobManageLink.href = `edit-jobs.html?id=${encodeURIComponent(job.id)}`;
   if (selectedJobManageLink) selectedJobManageLink.textContent = "Manage Job";
@@ -422,14 +549,15 @@ function renderSelectedJobContext() {
 
 function renderPipeline(activeApplications, selectedApps) {
   if (!pipelineBoard) return;
+  pipelineBoard.classList.toggle("is-empty", !employerJobs.length || !selectedApps.length || !activeApplications.length);
 
   if (!employerJobs.length) {
     pipelineBoard.innerHTML = `
       <div class="empty-state board-empty">
         <div class="empty-icon">PT</div>
-        <h3>No jobs posted yet</h3>
-        <p>Create a job post before managing applicants in a pipeline.</p>
-        <a href="post-job.html" class="primary-link">Post Job</a>
+        <h3>No active jobs</h3>
+        <p>Publish or reactivate a job before managing applicants in a pipeline.</p>
+        <a href="manage-jobs.html" class="primary-link">Manage Jobs</a>
       </div>
     `;
     return;
@@ -538,8 +666,8 @@ function renderArchivedApplicants(archived, selectedApps) {
     archivedApplicants.innerHTML = `
       <div class="empty-state">
         <div class="empty-icon">PT</div>
-        <h3>No jobs posted yet</h3>
-        <p>Archived applicants will appear after jobs receive applications.</p>
+        <h3>No active jobs</h3>
+        <p>Archived applicants will appear here after an active job receives applications.</p>
       </div>
     `;
     return;
@@ -1367,6 +1495,7 @@ function renderLoadError(title, message) {
   setLoading(false);
   if (!pipelineBoard) return;
   pipelineBoard.classList.remove("hidden");
+  pipelineBoard.classList.add("is-empty");
   archivedApplicants.classList.add("hidden");
   pipelineBoard.innerHTML = `
     <div class="empty-state board-empty">
@@ -1387,6 +1516,7 @@ function handleDocumentKeydown(event) {
     setFiltersOpen(false);
     setJobSelectorOpen(false);
     closeApplicantDrawer();
+    closeSidebar();
     return;
   }
 
@@ -1447,8 +1577,8 @@ function normalizeJobStatus(status) {
 
 function getStatusLabel(status) {
   const labels = {
-    new: "New",
-    submitted: "New",
+    new: "Applied",
+    submitted: "Applied",
     reviewing: "Reviewing",
     interview: "Interview",
     offer: "Offer",
@@ -1458,7 +1588,7 @@ function getStatusLabel(status) {
     candidate_deleted: "Candidate Profile Deleted"
   };
 
-  return labels[status] || "New";
+  return labels[status] || "Applied";
 }
 
 function shortLocation(value) {
