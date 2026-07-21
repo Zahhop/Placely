@@ -5,12 +5,11 @@ let currentProfile = {};
 let selectedPhotoPreviewUrl = "";
 let isDeletingResume = false;
 let isUploadingResume = false;
+let isDeletingPhoto = false;
 
 const PHOTO_BUCKET = "candidate_photos";
 const RESUME_BUCKET = "candidate_resumes";
-const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024;
 const MAX_RESUME_SIZE_BYTES = 10 * 1024 * 1024;
-const ALLOWED_PHOTO_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 const ALLOWED_RESUME_TYPES = new Set([
   "application/pdf",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -74,8 +73,7 @@ function updatePreview() {
   const location = value("location") || "Location";
   const profilePhotoUrl =
     selectedPhotoPreviewUrl ||
-    currentProfile.profile_photo_url ||
-    currentProfile.avatar_url ||
+    getCandidatePhotoUrl(currentProfile.profile_photo_url || currentProfile.avatar_url) ||
     "";
 
   const previewName = getEl("preview_name");
@@ -114,10 +112,10 @@ function getPreviewProfileFromForm() {
     email: value("email") || currentProfile.email || currentUser?.email || "",
     phone: value("phone") || currentProfile.phone || "",
     contact_method: value("contact_method") || currentProfile.contact_method || "",
+    shown_contact_method: window.PlacelyAuth.normalizeCandidateContactPreference(value("shown_contact_method") || currentProfile.shown_contact_method),
     profile_photo_url:
       selectedPhotoPreviewUrl ||
-      currentProfile.profile_photo_url ||
-      currentProfile.avatar_url ||
+      getCandidatePhotoUrl(currentProfile.profile_photo_url || currentProfile.avatar_url) ||
       "",
     avatar_url: currentProfile.avatar_url || "",
     resume_path: getResumePath(currentProfile),
@@ -153,23 +151,16 @@ async function loadCandidateProfile() {
     .eq("id", user.id)
     .single();
 
-  if (error) {
-    console.error("Error loading candidate profile:", error);
-    currentProfile = {
-      id: user.id,
-      email: user.email,
-      profile_visible: true
-    };
-  } else {
-    currentProfile = profile;
+  if (error || !profile) {
+    await window.PlacelyAuth.clearAuthState();
+    window.location.replace("candidate-login.html");
+    return;
   }
 
-  console.log("Loaded candidate profile:", currentProfile);
-  console.log("Loaded availability:", currentProfile.availability);
+  currentProfile = profile;
 
   getEl("profile_photo_preview").src =
-    currentProfile.profile_photo_url ||
-    currentProfile.avatar_url ||
+    getCandidatePhotoUrl(currentProfile.profile_photo_url || currentProfile.avatar_url) ||
     "https://placehold.co/180x180";
 
   renderResumeManager();
@@ -185,30 +176,18 @@ async function loadCandidateProfile() {
   getEl("email").value = currentProfile.email || user.email || "";
   getEl("phone").value = currentProfile.phone || "";
   getEl("contact_method").value = currentProfile.contact_method || "Email";
+  getEl("shown_contact_method").value = window.PlacelyAuth.normalizeCandidateContactPreference(currentProfile.shown_contact_method) || "email";
   getEl("profile_visible").checked = currentProfile.profile_visible ?? true;
 
   updatePreview();
 }
 
-async function uploadFile(bucket, file, userId) {
-  validateUploadFile(bucket, file);
+function getCandidatePhotoUrl(value, cacheBust = "") {
+  return window.PlacelyAuth.getPublicImageUrl(candidateSupabase, PHOTO_BUCKET, value, { cacheBust });
+}
 
-  const cleanName = file.name.replace(/\s+/g, "-").toLowerCase();
-  const path = `${userId}/${Date.now()}-${cleanName}`;
-
-  const { error } = await candidateSupabase.storage
-    .from(bucket)
-    .upload(path, file, { upsert: true });
-
-  if (error) {
-    throw error;
-  }
-
-  const { data } = candidateSupabase.storage
-    .from(bucket)
-    .getPublicUrl(path);
-
-  return data.publicUrl;
+async function uploadCandidatePhoto(file, userId) {
+  return window.PlacelyAuth.uploadOwnedImage(candidateSupabase, "candidatePhoto", file, userId);
 }
 
 async function uploadResume(file, userId) {
@@ -229,22 +208,11 @@ async function uploadResume(file, userId) {
     });
 
   if (error) throw error;
-  console.log("Uploaded resume path:", path);
   return path;
 }
 
 function validateUploadFile(bucket, file) {
   if (!file) return;
-
-  if (bucket === PHOTO_BUCKET) {
-    if (!ALLOWED_PHOTO_TYPES.has(file.type)) {
-      throw new Error("Profile photo must be PNG, JPG, or WEBP.");
-    }
-
-    if (file.size > MAX_PHOTO_SIZE_BYTES) {
-      throw new Error("Profile photo must be 5 MB or smaller.");
-    }
-  }
 
   if (bucket === RESUME_BUCKET) {
     if (!ALLOWED_RESUME_TYPES.has(file.type)) {
@@ -312,9 +280,6 @@ function renderResumeManager(profile = currentProfile) {
 
   if (!resumePreview || !resumeFileName) return;
 
-  console.log("Stored candidate resume_path:", profile.resume_path || null);
-  console.log("Resolved candidate resume path:", resumePath || null);
-
   if (resumePath) {
     resumePreview.style.display = "flex";
     resumeFileName.textContent = getResumeFileName(resumePath);
@@ -352,7 +317,7 @@ async function removeResumeObject(path) {
     .remove([path]);
 
   if (error) {
-    console.warn("Could not remove previous resume object:", error);
+    return;
   }
 }
 
@@ -391,7 +356,6 @@ async function deleteCurrentResume() {
     if (profileError) throw profileError;
 
     const resumePath = getResumePath(profile);
-    console.log("Deleting resume path:", resumePath);
 
     if (!resumePath) {
       throw new Error("No stored resume path was found. The resume could not be deleted.");
@@ -401,14 +365,9 @@ async function deleteCurrentResume() {
       throw new Error("Stored resume path does not belong to the signed-in candidate.");
     }
 
-    const { data, error } = await supabaseClient.storage
+    const { error } = await supabaseClient.storage
       .from("candidate_resumes")
       .remove([resumePath]);
-
-    console.log("Resume delete result:", data);
-    if (error) {
-      console.error("Resume delete error:", error);
-    }
 
     if (error) throw error;
 
@@ -433,8 +392,7 @@ async function deleteCurrentResume() {
     await refreshResumeManager();
     showToast("Resume removed.");
   } catch (error) {
-    console.error("Resume delete flow error:", error);
-    showToast("Error removing resume: " + (error?.message || "Unknown error"));
+    showToast(getFriendlyProfileError(error, "Could not remove resume."));
   } finally {
     isDeletingResume = false;
     if (removeResumeBtn) {
@@ -495,10 +453,9 @@ async function uploadSelectedResume(file) {
     updatePreview();
     showToast("Resume uploaded.");
   } catch (error) {
-    console.error("Resume upload error:", error);
     if (resumeInput) resumeInput.value = "";
     renderResumeManager();
-    showToast("Error uploading resume: " + (error?.message || "Unknown error"));
+    showToast(getFriendlyProfileError(error, "Could not upload resume."));
   } finally {
     isUploadingResume = false;
     if (removeResumeBtn) removeResumeBtn.disabled = false;
@@ -518,7 +475,6 @@ async function openOwnResume() {
     .createSignedUrl(path, RESUME_SIGNED_URL_SECONDS);
 
   if (error || !data?.signedUrl) {
-    console.error("Resume signed URL error:", error);
     showToast("Could not open resume.");
     return;
   }
@@ -540,11 +496,14 @@ async function saveCandidateProfile() {
 
   try {
     let profilePhotoUrl = currentProfile.profile_photo_url || null;
+    const previousPhotoValue = currentProfile.profile_photo_url || currentProfile.avatar_url || "";
+    let uploadedPhotoPath = "";
 
     const photoFile = getEl("profile_photo_file")?.files[0];
 
     if (photoFile) {
-      profilePhotoUrl = await uploadFile(PHOTO_BUCKET, photoFile, currentUser.id);
+      uploadedPhotoPath = await uploadCandidatePhoto(photoFile, currentUser.id);
+      profilePhotoUrl = uploadedPhotoPath;
     }
 
     const updates = {
@@ -560,15 +519,22 @@ async function saveCandidateProfile() {
       email: value("email") || currentUser.email,
       phone: value("phone"),
       contact_method: value("contact_method"),
+      shown_contact_method: window.PlacelyAuth.normalizeCandidateContactPreference(value("shown_contact_method")) || "email",
       profile_visible: getEl("profile_visible").checked,
       profile_photo_url: profilePhotoUrl
     };
 
-    const { data, error } = await candidateSupabase
-      .from("candidate_profiles")
-      .upsert(updates)
-      .select()
-      .single();
+    const willBeComplete = window.PlacelyAuth.isCandidateOnboardingComplete({
+      ...currentProfile,
+      ...updates
+    });
+
+    updates.onboarding_completed = willBeComplete;
+    updates.onboarding_completed_at = willBeComplete
+      ? (currentProfile.onboarding_completed_at || new Date().toISOString())
+      : null;
+
+    const { data, error } = await updateExistingCandidateProfile(updates);
 
     if (error) {
       throw error;
@@ -581,12 +547,20 @@ async function saveCandidateProfile() {
     };
 
     selectedPhotoPreviewUrl = "";
+    getEl("profile_photo_file").value = "";
 
     showToast("Profile saved successfully.");
+    if (uploadedPhotoPath && previousPhotoValue && previousPhotoValue !== uploadedPhotoPath) {
+      try {
+        await window.PlacelyAuth.removeOwnedImage(candidateSupabase, PHOTO_BUCKET, previousPhotoValue, currentUser.id);
+      } catch {}
+    }
+    if (currentProfile.profile_photo_url) {
+      getEl("profile_photo_preview").src = getCandidatePhotoUrl(currentProfile.profile_photo_url, Date.now());
+    }
     updatePreview();
   } catch (error) {
-    console.error("Save error:", error);
-    showToast("Error saving profile: " + error.message);
+    showToast(getFriendlyProfileError(error, "Could not save profile."));
   } finally {
     saveButtons.forEach(btn => {
       btn.disabled = false;
@@ -595,8 +569,52 @@ async function saveCandidateProfile() {
   }
 }
 
+async function updateExistingCandidateProfile(updates) {
+  const result = await candidateSupabase
+    .from("candidate_profiles")
+    .update(updates)
+    .eq("id", currentUser.id)
+    .select()
+    .single();
+
+  if (!isMissingColumnError(result.error)) {
+    return result;
+  }
+
+  const compatibleUpdates = { ...updates };
+  delete compatibleUpdates.onboarding_completed;
+  delete compatibleUpdates.onboarding_completed_at;
+
+  return candidateSupabase
+    .from("candidate_profiles")
+    .update(compatibleUpdates)
+    .eq("id", currentUser.id)
+    .select()
+    .single();
+}
+
+function isMissingColumnError(error) {
+  const message = String(error?.message || "").toLowerCase();
+  return error?.code === "PGRST204" || message.includes("column") && message.includes("onboarding");
+}
+
+function getFriendlyProfileError(error, fallback) {
+  const message = String(error?.message || "").toLowerCase();
+
+  if (message.includes("must be a pdf") || message.includes("must be png") || message.includes("please upload a jpg") || message.includes("mb")) {
+    return error.message;
+  }
+
+  if (window.PlacelyAuth?.isMissingRowError?.(error)) {
+    return "We could not verify your candidate profile. Please log in again.";
+  }
+
+  return fallback;
+}
+
 function setupEvents() {
   const uploadPhotoBtn = getEl("uploadPhotoBtn");
+  const removePhotoBtn = getEl("removePhotoBtn");
   const photoInput = getEl("profile_photo_file");
   const resumeDrop = getEl("resumeDrop");
   const resumeInput = getEl("resume_file");
@@ -610,17 +628,26 @@ function setupEvents() {
   }
 
   if (photoInput) {
-    photoInput.addEventListener("change", () => {
+    photoInput.addEventListener("change", async () => {
       const file = photoInput.files[0];
 
       if (!file) return;
 
-      selectedPhotoPreviewUrl = URL.createObjectURL(file);
-      getEl("profile_photo_preview").src = selectedPhotoPreviewUrl;
-      updateStrength();
-      updatePreview();
+      try {
+        await window.PlacelyAuth.validateImageFileForUpload(file, "candidatePhoto");
+        if (selectedPhotoPreviewUrl) URL.revokeObjectURL(selectedPhotoPreviewUrl);
+        selectedPhotoPreviewUrl = URL.createObjectURL(file);
+        getEl("profile_photo_preview").src = selectedPhotoPreviewUrl;
+        updateStrength();
+        updatePreview();
+      } catch (error) {
+        photoInput.value = "";
+        showToast(error?.message || "Please upload a JPG, PNG, or WebP image.");
+      }
     });
   }
+
+  removePhotoBtn?.addEventListener("click", removeCurrentPhoto);
 
   if (resumeDrop && resumeInput) {
     resumeDrop.addEventListener("click", () => {
@@ -679,6 +706,60 @@ function setupEvents() {
       updatePreview();
     });
   });
+}
+
+async function removeCurrentPhoto() {
+  if (!currentUser || isDeletingPhoto) return;
+
+  const currentValue = currentProfile.profile_photo_url || currentProfile.avatar_url || "";
+  if (!currentValue) return;
+  if (!window.confirm("Remove this profile photo?")) return;
+
+  isDeletingPhoto = true;
+  const removePhotoBtn = getEl("removePhotoBtn");
+  const uploadPhotoBtn = getEl("uploadPhotoBtn");
+  if (removePhotoBtn) {
+    removePhotoBtn.disabled = true;
+    removePhotoBtn.textContent = "Removing...";
+  }
+  if (uploadPhotoBtn) uploadPhotoBtn.disabled = true;
+
+  try {
+    if (window.PlacelyAuth.isOwnedStoragePath(currentValue, PHOTO_BUCKET, currentUser.id)) {
+      await window.PlacelyAuth.removeOwnedImage(candidateSupabase, PHOTO_BUCKET, currentValue, currentUser.id);
+    }
+
+    const { data, error } = await updateExistingCandidateProfile({
+      id: currentUser.id,
+      profile_photo_url: null,
+      avatar_url: null
+    });
+
+    if (error) throw error;
+
+    currentProfile = {
+      ...currentProfile,
+      ...data,
+      profile_photo_url: null,
+      avatar_url: null
+    };
+    if (selectedPhotoPreviewUrl) {
+      URL.revokeObjectURL(selectedPhotoPreviewUrl);
+      selectedPhotoPreviewUrl = "";
+    }
+    getEl("profile_photo_preview").src = "https://placehold.co/180x180";
+    updatePreview();
+    showToast("Profile photo removed.");
+  } catch (error) {
+    showToast("Could not remove profile photo. Please try again.");
+  } finally {
+    isDeletingPhoto = false;
+    if (removePhotoBtn) {
+      removePhotoBtn.disabled = false;
+      removePhotoBtn.textContent = "Remove Photo";
+    }
+    if (uploadPhotoBtn) uploadPhotoBtn.disabled = false;
+  }
 }
 
 document.addEventListener("DOMContentLoaded", async () => {

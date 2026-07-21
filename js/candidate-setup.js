@@ -6,18 +6,27 @@ const backBtn = document.getElementById("backBtn");
 const nextBtn = document.getElementById("nextBtn");
 const progressFill = document.getElementById("progressFill");
 const progressText = document.getElementById("progressText");
+const skipOptionalBtn = document.getElementById("skipOptionalBtn");
 
 let currentStep = 0;
-const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024;
+let currentUser = null;
 const MAX_RESUME_SIZE_BYTES = 10 * 1024 * 1024;
 
-protectCandidateSetup();
+document.addEventListener("DOMContentLoaded", initCandidateSetup);
 
-async function protectCandidateSetup() {
-  await verifyCandidateAccess(placelySupabase, {
+async function initCandidateSetup() {
+  currentUser = await verifyCandidateAccess(placelySupabase, {
     loginPath: "candidate-login.html",
-    employerDashboardPath: "../employers/employer-dashboard.html"
+    employerDashboardPath: "../employers/employer-dashboard.html",
+    requireOnboarding: false,
+    requireIncompleteOnboarding: true
   });
+
+  if (!currentUser) return;
+
+  setupEvents();
+  showStep(currentStep);
+  await loadExistingProfile(currentUser);
 }
 
 function showStep(index) {
@@ -55,36 +64,9 @@ function validateResumeFile(file) {
   return allowedTypes.includes(file.type) && file.size <= MAX_RESUME_SIZE_BYTES;
 }
 
-function validatePhotoFile(file) {
-  if (!file) return true;
-
-  const allowedTypes = ["image/png", "image/jpeg"];
-
-  return allowedTypes.includes(file.type) && file.size <= MAX_PHOTO_SIZE_BYTES;
-}
-
-async function uploadFile(bucketName, userId, file) {
+async function uploadCandidatePhoto(userId, file) {
   if (!file) return null;
-
-  const fileExt = file.name.split(".").pop();
-  const filePath = `${userId}/${Date.now()}.${fileExt}`;
-
-  const { error: uploadError } = await placelySupabase.storage
-    .from(bucketName)
-    .upload(filePath, file, {
-      cacheControl: "3600",
-      upsert: true
-    });
-
-  if (uploadError) {
-    throw uploadError;
-  }
-
-  const { data } = placelySupabase.storage
-    .from(bucketName)
-    .getPublicUrl(filePath);
-
-  return data.publicUrl;
+  return window.PlacelyAuth.uploadOwnedImage(placelySupabase, "candidatePhoto", file, userId);
 }
 
 async function uploadResume(userId, file) {
@@ -128,8 +110,7 @@ async function saveCandidateProfile() {
     return;
   }
 
-  if (!validatePhotoFile(profilePhotoFile)) {
-    alert("Profile photo must be PNG, JPG, or JPEG and 5 MB or smaller.");
+  if (!validateRequiredSetupFields()) {
     return;
   }
 
@@ -137,8 +118,9 @@ async function saveCandidateProfile() {
   nextBtn.textContent = "Saving...";
 
   try {
+    await window.PlacelyAuth.validateImageFileForUpload(profilePhotoFile, "candidatePhoto");
     const resumePath = await uploadResume(user.id, resumeFile);
-    const profilePhotoUrl = await uploadFile("candidate_photos", user.id, profilePhotoFile);
+    const profilePhotoPath = await uploadCandidatePhoto(user.id, profilePhotoFile);
 
     const profileData = {
       id: user.id,
@@ -151,8 +133,10 @@ async function saveCandidateProfile() {
       certifications: document.getElementById("certifications").value.trim(),
       availability: document.getElementById("availability").value,
       contact_method: document.getElementById("contactMethod").value,
-      shown_contact_method: document.getElementById("shownContactMethod").value,
-      profile_visible: document.getElementById("profileVisible").checked
+      shown_contact_method: window.PlacelyAuth.normalizeCandidateContactPreference(document.getElementById("shownContactMethod").value),
+      profile_visible: document.getElementById("profileVisible").checked,
+      onboarding_completed: true,
+      onboarding_completed_at: new Date().toISOString()
     };
 
     if (resumePath) {
@@ -160,60 +144,101 @@ async function saveCandidateProfile() {
       profileData.resume_url = null;
     }
 
-    if (profilePhotoUrl) {
-      profileData.profile_photo_url = profilePhotoUrl;
+    if (profilePhotoPath) {
+      profileData.profile_photo_url = profilePhotoPath;
     }
 
-    console.log("Profile data being saved:", profileData);
-
-    const { error } = await placelySupabase
-      .from("candidate_profiles")
-      .upsert(profileData);
+    const { error } = await updateCandidateProfile(profileData, user.id);
 
     if (error) {
       throw error;
     }
 
-    window.location.href = "candidate-dashboard.html";
+    const { data: savedProfile, error: savedProfileError } = await placelySupabase
+      .from("candidate_profiles")
+      .select("trade, experience, bio, availability, contact_method, shown_contact_method")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (savedProfileError || !window.PlacelyAuth.isCandidateOnboardingComplete(savedProfile)) {
+      throw savedProfileError || new Error("Complete the required onboarding fields before opening the dashboard.");
+    }
+
+    window.location.replace("candidate-dashboard.html");
   } catch (error) {
-    console.error("Candidate profile save failed:", error);
-    alert("Profile save failed: " + error.message);
+    if (window.PlacelyAuth.isMissingRowError(error)) {
+      await window.PlacelyAuth.clearAuthState();
+      window.location.replace("candidate-login.html");
+      return;
+    }
+
+    alert(error?.message || "We could not save your profile. Please check your information and try again.");
     nextBtn.disabled = false;
     nextBtn.textContent = "Finish & Go To Dashboard";
   }
 }
 
-nextBtn.addEventListener("click", async () => {
-  if (currentStep < steps.length - 1) {
-    currentStep++;
-    showStep(currentStep);
-  } else {
-    await saveCandidateProfile();
-  }
-});
+async function updateCandidateProfile(profileData, userId) {
+  const result = await placelySupabase
+    .from("candidate_profiles")
+    .update(profileData)
+    .eq("id", userId)
+    .select("trade, experience, bio, availability, contact_method, shown_contact_method")
+    .single();
 
-backBtn.addEventListener("click", () => {
-  if (currentStep > 0) {
-    currentStep--;
-    showStep(currentStep);
+  if (!isMissingColumnError(result.error)) {
+    return result;
   }
-});
 
-sidebarSteps.forEach((step, index) => {
-  step.addEventListener("click", () => {
-    currentStep = index;
+  const compatibleData = { ...profileData };
+  delete compatibleData.onboarding_completed;
+  delete compatibleData.onboarding_completed_at;
+
+  return placelySupabase
+    .from("candidate_profiles")
+    .update(compatibleData)
+    .eq("id", userId)
+    .select("trade, experience, bio, availability, contact_method, shown_contact_method")
+    .single();
+}
+
+function isMissingColumnError(error) {
+  const message = String(error?.message || "").toLowerCase();
+  return error?.code === "PGRST204" || message.includes("column") && message.includes("onboarding");
+}
+
+function setupEvents() {
+  nextBtn.addEventListener("click", async () => {
+    if (currentStep < steps.length - 1) {
+      currentStep++;
+      showStep(currentStep);
+    } else {
+      await saveCandidateProfile();
+    }
+  });
+
+  backBtn.addEventListener("click", () => {
+    if (currentStep > 0) {
+      currentStep--;
+      showStep(currentStep);
+    }
+  });
+
+  sidebarSteps.forEach((step, index) => {
+    step.addEventListener("click", () => {
+      currentStep = index;
+      showStep(currentStep);
+    });
+  });
+
+  skipOptionalBtn?.addEventListener("click", (event) => {
+    event.preventDefault();
+    currentStep = steps.length - 1;
     showStep(currentStep);
   });
-});
+}
 
-async function loadExistingProfile() {
-  const user = await verifyCandidateAccess(placelySupabase, {
-    loginPath: "candidate-login.html",
-    employerDashboardPath: "../employers/employer-dashboard.html"
-  });
-
-  if (!user) return;
-
+async function loadExistingProfile(user) {
   const { data, error } = await placelySupabase
     .from("candidate_profiles")
     .select("*")
@@ -229,9 +254,34 @@ async function loadExistingProfile() {
   document.getElementById("certifications").value = data.certifications || "";
   document.getElementById("availability").value = data.availability || "";
   document.getElementById("contactMethod").value = data.contact_method || "";
-  document.getElementById("shownContactMethod").value = data.shown_contact_method || "";
+  document.getElementById("shownContactMethod").value = window.PlacelyAuth.normalizeCandidateContactPreference(data.shown_contact_method) || "";
   document.getElementById("profileVisible").checked = data.profile_visible !== false;
 }
 
-showStep(currentStep);
-loadExistingProfile();
+function validateRequiredSetupFields() {
+  const requiredFields = [
+    ["trade", "Primary profession is required."],
+    ["experience", "Experience is required."],
+    ["bio", "Professional summary is required."],
+    ["availability", "Availability is required."],
+    ["contactMethod", "Preferred contact method is required."],
+    ["shownContactMethod", "Contact visibility is required."]
+  ];
+
+  for (const [id, message] of requiredFields) {
+    const field = document.getElementById(id);
+    if (String(field?.value || "").trim()) continue;
+
+    alert(message);
+    field?.focus();
+    const step = field?.closest(".form-step");
+    const index = [...steps].indexOf(step);
+    if (index >= 0) {
+      currentStep = index;
+      showStep(currentStep);
+    }
+    return false;
+  }
+
+  return true;
+}

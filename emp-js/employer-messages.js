@@ -1,9 +1,5 @@
 const employerMessagesSupabase = window.employerSupabase;
 
-if (!employerMessagesSupabase) {
-  console.error("Employer Supabase client was not initialized.");
-}
-
 const messagesLayout = document.getElementById("messagesLayout");
 const conversationList = document.getElementById("conversationList");
 const conversationSearch = document.getElementById("conversationSearch");
@@ -38,6 +34,7 @@ let activeMessages = [];
 let isSendingMessage = false;
 let savedTalentRowsByCandidateId = new Map();
 let saveMutationIds = new Set();
+let hasCandidateAccess = false;
 
 document.addEventListener("DOMContentLoaded", initMessages);
 
@@ -50,6 +47,7 @@ async function initMessages() {
   if (!user) return;
 
   currentUser = user;
+  hasCandidateAccess = await loadEmployerCandidateAccess(user.id);
   setupEvents();
   setComposerEnabled(false);
   renderLoadingState();
@@ -125,8 +123,8 @@ function setupEvents() {
   });
 
   logoutBtn?.addEventListener("click", async () => {
-    await employerMessagesSupabase.auth.signOut();
-    window.location.href = "employer-login.html";
+    await window.PlacelyAuth.clearAuthState();
+    window.location.replace("employer-login.html");
   });
 
   window.addEventListener("beforeunload", () => {
@@ -149,6 +147,11 @@ function getMessageRoute() {
 async function resolveCandidateRoute(route) {
   if (!isRouteId(route.candidateId)) {
     showToast("Could not open this candidate conversation.", "error");
+    return false;
+  }
+
+  if (!hasCandidateAccess && !route.applicationId && !route.jobId) {
+    showToast("Candidate Network access is required to start this conversation.", "error");
     return false;
   }
 
@@ -187,10 +190,10 @@ async function fetchCandidateProfile(candidateId) {
     .from("candidate_profiles")
     .select("*")
     .eq("id", candidateId)
+    .eq("profile_visible", true)
     .maybeSingle();
 
   if (error) {
-    console.error("Candidate load error:", error);
     return null;
   }
 
@@ -217,7 +220,6 @@ async function fetchEmployerApplication(route, candidateId) {
     .limit(1);
 
   if (error) {
-    console.error("Application context load error:", error);
     return null;
   }
 
@@ -234,6 +236,17 @@ async function fetchEmployerName() {
   return data?.company_name || "Employer";
 }
 
+async function loadEmployerCandidateAccess(userId) {
+  const { data, error } = await employerMessagesSupabase
+    .from("employer_profiles")
+    .select("candidate_access, subscription_status")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error || !data) return false;
+  return window.PlacelyAuth.hasCandidateSearchAccess(data);
+}
+
 async function findConversationForCandidate(candidateId) {
   const { data, error } = await employerMessagesSupabase
     .from("conversations")
@@ -244,7 +257,6 @@ async function findConversationForCandidate(candidateId) {
     .limit(1);
 
   if (error) {
-    console.error("Conversation lookup error:", error);
     showToast("Could not check for an existing conversation.", "error");
     return null;
   }
@@ -275,7 +287,6 @@ async function createConversation({ candidate, application, employerName, route 
   const result = await insertWithSchemaFallback("conversations", payload);
 
   if (result.error) {
-    console.error("Conversation create error:", result.error);
     showToast("Could not start this conversation.", "error");
     return null;
   }
@@ -323,7 +334,6 @@ async function loadConversations() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Load conversations error:", error);
     conversationsData = [];
     showToast("Could not load conversations.", "error");
     return;
@@ -351,7 +361,7 @@ async function loadConversations() {
       initials: conversation.candidate_initials || getInitials(name),
       role,
       location,
-      photoUrl: profile.profile_photo_url || conversation.candidate_photo_url || "",
+      photoUrl: getCandidatePhotoUrl(profile.profile_photo_url || conversation.candidate_photo_url || ""),
       source: conversation.source || (application ? "Application" : "Candidate Profile"),
       status: conversation.status || application?.status || "Active",
       response: conversation.response || "New",
@@ -376,7 +386,6 @@ async function fetchCandidateProfiles(candidateIds) {
     .in("id", candidateIds);
 
   if (error) {
-    console.error("Candidate profiles batch load error:", error);
     return new Map();
   }
 
@@ -409,11 +418,11 @@ async function getLatestMessage(conversationId) {
     .from("messages")
     .select("*")
     .eq("conversation_id", conversationId)
+    .eq("employer_id", currentUser.id)
     .order("created_at", { ascending: false })
     .limit(1);
 
   if (error) {
-    console.error("Latest message error:", error);
     return null;
   }
 
@@ -430,7 +439,6 @@ async function getUnreadCount(conversationId) {
     .eq("read_by_employer", false);
 
   if (error) {
-    console.error("Unread count error:", error);
     return 0;
   }
 
@@ -560,14 +568,22 @@ function renderContext(conversation) {
   const experience = pickFirst(profile.experience, profile.experience_level, profile.years_experience, "Experience not provided");
   const education = pickFirst(profile.education, profile.school, profile.training, "");
   const skills = normalizeList(pickFirst(profile.skills, profile.skill_tags, ""));
+  const contactSource = {
+    ...profile,
+    candidate_email: application.candidate_email,
+    candidate_phone: application.candidate_phone,
+    shown_contact_method: pickFirst(profile.shown_contact_method, application.shown_contact_method),
+    contact_method: pickFirst(profile.contact_method, application.candidate_contact_method)
+  };
+  const visibleContact = window.PlacelyAuth.getVisibleCandidateContact(contactSource);
   const quickRows = [
     ["Source", conversation.source],
     ["Availability", pickFirst(profile.availability, application.availability, "Not provided")],
     ["Applied role", pickFirst(application.job_title, conversation.jobTitle, "Not linked")],
     ["Application status", application.status],
-    ["Email", pickFirst(profile.email, application.candidate_email, "")],
-    ["Phone", pickFirst(profile.phone, profile.phone_number, application.candidate_phone, "")]
-  ].filter(([, value]) => value);
+    visibleContact.showEmail ? ["Email", pickFirst(profile.email, application.candidate_email, "")] : null,
+    visibleContact.showPhone ? ["Phone", pickFirst(profile.phone, profile.phone_number, application.candidate_phone, "")] : null
+  ].filter(Boolean).filter(([, value]) => value);
   const isSaved = isCandidateSaved(conversation.candidateId);
   const isSaving = saveMutationIds.has(String(conversation.candidateId || ""));
 
@@ -671,7 +687,6 @@ async function loadMessages(conversationId) {
     .limit(100);
 
   if (error) {
-    console.error("Load messages error:", error);
     chatMessages.innerHTML = `
       <div class="empty-message">
         <h3>Could not load messages</h3>
@@ -737,17 +752,12 @@ async function markConversationRead(conversation) {
     .neq("sender_type", "employer");
 
   if (error) {
-    console.error("Mark read error:", error);
+    return;
   }
 }
 
 async function loadSavedCandidates() {
   savedTalentRowsByCandidateId = new Map();
-  const localSavedIds = getLocalSavedCandidateIds();
-  localSavedIds.forEach((id) => {
-    savedTalentRowsByCandidateId.set(id, { candidate_id: id, local: true });
-  });
-
   if (!currentUser) return;
 
   const { data, error } = await employerMessagesSupabase
@@ -756,7 +766,6 @@ async function loadSavedCandidates() {
     .eq("employer_id", currentUser.id);
 
   if (error) {
-    console.warn("Saved talent table load failed; using local saved candidate cache.", error);
     return;
   }
 
@@ -794,8 +803,7 @@ async function toggleSaveCandidate(conversation) {
 
     localStorage.setItem("placelySavedCandidates", JSON.stringify([...savedTalentRowsByCandidateId.keys()]));
     localStorage.setItem("placelySavedCandidateDates", JSON.stringify(savedDates));
-  } catch (error) {
-    console.error(wasSaved ? "Remove saved candidate error:" : "Save candidate error:", error);
+  } catch {
     savedTalentRowsByCandidateId = previousRows;
     showToast(wasSaved ? "Could not remove candidate." : "Could not save candidate.", "error");
   } finally {
@@ -901,7 +909,6 @@ async function sendMessage(event) {
   setSendingState(false);
 
   if (result.error) {
-    console.error("Message send error:", result.error);
     activeMessages = activeMessages.filter((message) => message.id !== tempMessage.id);
     await openConversation(conversation.id);
     showToast("Message could not be sent.", "error");
@@ -1089,6 +1096,10 @@ function renderAvatar(conversation) {
   }
 
   return escapeHTML(conversation.initials || getInitials(conversation.name));
+}
+
+function getCandidatePhotoUrl(value) {
+  return window.PlacelyAuth?.getPublicImageUrl?.(employerMessagesSupabase, "candidate_photos", value) || String(value || "");
 }
 
 function replaceRouteForConversation(conversation, route) {

@@ -1,3 +1,4 @@
+html.auth-booting body { visibility: hidden; }
 * {
   margin: 0;
   padding: 0;
@@ -94,6 +95,7 @@ button,
 }
 
 .secondary-btn,
+.secondary-wide,
 .small-outline-btn {
   color: #2563eb;
   border: 1px solid #cbd5e1;

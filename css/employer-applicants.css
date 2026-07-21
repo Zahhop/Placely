@@ -1,3 +1,4 @@
+html.auth-booting body { visibility: hidden; }
 * {
   box-sizing: border-box;
 }

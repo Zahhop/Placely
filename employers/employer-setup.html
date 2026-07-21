@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="auth-booting">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -18,7 +18,7 @@
     <div class="logo-subtitle">Employer Platform</div>
   </div>
 
-  <a href="employer-dashboard.html" class="skip-btn">Skip to Dashboard</a>
+  <a href="#employerSetupForm" class="skip-btn" id="skipOptionalBtn">Skip optional questions</a>
 </header>
 
 <main class="setup-shell">
@@ -40,7 +40,7 @@
 
       <button type="button" class="step-item" data-step-indicator="1">
         <span>02</span>
-        <strong>Hiring Focus</strong>
+        <strong>Hiring Preferences</strong>
       </button>
 
       <button type="button" class="step-item" data-step-indicator="2">
@@ -95,7 +95,7 @@
       </section>
 
       <section class="form-step" data-step="1">
-        <span class="section-pill">Hiring focus</span>
+        <span class="section-pill">Hiring preferences</span>
         <h3>What roles are you hiring for?</h3>
         <p class="step-copy">Help Placely understand the trades, industries, and positions your company needs most.</p>
 
@@ -119,7 +119,8 @@
 
           <div class="form-group full">
             <label>Hiring Needs</label>
-            <textarea id="hiringNeeds" placeholder="Example: electrical apprentices, journeyman welders, labourers, equipment operators, HVAC techs..."></textarea>
+            <div class="role-chip-grid" id="hiringRolesGroup" aria-label="Hiring roles"></div>
+            <input id="hiringRoleOther" class="other-role-input" type="text" placeholder="Custom role" hidden />
           </div>
         </div>
       </section>
@@ -131,19 +132,33 @@
 
         <div class="form-grid">
           <div class="form-group">
-            <label>Typical Pay Range</label>
-            <input id="payRange" type="text" placeholder="$25 - $40/hr" />
+            <label>Compensation Type</label>
+            <select id="compensationType">
+              <option value="">Select compensation</option>
+              <option value="hourly">Hourly</option>
+              <option value="annual">Annual salary</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Minimum Compensation</label>
+            <input id="compensationMin" type="number" min="1" step="1" inputmode="numeric" placeholder="20" />
+          </div>
+
+          <div class="form-group">
+            <label>Maximum Compensation</label>
+            <input id="compensationMax" type="number" min="1" step="1" inputmode="numeric" placeholder="40" />
           </div>
 
           <div class="form-group">
             <label>Hiring Timeline</label>
             <select id="hiringTimeline">
               <option value="">Select timeline</option>
-              <option>Immediately</option>
-              <option>Within 1 week</option>
-              <option>Within 2 weeks</option>
-              <option>Within 1 month</option>
-              <option>Always hiring</option>
+              <option value="immediately">Immediately</option>
+              <option value="within_2_weeks">Within 2 weeks</option>
+              <option value="within_1_month">Within 1 month</option>
+              <option value="within_3_months">Within 3 months</option>
+              <option value="always_hiring">Always hiring</option>
             </select>
           </div>
         </div>

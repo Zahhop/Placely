@@ -17,7 +17,12 @@
   }
 
   function getProfilePhoto(profile) {
-    return profile?.profile_photo_url || profile?.avatar_url || "";
+    const value = profile?.profile_photo_url || profile?.avatar_url || "";
+    return window.PlacelyAuth?.getPublicImageUrl?.(
+      window.PlacelyAuth.client(),
+      "candidate_photos",
+      value
+    ) || value;
   }
 
   function getCandidateTags(profile, limit = 5) {
@@ -65,6 +70,24 @@
     return profile?.resume_path || profile?.resume_url ? "Resume uploaded" : "No resume uploaded";
   }
 
+  function renderDetailItem(label, value) {
+    return `
+      <div class="detail-item">
+        <span>${escapeHTML(label)}</span>
+        <strong>${escapeHTML(value)}</strong>
+      </div>
+    `;
+  }
+
+  function renderContactItems(profile) {
+    const contact = window.PlacelyAuth?.getVisibleCandidateContact(profile) || { showEmail: false, showPhone: false };
+
+    return [
+      contact.showEmail ? renderDetailItem("Email", profile.email || "Locked / not added") : "",
+      contact.showPhone ? renderDetailItem("Phone", profile.phone || "Locked / not added") : ""
+    ].join("");
+  }
+
   function buildDetailHTML(profileInput) {
     const profile = { ...fallbackProfile, ...(profileInput || {}) };
     const tags = getCandidateTags(profile, 10);
@@ -85,40 +108,12 @@
       <p class="detail-bio">${escapeHTML(profile.bio || "No bio added yet.")}</p>
 
       <div class="detail-info-grid">
-        <div class="detail-item">
-          <span>Location</span>
-          <strong>${escapeHTML(profile.location || "Not added")}</strong>
-        </div>
-
-        <div class="detail-item">
-          <span>Experience</span>
-          <strong>${escapeHTML(profile.experience || "Not added")}</strong>
-        </div>
-
-        <div class="detail-item">
-          <span>Availability</span>
-          <strong>${escapeHTML(profile.availability || "Not added")}</strong>
-        </div>
-
-        <div class="detail-item">
-          <span>Resume</span>
-          <strong>${escapeHTML(getResumeStatus(profile))}</strong>
-        </div>
-
-        <div class="detail-item">
-          <span>Preferred Contact</span>
-          <strong>${escapeHTML(profile.contact_method || "Not added")}</strong>
-        </div>
-
-        <div class="detail-item">
-          <span>Email</span>
-          <strong>${escapeHTML(profile.email || "Locked / not added")}</strong>
-        </div>
-
-        <div class="detail-item">
-          <span>Phone</span>
-          <strong>${escapeHTML(profile.phone || "Locked / not added")}</strong>
-        </div>
+        ${renderDetailItem("Location", profile.location || "Not added")}
+        ${renderDetailItem("Experience", profile.experience || "Not added")}
+        ${renderDetailItem("Availability", profile.availability || "Not added")}
+        ${renderDetailItem("Resume", getResumeStatus(profile))}
+        ${renderDetailItem("Preferred Contact", profile.contact_method || "Not added")}
+        ${renderContactItems(profile)}
       </div>
 
       <div class="detail-section">

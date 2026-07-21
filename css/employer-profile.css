@@ -1,3 +1,4 @@
+html.auth-booting body { visibility: hidden; }
 * {
   margin: 0;
   padding: 0;
@@ -132,7 +133,8 @@ nav a:hover {
 
 .primary-btn,
 .secondary-btn,
-.primary-wide {
+.primary-wide,
+.secondary-wide {
   border: 0;
   text-decoration: none;
   padding: 15px 22px;
@@ -152,6 +154,14 @@ nav a:hover {
 
 .secondary-btn {
   color: #2563eb;
+  border: 1px solid #cbd5e1;
+  background: white;
+}
+
+.secondary-wide {
+  width: 100%;
+  padding: 13px;
+  color: #475569;
   border: 1px solid #cbd5e1;
   background: white;
 }
@@ -486,6 +496,46 @@ textarea {
   min-height: 120px;
   resize: vertical;
   line-height: 1.5;
+}
+
+.role-chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.role-chip {
+  cursor: pointer;
+}
+
+.role-chip input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.role-chip span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  border: 1px solid #dbe3ef;
+  border-radius: 999px;
+  padding: 8px 12px;
+  color: #334155;
+  background: #f8fafc;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.role-chip input:checked + span {
+  border-color: #2563eb;
+  color: #1d4ed8;
+  background: #dbeafe;
+}
+
+.other-role-input {
+  margin-top: 12px;
 }
 
 input:focus,

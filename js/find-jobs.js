@@ -47,7 +47,7 @@ function normalizeJob(job) {
     company: job.company_name || "Employer",
     location: job.location || "Location not listed",
     type: job.employment_type || "Full-time",
-    pay: job.pay_range || "Pay not listed",
+    pay: window.PlacelyAuth.formatCompensationFromRecord(job),
     trade: job.experience_level || "Trades",
     description: job.job_description || "No description provided yet.",
     requirements: job.required_skills || "Requirements not listed.",
@@ -61,6 +61,7 @@ function normalizeJob(job) {
 async function loadCurrentUser() {
   const user = await verifyCandidateAccess(jobsSupabase, {
     loginPath: "../candidates/candidate-login.html",
+    setupPath: "../candidates/candidate-setup.html",
     employerDashboardPath: "../employers/employer-dashboard.html"
   });
 
@@ -78,7 +79,6 @@ async function loadSavedJobIds() {
     .eq("candidate_id", currentUser.id);
 
   if (error) {
-    console.error("Error loading saved jobs:", error);
     savedJobIds = [];
     return;
   }
@@ -100,7 +100,6 @@ async function loadEmployerLogos(jobs) {
     .in("id", employerIds);
 
   if (error) {
-    console.warn("Could not load employer logos:", error);
     employerLogos = {};
     return;
   }
@@ -117,7 +116,7 @@ async function loadEmployerLogos(jobs) {
       profile.company_logo_preview ||
       "";
 
-    employerLogos[String(profile.id)] = logo;
+    employerLogos[String(profile.id)] = getEmployerLogoUrl(logo);
     employerProfiles[String(profile.id)] = profile;
   });
 }
@@ -135,11 +134,9 @@ async function loadJobs() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Error loading jobs:", error);
-
     jobsList.innerHTML = `
       <div class="empty-state">
-        Could not load jobs from Supabase. Check your RLS policy and jobs table.
+        Could not load jobs. Please refresh the page and try again.
       </div>
     `;
     return;
@@ -249,7 +246,7 @@ function renderJobCard(job) {
 
       <div class="job-card-actions">
         <button class="save-btn save-job-btn" type="button" data-job-id="${escapeHTML(job.id)}">
-          ${alreadySaved ? "Saved" : "Save"}
+          ${alreadySaved ? "Unsave" : "Save"}
         </button>
         <button class="view-btn view-job-btn" type="button" data-job-id="${escapeHTML(job.id)}">
           View Details
@@ -308,7 +305,7 @@ function renderJobDetails() {
 
         <div class="job-detail-actions">
           <button class="secondary-btn" type="button" id="saveJobBtn">
-            ${alreadySaved ? "Saved" : "Save Job"}
+            ${alreadySaved ? "Unsave Job" : "Save Job"}
           </button>
 
           <button class="primary-btn" type="button" id="applyBtn">
@@ -424,7 +421,21 @@ async function saveJob(jobId) {
   const alreadySaved = savedJobIds.includes(String(job.id));
 
   if (alreadySaved) {
-    showToast("Job already saved.");
+    const { error } = await jobsSupabase
+      .from("saved_jobs")
+      .delete()
+      .eq("candidate_id", currentUser.id)
+      .eq("job_id", job.id);
+
+    if (error) {
+      showToast("Could not remove saved job.");
+      return;
+    }
+
+    savedJobIds = savedJobIds.filter((id) => id !== String(job.id));
+    renderJobs();
+    if (selectedJob && String(selectedJob.id) === String(job.id)) renderJobDetails();
+    showToast("Job removed from saved jobs.");
     return;
   }
 
@@ -444,7 +455,6 @@ async function saveJob(jobId) {
       return;
     }
 
-    console.error("Save job error:", error);
     showToast("Could not save job.");
     return;
   }
@@ -459,7 +469,6 @@ function applyToSelectedJob() {
   if (!selectedJob || !currentUser) return;
 
   if (!selectedJob.employer_id) {
-    console.error("Selected job is missing employer_id:", selectedJob);
     showToast("This job is missing employer information.");
     return;
   }
@@ -472,7 +481,6 @@ function applyToJob(jobId) {
   if (!job || !currentUser) return;
 
   if (!job.employer_id) {
-    console.error("Selected job is missing employer_id:", job);
     showToast("This job is missing employer information.");
     return;
   }
@@ -493,6 +501,10 @@ function renderCompanyAvatar(job, large = false) {
   }
 
   return `<div class="${classes}">${escapeHTML(getInitials(job.company))}</div>`;
+}
+
+function getEmployerLogoUrl(value) {
+  return window.PlacelyAuth?.getPublicImageUrl?.(jobsSupabase, "employer-logos", value) || String(value || "");
 }
 
 function getInitials(name) {

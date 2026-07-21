@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="auth-booting">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -92,7 +92,7 @@
               <div id="strengthBar"></div>
             </div>
 
-            <p>Complete your logo, company description, hiring needs, pay range, and candidate qualities to improve trust with candidates.</p>
+            <p>Complete your logo, company description, hiring roles, compensation, and candidate qualities to improve trust with candidates.</p>
 
             <div class="score-list" id="scoreList"></div>
           </aside>
@@ -120,9 +120,10 @@
               <div class="logo-initials" id="companyLogo">PT</div>
             </div>
 
-            <input id="company_logo_file" type="file" accept="image/*" hidden />
+            <input id="company_logo_file" type="file" accept="image/jpeg,image/png,image/webp" hidden />
 
             <button id="uploadLogoBtn" type="button" class="primary-wide">Upload Logo</button>
+            <button id="removeLogoBtn" type="button" class="secondary-wide">Remove Logo</button>
             <span class="visibility-chip">Visible to Candidates</span>
           </aside>
 
@@ -186,24 +187,40 @@
           </div>
 
           <div>
-            <label>Typical Pay Range</label>
-            <input id="pay_range" type="text" placeholder="$25 - $40/hr" />
+            <label>Compensation Type</label>
+            <select id="compensation_type">
+              <option value="">Select compensation</option>
+              <option value="hourly">Hourly</option>
+              <option value="annual">Annual salary</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Minimum Compensation</label>
+            <input id="compensation_min" type="number" min="1" step="1" inputmode="numeric" placeholder="20" />
+          </div>
+
+          <div>
+            <label>Maximum Compensation</label>
+            <input id="compensation_max" type="number" min="1" step="1" inputmode="numeric" placeholder="40" />
           </div>
 
           <div>
             <label>Hiring Timeline</label>
             <select id="hiring_timeline">
               <option value="">Select timeline</option>
-              <option>Immediately</option>
-              <option>Within 2 Weeks</option>
-              <option>Within 1 Month</option>
-              <option>Ongoing Hiring</option>
+              <option value="immediately">Immediately</option>
+              <option value="within_2_weeks">Within 2 weeks</option>
+              <option value="within_1_month">Within 1 month</option>
+              <option value="within_3_months">Within 3 months</option>
+              <option value="always_hiring">Always hiring</option>
             </select>
           </div>
         </div>
 
-        <label>Hiring Needs</label>
-        <textarea id="hiring_needs" placeholder="Example: apprentices, journeymen, welders, labourers, equipment operators..."></textarea>
+        <label>Hiring Roles</label>
+        <div class="role-chip-grid" id="hiring_roles_group" aria-label="Hiring roles"></div>
+        <input id="hiring_role_other" class="other-role-input" type="text" placeholder="Custom role" hidden />
       </section>
 
       <section class="panel profile-section hidden" id="candidate-section" role="tabpanel">

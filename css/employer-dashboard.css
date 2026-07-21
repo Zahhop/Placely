@@ -1,3 +1,4 @@
+html.auth-booting body { visibility: hidden; }
 /* Restored standalone employer shell rules from the pre-shared-CSS dashboard state. */
 * {
   box-sizing: border-box;
