@@ -102,10 +102,7 @@
   async function loadCandidateAccess() {
     const employerClient = window.employerSupabase;
 
-    console.log("Employer Supabase ready:", Boolean(employerClient));
-
     if (!employerClient) {
-      console.error("Employer Supabase client was not initialized.");
       return false;
     }
 
@@ -116,25 +113,19 @@
       } = await employerClient.auth.getUser();
 
       if (userError || !user) {
-        window.location.href = "employer-login.html";
+        window.location.replace("employer-login.html");
         return false;
       }
 
-      console.log("Logged-in employer ID:", user.id);
-
       const { data, error } = await employerClient
         .from("employer_profiles")
-        .select("candidate_access")
+        .select("candidate_access, subscription_status")
         .eq("id", user.id)
         .maybeSingle();
 
-      console.log("Employer profile:", data);
-      console.log("Candidate access:", data?.candidate_access);
-
       if (error || !data) return false;
       return hasCandidateSearchAccess(data);
-    } catch (error) {
-      console.warn("Employer navbar candidate access check failed.", error);
+    } catch {
       return false;
     }
   }
@@ -148,7 +139,6 @@
   function applyCandidateNavbarUI(hasAccess) {
     const candidatesNav = document.getElementById("employerCandidatesNav");
     const savedTalentNav = document.getElementById("employerSavedTalentNav");
-    console.log("Candidates nav element:", candidatesNav);
 
     if (candidatesNav) {
       candidatesNav.hidden = false;
@@ -160,13 +150,6 @@
       candidatesNav.style.removeProperty("visibility");
       candidatesNav.style.removeProperty("opacity");
 
-      console.log("Candidates nav final state:", {
-        exists: Boolean(candidatesNav),
-        hidden: candidatesNav.hidden,
-        hasHiddenAttribute: candidatesNav.hasAttribute("hidden"),
-        classes: candidatesNav.className,
-        display: getComputedStyle(candidatesNav).display
-      });
     }
 
     if (savedTalentNav) {
@@ -239,7 +222,7 @@
   }
 
   function hasCandidateSearchAccess(profile) {
-    return profile?.candidate_access === true;
+    return window.PlacelyAuth?.hasCandidateSearchAccess(profile) || false;
   }
 
   function escapeHTML(value) {
@@ -253,14 +236,14 @@
 
   async function handleLogout() {
     if (!window.PlacelyAuth) {
-      window.location.href = "employer-login.html";
+      window.location.replace("employer-login.html");
       return;
     }
 
     try {
       await window.PlacelyAuth.clearAuthState();
     } finally {
-      window.location.href = "employer-login.html";
+      window.location.replace("employer-login.html");
     }
   }
 

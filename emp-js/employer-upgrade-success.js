@@ -1,9 +1,5 @@
 const upgradeSuccessSupabase = window.employerSupabase;
 
-if (!upgradeSuccessSupabase) {
-  console.error("Employer Supabase client was not initialized.");
-}
-
 const statusText = document.getElementById("upgradeStatusText");
 const findCandidatesBtn = document.getElementById("findCandidatesBtn");
 
@@ -51,20 +47,19 @@ async function loadEmployerSubscription(userId) {
   try {
     const { data, error } = await upgradeSuccessSupabase
       .from("employer_profiles")
-      .select("candidate_access")
+      .select("candidate_access, subscription_status")
       .eq("id", userId)
       .maybeSingle();
 
     if (error) throw error;
     return data || {};
-  } catch (error) {
-    console.warn("Could not confirm candidate access yet.", error);
+  } catch {
     return {};
   }
 }
 
 function hasCandidateSearchAccess(profile) {
-  return profile?.candidate_access === true;
+  return window.PlacelyAuth.hasCandidateSearchAccess(profile);
 }
 
 function delay(ms) {

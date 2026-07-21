@@ -12,7 +12,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function startCandidateCheckout() {
   if (!dashboardAccessSupabase) {
-    console.error("Employer Supabase client was not initialized.");
     showDashboardAccessToast("Could not start checkout. Please refresh and try again.");
     return;
   }
@@ -38,9 +37,7 @@ async function startCandidateCheckout() {
     );
 
     if (error) {
-      console.error("Checkout function error:", error);
       const responseBody = await readFunctionErrorBody(error);
-      if (responseBody) console.error("Checkout function response body:", responseBody);
       throw new Error(responseBody?.error || error.message || "Unable to start checkout.");
     }
 
@@ -50,7 +47,6 @@ async function startCandidateCheckout() {
 
     window.location.href = data.url;
   } catch (error) {
-    console.error("Candidate checkout failed:", error);
     showDashboardAccessToast(error instanceof Error ? error.message : "Unable to start checkout.");
 
     if (cta) {

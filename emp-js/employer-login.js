@@ -4,6 +4,7 @@ const form = document.getElementById("loginForm");
 const errorMessage = document.getElementById("errorMessage");
 const submitBtn = form?.querySelector(".login-btn");
 const resendBtn = document.getElementById("resendVerificationBtn");
+const createAccountBtn = document.getElementById("createAccountBtn");
 const keepSignedInInput = document.getElementById("keepSignedIn");
 
 let isSubmitting = false;
@@ -35,7 +36,8 @@ form.addEventListener("submit", async function (e) {
         return;
       }
 
-      throw error;
+      await showLoginFailure(email);
+      return;
     }
 
     if (!data.session || !data.user) {
@@ -47,7 +49,7 @@ form.addEventListener("submit", async function (e) {
       return;
     }
 
-    const accountType = await window.PlacelyAuth.detectAccountType(data.user);
+    const accountType = await getRecordedAccountType(data.user.id);
 
     if (accountType !== "employer") {
       await window.PlacelyAuth.clearAuthState();
@@ -55,13 +57,28 @@ form.addEventListener("submit", async function (e) {
       return;
     }
 
-    await window.PlacelyAuth.ensureAccountProfiles(data.user, "employer");
+    const profile = await getEmployerProfile(data.user.id);
+    if (!profile) {
+      await window.PlacelyAuth.clearAuthState();
+      showMessage("We could not verify your employer profile. Please contact Placely support.", "error");
+      return;
+    }
+
+    if (!window.PlacelyAuth.isEmployerOnboardingComplete(profile)) {
+      window.location.href = "employer-setup.html";
+      return;
+    }
+
     window.location.href = await window.PlacelyAuth.getPostAuthDestination("employer");
   } catch (error) {
-    showMessage(error.message || "Login failed.", "error");
+    showMessage(getSafeLoginMessage(error), "error");
   } finally {
     setSubmitting(false);
   }
+});
+
+createAccountBtn?.addEventListener("click", () => {
+  window.location.href = "employer-signup.html";
 });
 
 resendBtn?.addEventListener("click", async () => {
@@ -141,4 +158,62 @@ function hideMessage() {
   errorMessage.style.display = "none";
   errorMessage.style.color = "";
   if (resendBtn) resendBtn.hidden = true;
+  if (createAccountBtn) createAccountBtn.hidden = true;
+}
+
+async function showLoginFailure(email) {
+  const accountExists = await canFindAccountByEmail(email);
+
+  if (accountExists === false) {
+    showMessage("No employer account exists for that email.", "error");
+    if (createAccountBtn) createAccountBtn.hidden = false;
+    return;
+  }
+
+  showMessage("Invalid email or password.", "error");
+}
+
+async function canFindAccountByEmail(email) {
+  try {
+    const { data, error } = await placelySupabase
+      .from("profiles")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (error) return null;
+    return Boolean(data);
+  } catch {
+    return null;
+  }
+}
+
+async function getRecordedAccountType(userId) {
+  const { data, error } = await placelySupabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data?.role || null;
+}
+
+async function getEmployerProfile(userId) {
+  const { data, error } = await placelySupabase
+    .from("employer_profiles")
+    .select("*")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data || null;
+}
+
+function getSafeLoginMessage(error) {
+  if (/invalid login credentials/i.test(error?.message || "")) {
+    return "Invalid email or password.";
+  }
+
+  return error?.message || "Login failed.";
 }

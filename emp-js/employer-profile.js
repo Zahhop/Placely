@@ -1,9 +1,5 @@
 const employerSupabase = window.employerSupabase;
 
-if (!employerSupabase) {
-  console.error("Employer Supabase client was not initialized.");
-}
-
 const form = document.getElementById("employerProfileForm");
 const logoutBtn = document.getElementById("logoutBtn");
 const toast = document.getElementById("toast");
@@ -12,10 +8,15 @@ const companyNameInput = document.getElementById("company_name");
 const industryInput = document.getElementById("industry");
 const locationInput = document.getElementById("company_location");
 const employmentInput = document.getElementById("employment_type");
-const payInput = document.getElementById("pay_range");
+const compensationTypeInput = document.getElementById("compensation_type");
+const compensationMinInput = document.getElementById("compensation_min");
+const compensationMaxInput = document.getElementById("compensation_max");
 const timelineInput = document.getElementById("hiring_timeline");
+const hiringRolesGroup = document.getElementById("hiring_roles_group");
+const hiringRoleOtherInput = document.getElementById("hiring_role_other");
 
 const uploadLogoBtn = document.getElementById("uploadLogoBtn");
+const removeLogoBtn = document.getElementById("removeLogoBtn");
 const logoFileInput = document.getElementById("company_logo_file");
 const logoPreview = document.getElementById("company_logo_preview");
 const logoFrame = document.querySelector(".logo-frame");
@@ -26,15 +27,19 @@ const profileSections = document.querySelectorAll(".profile-section");
 const scoreList = document.getElementById("scoreList");
 
 const PHOTO_BUCKET = "employer-logos";
-const MAX_LOGO_SIZE_BYTES = 5 * 1024 * 1024;
 
 let currentLogoUrl = "";
 let isLogoUploading = false;
+let isProfileSaving = false;
+let currentUser = null;
+let currentProfile = {};
 
 document.addEventListener("DOMContentLoaded", () => {
+  renderHiringRoleOptions();
   setupSectionNavigation();
   loadEmployerProfile();
   setupLivePreview();
+  setupStructuredFieldEvents();
   setupLogoUpload();
   setupLogout();
 });
@@ -46,6 +51,7 @@ async function loadEmployerProfile() {
   });
 
   if (!user) return;
+  currentUser = user;
 
   const { data: profile, error } = await employerSupabase
     .from("employer_profiles")
@@ -53,17 +59,13 @@ async function loadEmployerProfile() {
     .eq("id", user.id)
     .maybeSingle();
 
-  if (error) {
-    console.error("Error loading profile:", error);
-    showToast("Could not load profile.");
+  if (error || !profile) {
+    await window.PlacelyAuth.clearAuthState();
+    window.location.replace("employer-login.html");
     return;
   }
 
-  if (!profile) {
-    updatePreview();
-    updateStrength();
-    return;
-  }
+  currentProfile = profile;
 
   setValue("company_name", profile.company_name);
   setValue("industry", profile.industry);
@@ -75,15 +77,17 @@ async function loadEmployerProfile() {
   setValue("company_description", profile.company_description);
   setValue("main_hiring_industry", profile.main_hiring_industry);
   setValue("employment_type", profile.employment_type);
-  setValue("pay_range", profile.pay_range);
-  setValue("hiring_timeline", profile.hiring_timeline);
+  setValue("compensation_type", profile.compensation_type);
+  setValue("compensation_min", profile.compensation_min);
+  setValue("compensation_max", profile.compensation_max);
+  setValue("hiring_timeline", window.PlacelyAuth.normalizeHiringTimeline(profile.hiring_timeline));
   setValue("candidate_qualities", profile.candidate_qualities);
-  setValue("hiring_needs", profile.hiring_needs);
+  setHiringRoles(window.PlacelyAuth.getEmployerHiringRoles(profile), profile.hiring_role_other);
 
   currentLogoUrl = profile.company_logo_url || "";
 
   if (currentLogoUrl) {
-    setLogoImage(currentLogoUrl);
+    setLogoImage(getEmployerLogoUrl(currentLogoUrl));
   } else {
     clearLogoImage();
   }
@@ -95,6 +99,8 @@ async function loadEmployerProfile() {
 if (form) {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+
+    if (isProfileSaving) return;
 
     if (isLogoUploading) {
       showToast("Logo is still uploading. Please wait a second.");
@@ -111,6 +117,11 @@ if (form) {
       return;
     }
 
+    const compensation = window.PlacelyAuth.buildCompensationPayload(
+      getValue("compensation_type"),
+      compensationMinInput?.value,
+      compensationMaxInput?.value
+    );
     const updates = {
       id: user.id,
       company_name: getValue("company_name"),
@@ -123,26 +134,72 @@ if (form) {
       company_location: getValue("company_location"),
       company_description: getValue("company_description"),
       employment_type: getValue("employment_type"),
-      pay_range: getValue("pay_range"),
-      hiring_timeline: getValue("hiring_timeline"),
+      hiring_roles: getSelectedKnownHiringRoles(),
+      hiring_role_other: getOtherHiringRole(),
+      hiring_needs: getSelectedHiringRoles().join(", "),
+      ...(compensation.payload || {
+        compensation_type: getValue("compensation_type"),
+        compensation_min: getNumberValue(compensationMinInput),
+        compensation_max: getNumberValue(compensationMaxInput),
+        pay_range: window.PlacelyAuth.formatCompensation(getValue("compensation_type"), getNumberValue(compensationMinInput), getNumberValue(compensationMaxInput))
+      }),
+      hiring_timeline: window.PlacelyAuth.normalizeHiringTimeline(getValue("hiring_timeline")),
       candidate_qualities: getValue("candidate_qualities"),
-      hiring_needs: getValue("hiring_needs"),
       company_logo_url: currentLogoUrl
     };
 
-    const { error } = await employerSupabase
-      .from("employer_profiles")
-      .upsert(updates, { onConflict: "id" });
+    const compensationError = validateCompensation();
+    if (compensationError) {
+      showToast(compensationError);
+      return;
+    }
+
+    const willBeComplete = window.PlacelyAuth.isEmployerOnboardingComplete({
+      ...updates,
+      onboarding_completed: true
+    });
+
+    updates.onboarding_completed = willBeComplete;
+    updates.onboarding_completed_at = willBeComplete ? new Date().toISOString() : null;
+
+    isProfileSaving = true;
+    const saveBtn = form.querySelector("[type='submit']");
+    const originalText = saveBtn?.textContent || "Save Changes";
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Saving...";
+    }
+
+    const { error } = await updateExistingEmployerProfile(updates, user.id);
 
     if (error) {
-      console.error("Save error:", error);
-      showToast("Error saving profile.");
+      if (window.PlacelyAuth.isMissingRowError(error)) {
+        await window.PlacelyAuth.clearAuthState();
+        window.location.replace("employer-login.html");
+        return;
+      }
+
+      showToast("Could not save profile.");
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
+      isProfileSaving = false;
       return;
     }
 
     showToast("Company profile saved.");
+    currentProfile = {
+      ...currentProfile,
+      ...updates
+    };
     updatePreview();
     updateStrength();
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = originalText;
+    }
+    isProfileSaving = false;
   });
 }
 
@@ -158,18 +215,6 @@ function setupLogoUpload() {
 
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      showToast("Please upload an image file.");
-      logoFileInput.value = "";
-      return;
-    }
-
-    if (file.size > MAX_LOGO_SIZE_BYTES) {
-      showToast("Logo must be 5 MB or smaller.");
-      logoFileInput.value = "";
-      return;
-    }
-
     const {
       data: { user },
       error: userError
@@ -182,34 +227,56 @@ function setupLogoUpload() {
 
     try {
       isLogoUploading = true;
+      uploadLogoBtn.disabled = true;
+      uploadLogoBtn.textContent = "Uploading...";
 
+      await window.PlacelyAuth.validateImageFileForUpload(file, "employerLogo");
       const previewUrl = URL.createObjectURL(file);
       setLogoImage(previewUrl);
       updateStrength();
 
       showToast("Uploading company logo...");
 
-      const logoUrl = await uploadCompanyLogo(user.id, file);
+      const previousLogoValue = currentLogoUrl;
+      const logoPath = await uploadCompanyLogo(user.id, file);
+      const { error: profileError } = await updateExistingEmployerProfile({ company_logo_url: logoPath }, user.id);
 
-      currentLogoUrl = logoUrl;
-      setLogoImage(logoUrl);
+      if (profileError) {
+        await removeLogoObject(logoPath, user.id);
+        throw new Error("Logo uploaded, but we could not save it to your profile.");
+      }
+
+      currentLogoUrl = logoPath;
+      currentProfile = {
+        ...currentProfile,
+        company_logo_url: logoPath
+      };
+      setLogoImage(getEmployerLogoUrl(logoPath, Date.now()));
       updateStrength();
+      if (previousLogoValue && previousLogoValue !== logoPath) {
+        try {
+          await removeLogoObject(previousLogoValue, user.id);
+        } catch {}
+      }
 
       showToast("Logo uploaded. Click Save Changes to finish.");
     } catch (error) {
-      console.error("Logo upload failed:", error);
       showToast(error?.message || "Logo upload failed.");
 
       if (currentLogoUrl) {
-        setLogoImage(currentLogoUrl);
+        setLogoImage(getEmployerLogoUrl(currentLogoUrl));
       } else {
         clearLogoImage();
       }
     } finally {
       isLogoUploading = false;
+      uploadLogoBtn.disabled = false;
+      uploadLogoBtn.textContent = "Upload Logo";
       logoFileInput.value = "";
     }
   });
+
+  removeLogoBtn?.addEventListener("click", removeCurrentLogo);
 }
 
 async function uploadCompanyLogo(userId, file) {
@@ -217,52 +284,140 @@ async function uploadCompanyLogo(userId, file) {
     throw new Error("No logo file selected.");
   }
 
-  if (!file.type.startsWith("image/")) {
-    throw new Error("Please upload an image file.");
+  return window.PlacelyAuth.uploadOwnedImage(employerSupabase, "employerLogo", file, userId);
+}
+
+async function removeCurrentLogo() {
+  if (!currentUser || isLogoUploading || !currentLogoUrl) return;
+
+  const previousLogoValue = currentLogoUrl;
+  const wasOwned = window.PlacelyAuth.isOwnedStoragePath(previousLogoValue, PHOTO_BUCKET, currentUser.id);
+
+  if (wasOwned) await removeLogoObject(previousLogoValue, currentUser.id);
+
+  const { error } = await updateExistingEmployerProfile({ company_logo_url: null }, currentUser.id);
+  if (error) {
+    showToast("Could not remove logo. Please try again.");
+    return;
   }
 
-  if (file.size > MAX_LOGO_SIZE_BYTES) {
-    throw new Error("Logo must be 5 MB or smaller.");
-  }
+  currentLogoUrl = "";
+  currentProfile = {
+    ...currentProfile,
+    company_logo_url: null
+  };
+  clearLogoImage();
+  updateStrength();
+  showToast("Logo removed.");
+}
 
-  const safeName = file.name
-    .toLowerCase()
-    .replace(/[^a-z0-9.\-_]/g, "-")
-    .replace(/-+/g, "-");
+async function removeLogoObject(value, userId) {
+  await window.PlacelyAuth.removeOwnedImage(employerSupabase, PHOTO_BUCKET, value, userId);
+}
 
-  const filePath = `${userId}/${Date.now()}-${safeName}`;
+function getEmployerLogoUrl(value, cacheBust = "") {
+  return window.PlacelyAuth.getPublicImageUrl(employerSupabase, PHOTO_BUCKET, value, { cacheBust });
+}
 
-  console.log("Uploading logo:", {
-    bucket: PHOTO_BUCKET,
-    path: filePath,
-    fileType: file.type,
-    fileSize: file.size
+async function updateExistingEmployerProfile(updates, userId) {
+  const result = await employerSupabase
+    .from("employer_profiles")
+    .update(updates)
+    .eq("id", userId)
+    .select("id")
+    .single();
+
+  if (!isMissingColumnError(result.error)) return result;
+
+  const compatibleUpdates = { ...updates };
+  delete compatibleUpdates.onboarding_completed;
+  delete compatibleUpdates.onboarding_completed_at;
+  delete compatibleUpdates.hiring_roles;
+  delete compatibleUpdates.hiring_role_other;
+  delete compatibleUpdates.compensation_type;
+  delete compatibleUpdates.compensation_min;
+  delete compatibleUpdates.compensation_max;
+
+  return employerSupabase
+    .from("employer_profiles")
+    .update(compatibleUpdates)
+    .eq("id", userId)
+    .select("id")
+    .single();
+}
+
+function isMissingColumnError(error) {
+  const message = String(error?.message || "").toLowerCase();
+  return error?.code === "PGRST204" || message.includes("column") || message.includes("could not find");
+}
+
+function renderHiringRoleOptions() {
+  if (!hiringRolesGroup) return;
+
+  hiringRolesGroup.innerHTML = window.PlacelyAuth.hiringRoleOptions.map((role) => `
+    <label class="role-chip">
+      <input type="checkbox" value="${escapeAttribute(role)}">
+      <span>${escapeHTML(role)}</span>
+    </label>
+  `).join("");
+}
+
+function getSelectedHiringRoles() {
+  if (!hiringRolesGroup) return [];
+
+  const selected = getSelectedKnownHiringRoles();
+  const other = getOtherHiringRole();
+  return other ? [...selected, other] : selected;
+}
+
+function getSelectedKnownHiringRoles() {
+  if (!hiringRolesGroup) return [];
+
+  return [...hiringRolesGroup.querySelectorAll("input:checked")]
+    .map((input) => input.value)
+    .filter((role) => role !== "Other");
+}
+
+function getOtherHiringRole() {
+  const hasOther = Boolean(hiringRolesGroup?.querySelector('input[value="Other"]')?.checked);
+  return hasOther ? String(hiringRoleOtherInput?.value || "").trim() : "";
+}
+
+function setHiringRoles(roles, otherValue = "") {
+  if (!hiringRolesGroup) return;
+
+  const knownRoles = new Set(window.PlacelyAuth.hiringRoleOptions);
+  const unknownRoles = (roles || []).filter((role) => !knownRoles.has(role));
+  const resolvedOther = otherValue || unknownRoles.join(", ");
+  const roleSet = new Set(roles || []);
+  [...hiringRolesGroup.querySelectorAll("input")].forEach((input) => {
+    input.checked = roleSet.has(input.value) || (input.value === "Other" && Boolean(resolvedOther));
   });
 
-  const { data: uploadData, error: uploadError } = await employerSupabase.storage
-    .from(PHOTO_BUCKET)
-    .upload(filePath, file, {
-      cacheControl: "3600",
-      upsert: false,
-      contentType: file.type
-    });
+  if (hiringRoleOtherInput) hiringRoleOtherInput.value = resolvedOther;
+  syncOtherRoleVisibility();
+}
 
-  console.log("Upload data:", uploadData);
-  console.log("Upload error:", uploadError);
+function syncOtherRoleVisibility() {
+  const hasOther = Boolean(hiringRolesGroup?.querySelector('input[value="Other"]')?.checked);
+  if (hiringRoleOtherInput) hiringRoleOtherInput.hidden = !hasOther;
+}
 
-  if (uploadError) {
-    throw new Error(uploadError.message || "Storage upload failed.");
-  }
+function validateCompensation() {
+  const type = getValue("compensation_type");
 
-  const { data: publicData } = employerSupabase.storage
-    .from(PHOTO_BUCKET)
-    .getPublicUrl(filePath);
+  if (!type && !compensationMinInput?.value && !compensationMaxInput?.value) return "";
+  const result = window.PlacelyAuth.validateCompensationValues(
+    type,
+    compensationMinInput?.value,
+    compensationMaxInput?.value
+  );
+  return result.valid ? "" : result.message;
+}
 
-  if (!publicData || !publicData.publicUrl) {
-    throw new Error("Could not get public logo URL.");
-  }
-
-  return publicData.publicUrl;
+function getNumberValue(input) {
+  const value = Number(input?.value);
+  return Number.isFinite(value) && input?.value !== "" ? value : null;
 }
 
 function setLogoImage(url) {
@@ -310,7 +465,9 @@ function setupLivePreview() {
     industryInput,
     locationInput,
     employmentInput,
-    payInput,
+    compensationTypeInput,
+    compensationMinInput,
+    compensationMaxInput,
     timelineInput
   ].forEach((input) => {
     if (!input) return;
@@ -325,6 +482,29 @@ function setupLivePreview() {
   });
 }
 
+function setupStructuredFieldEvents() {
+  hiringRolesGroup?.addEventListener("change", () => {
+    syncOtherRoleVisibility();
+    updateStrength();
+  });
+
+  compensationTypeInput?.addEventListener("change", () => {
+    const isAnnual = compensationTypeInput.value === "annual";
+    if (compensationMinInput) compensationMinInput.placeholder = isAnnual ? "50000" : "20";
+    if (compensationMaxInput) compensationMaxInput.placeholder = isAnnual ? "80000" : "40";
+    updatePreview();
+    updateStrength();
+  });
+
+  [compensationMinInput, compensationMaxInput].forEach((input) => {
+    input?.addEventListener("input", () => {
+      input.value = input.value.replace(/[^\d.]/g, "");
+      updatePreview();
+      updateStrength();
+    });
+  });
+}
+
 function updatePreview() {
   const company = getValue("company_name") || "Company Name";
   const industry = getValue("industry") || "Industry";
@@ -333,8 +513,8 @@ function updatePreview() {
   setText("previewCompanyName", company);
   setText("previewCompanyMeta", `${industry} - ${location}`);
   setText("previewEmployment", getValue("employment_type") || "Employment Type");
-  setText("previewPay", getValue("pay_range") || "Pay Range");
-  setText("previewTimeline", getValue("hiring_timeline") || "Hiring Timeline");
+  setText("previewPay", window.PlacelyAuth.formatCompensation(getValue("compensation_type"), getNumberValue(compensationMinInput), getNumberValue(compensationMaxInput), currentProfile.pay_range) || "Pay Range");
+  setText("previewTimeline", window.PlacelyAuth.getHiringTimelineLabel(getValue("hiring_timeline")) || "Hiring Timeline");
 
   const initials = getInitials(company);
 
@@ -354,16 +534,17 @@ function updateStrength() {
     "company_description",
     "main_hiring_industry",
     "employment_type",
-    "pay_range",
+    "compensation_type",
+    "compensation_min",
+    "compensation_max",
     "hiring_timeline",
-    "candidate_qualities",
-    "hiring_needs"
+    "candidate_qualities"
   ];
 
-  const filled = fields.filter((id) => getValue(id)).length;
+  const filled = fields.filter((id) => getValue(id)).length + (getSelectedHiringRoles().length ? 1 : 0);
   const hasLogo = Boolean(currentLogoUrl) || isLogoUploading;
 
-  const total = fields.length + 1;
+  const total = fields.length + 2;
   const completed = filled + (hasLogo ? 1 : 0);
   const percent = Math.round((completed / total) * 100);
 
@@ -444,17 +625,22 @@ function renderStrengthRecommendations(fields, hasLogo) {
     company_description: ["Company description", "company-info"],
     main_hiring_industry: ["Hiring industry", "hiring-section"],
     employment_type: ["Employment type", "hiring-section"],
-    pay_range: ["Pay range", "hiring-section"],
+    compensation_type: ["Compensation type", "hiring-section"],
+    compensation_min: ["Minimum compensation", "hiring-section"],
+    compensation_max: ["Maximum compensation", "hiring-section"],
     hiring_timeline: ["Hiring timeline", "hiring-section"],
     candidate_qualities: ["Candidate qualities", "candidate-section"],
-    hiring_needs: ["Hiring needs", "hiring-section"],
     company_email: ["Company email", "contact-section"],
     phone: ["Phone number", "contact-section"],
     contact_name: ["Contact name", "contact-section"],
     company_website: ["Company website", "contact-section"]
   };
 
-  const missing = fields.filter((id) => !getValue(id)).slice(0, 3);
+  const missing = [
+    ...fields.filter((id) => !getValue(id)),
+    !getSelectedHiringRoles().length ? "hiring_roles" : ""
+  ].filter(Boolean).slice(0, 3);
+  fieldSections.hiring_roles = ["Hiring roles", "hiring-section"];
   const logoItem = hasLogo
     ? `<button type="button" data-section-target="company-info"><span>Done</span> Company logo</button>`
     : `<button type="button" data-section-target="company-info"><span>Add</span> Company logo</button>`;
@@ -473,7 +659,7 @@ function setupLogout() {
 
   logoutBtn.addEventListener("click", async () => {
     await window.PlacelyAuth.clearAuthState();
-    window.location.href = "employer-login.html";
+    window.location.replace("employer-login.html");
   });
 }
 
@@ -499,6 +685,10 @@ function setText(id, value) {
   }
 }
 
+function escapeAttribute(value) {
+  return escapeHTML(value).replaceAll("`", "&#096;");
+}
+
 function getInitials(value) {
   return String(value || "PT")
     .trim()
@@ -512,7 +702,6 @@ function getInitials(value) {
 
 function showToast(message) {
   if (!toast) {
-    console.warn(message);
     return;
   }
 

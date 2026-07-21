@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="auth-booting">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -69,8 +69,24 @@
           </div>
 
           <div class="form-group">
-            <label for="jobPay">Pay range</label>
-            <input id="jobPay" type="text" placeholder="$25 - $40/hr" />
+            <label for="jobCompensationType">Compensation type</label>
+            <select id="jobCompensationType">
+              <option value="hourly">Hourly</option>
+              <option value="annual">Annual salary</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="jobCompensationMin">Minimum Pay</label>
+            <input id="jobCompensationMin" type="number" min="1" step="0.01" inputmode="decimal" placeholder="25" />
+          </div>
+
+          <div class="form-group">
+            <label for="jobCompensationMax">Maximum Pay</label>
+            <input id="jobCompensationMax" type="number" min="1" step="0.01" inputmode="decimal" placeholder="40" />
+            <small id="jobCompensationUnit" class="field-hint">per hour</small>
+            <small id="jobCompensationError" class="field-error"></small>
+            <small id="jobCompensationPreview" class="field-hint"></small>
           </div>
 
           <div class="form-group">

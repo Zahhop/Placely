@@ -1,9 +1,5 @@
 const savedSupabase = window.employerSupabase;
 
-if (!savedSupabase) {
-  console.error("Employer Supabase client was not initialized.");
-}
-
 const savedTalentGrid = document.getElementById("savedTalentGrid");
 const emptyState = document.getElementById("emptyState");
 const resultsText = document.getElementById("resultsText");
@@ -40,6 +36,10 @@ async function initSavedTalent() {
 
   currentUser = user;
   hasCandidateAccess = await loadEmployerCandidateAccess(user.id);
+  if (!hasCandidateAccess) {
+    renderLockedSavedTalent();
+    return;
+  }
   await loadSavedTalent();
 }
 
@@ -57,7 +57,7 @@ function setupEvents() {
   if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {
       await window.PlacelyAuth.clearAuthState();
-      window.location.href = "employer-login.html";
+      window.location.replace("employer-login.html");
     });
   }
 }
@@ -69,15 +69,45 @@ async function requireEmployerLogin() {
   });
 }
 
+async function loadEmployerCandidateAccess(userId) {
+  const { data, error } = await savedSupabase
+    .from("employer_profiles")
+    .select("candidate_access, subscription_status")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error || !data) return false;
+  return window.PlacelyAuth.hasCandidateSearchAccess(data);
+}
+
+function renderLockedSavedTalent() {
+  allSavedCandidates = [];
+  filteredSavedCandidates = [];
+  savedTalentRowsByCandidateId = new Map();
+
+  if (savedTalentGrid) savedTalentGrid.innerHTML = "";
+  if (resultsText) resultsText.textContent = "Candidate Network access is required to view saved talent.";
+  if (savedCount) savedCount.textContent = "0";
+  if (readyCount) readyCount.textContent = "0";
+  if (tradeCount) tradeCount.textContent = "0";
+  if (newestSave) newestSave.textContent = "-";
+
+  if (emptyState) {
+    emptyState.classList.remove("hidden");
+    const title = emptyState.querySelector("h3, strong");
+    const copy = emptyState.querySelector("p");
+    if (title) title.textContent = "Candidate Network access required";
+    if (copy) copy.textContent = "Get access from the employer dashboard before viewing saved candidates.";
+  }
+}
+
 async function loadSavedTalent() {
   resultsText.textContent = "Loading saved candidates...";
 
   const savedRows = await loadSavedTalentRows();
-  const legacyIds = getLocalSavedCandidateIds();
   const candidateIds = [
     ...new Set([
-      ...savedRows.map((row) => String(row.candidate_id || "").trim()).filter(Boolean),
-      ...legacyIds
+      ...savedRows.map((row) => String(row.candidate_id || "").trim()).filter(Boolean)
     ])
   ];
 
@@ -97,18 +127,13 @@ async function loadSavedTalent() {
     savedTalentRowsByCandidateId.set(candidateId, row);
   });
 
-  const columns = hasCandidateAccess
-    ? "*"
-    : "id, full_name, trade, location, experience, availability, skills, certifications, profile_photo_url, created_at, profile_visible";
-
   const { data, error } = await savedSupabase
     .from("candidate_profiles")
-    .select(columns)
+    .select("*")
     .in("id", candidateIds)
     .eq("profile_visible", true);
 
   if (error) {
-    console.error("Error loading saved talent:", error);
     showToast("Could not load saved talent.");
     allSavedCandidates = [];
     filteredSavedCandidates = [];
@@ -139,7 +164,6 @@ async function loadSavedTalentRows() {
     .eq("employer_id", currentUser.id);
 
   if (error) {
-    console.warn("Saved talent table load failed; using legacy local saved IDs if present.", error);
     return [];
   }
 
@@ -228,8 +252,8 @@ function createTalentCard(candidate) {
     <div class="talent-top">
       <div class="avatar">
         ${
-          candidate.profile_photo_url
-            ? `<img src="${escapeAttribute(candidate.profile_photo_url)}" alt="Candidate photo">`
+          getCandidatePhotoUrl(candidate.profile_photo_url)
+            ? `<img src="${escapeAttribute(getCandidatePhotoUrl(candidate.profile_photo_url))}" alt="Candidate photo">`
             : `${getInitials(name)}`
         }
       </div>
@@ -286,9 +310,10 @@ function createTalentCard(candidate) {
 function openCandidatePanel(candidate) {
   const tags = getCandidateTags(candidate);
   const contactLocked = !hasCandidateAccess;
+  const visibleContact = window.PlacelyAuth.getVisibleCandidateContact(candidate);
 
   candidateDetailContent.innerHTML = `
-    <img src="${escapeAttribute(candidate.profile_photo_url || "https://placehold.co/160x160?text=PT")}" class="detail-photo" alt="Candidate photo" />
+    <img src="${escapeAttribute(getCandidatePhotoUrl(candidate.profile_photo_url) || "https://placehold.co/160x160?text=PT")}" class="detail-photo" alt="Candidate photo" />
 
     <h2 class="detail-name">${escapeHTML(candidate.full_name || "Candidate")}</h2>
     <div class="detail-trade">${escapeHTML(candidate.trade || "Trade not listed")}</div>
@@ -318,15 +343,8 @@ function openCandidatePanel(candidate) {
         <strong>${escapeHTML(contactLocked ? "Upgrade required" : candidate.contact_method || "Not added")}</strong>
       </div>
 
-      <div class="detail-item">
-        <span>Email</span>
-          <strong>${escapeHTML(contactLocked ? "Upgrade required" : candidate.email || "Email not listed")}</strong>
-      </div>
-
-      <div class="detail-item">
-        <span>Phone</span>
-          <strong>${escapeHTML(contactLocked ? "Upgrade required" : candidate.phone || "Phone not listed")}</strong>
-      </div>
+      ${!contactLocked && visibleContact.showEmail ? renderDetailItem("Email", candidate.email || "Email not listed") : ""}
+      ${!contactLocked && visibleContact.showPhone ? renderDetailItem("Phone", candidate.phone || "Phone not listed") : ""}
     </div>
 
     <div class="tag-row">
@@ -350,6 +368,15 @@ function openCandidatePanel(candidate) {
 
   candidateDetailPanel.classList.add("open");
   panelOverlay.classList.add("open");
+}
+
+function renderDetailItem(label, value) {
+  return `
+    <div class="detail-item">
+      <span>${escapeHTML(label)}</span>
+      <strong>${escapeHTML(value)}</strong>
+    </div>
+  `;
 }
 
 function startMessageWithCandidate(candidate) {
@@ -383,7 +410,6 @@ async function removeSavedCandidate(candidateId) {
       .eq("employer_id", currentUser.id);
 
     if (error) {
-      console.error("Remove saved talent error:", error);
       showToast("Could not remove candidate from saved talent.");
       return;
     }
@@ -395,7 +421,8 @@ async function removeSavedCandidate(candidateId) {
       .eq("candidate_id", id);
 
     if (error) {
-      console.warn("Saved talent table delete fallback failed; removing legacy local entry only.", error);
+      showToast("Could not remove candidate from saved talent.");
+      return;
     }
   }
 
@@ -517,7 +544,6 @@ function showToast(message) {
   const toast = document.getElementById("toast");
 
   if (!toast) {
-    console.warn(message);
     return;
   }
 
@@ -574,4 +600,8 @@ function escapeHTML(value) {
 
 function escapeAttribute(value) {
   return escapeHTML(value).replaceAll("`", "&#096;");
+}
+
+function getCandidatePhotoUrl(value) {
+  return window.PlacelyAuth?.getPublicImageUrl?.(savedSupabase, "candidate_photos", value) || String(value || "");
 }

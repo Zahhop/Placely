@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="auth-booting">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -92,8 +92,24 @@
 
       <div class="form-grid">
         <div class="form-group">
-          <label for="payRange">Pay range</label>
-          <input id="payRange" type="text" placeholder="$25 - $40/hr" />
+          <label for="compensationType">Compensation type</label>
+          <select id="compensationType" required>
+            <option value="hourly">Hourly</option>
+            <option value="annual">Annual salary</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="compensationMin">Minimum Pay</label>
+          <input id="compensationMin" type="number" min="1" step="0.01" inputmode="decimal" placeholder="25" required />
+        </div>
+
+        <div class="form-group">
+          <label for="compensationMax">Maximum Pay</label>
+          <input id="compensationMax" type="number" min="1" step="0.01" inputmode="decimal" placeholder="40" required />
+          <small id="compensationUnit" class="field-hint">per hour</small>
+          <small id="compensationError" class="field-error"></small>
+          <small id="compensationPreview" class="field-hint"></small>
         </div>
 
         <div class="form-group">

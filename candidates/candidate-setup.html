@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="auth-booting">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -18,7 +18,7 @@
     <div class="logo-subtitle">Talent Platform</div>
   </div>
 
-  <a href="candidate-dashboard.html" class="skip-btn">Skip to Dashboard</a>
+  <a href="#candidateSetupForm" class="skip-btn" id="skipOptionalBtn">Skip optional questions</a>
 </header>
 
 <main class="onboarding-container">
@@ -167,10 +167,9 @@
               <label for="shownContactMethod">Contact Info Shown To Employers</label>
               <select id="shownContactMethod">
                 <option value="">Select visibility</option>
-                <option>Email only</option>
-                <option>Phone only</option>
-                <option>Email and phone</option>
-                <option>Hide contact info until I apply</option>
+                <option value="email">Email</option>
+                <option value="phone">Phone</option>
+                <option value="both">Both</option>
               </select>
             </div>
           </div>
@@ -192,7 +191,7 @@
 
             <div class="form-group">
               <label for="profilePhoto">Profile Photo</label>
-              <input id="profilePhoto" type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" />
+              <input id="profilePhoto" type="file" accept="image/jpeg,image/png,image/webp" />
               <small>PNG, JPG, or JPEG.</small>
             </div>
 

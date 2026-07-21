@@ -54,11 +54,13 @@ async function loadCandidateProfile() {
     .eq("id", currentUser.id)
     .maybeSingle();
 
-  if (error) {
-    console.error("Settings profile load error:", error);
+  if (error || !data) {
+    await window.PlacelyAuth.clearAuthState();
+    window.location.replace("candidate-login.html");
+    return;
   }
 
-  currentProfile = data || {};
+  currentProfile = data;
 
   setText("settingsName", currentProfile.full_name || "Candidate");
   setText("settingsEmail", currentProfile.email || currentUser.email || "Not added");
@@ -178,10 +180,9 @@ async function handleDeleteProfile() {
 
     sessionStorage.setItem("placelyCandidateDeletionMessage", "Your profile has been deleted.");
     await window.PlacelyAuth.clearAuthState();
-    window.location.href = "candidate-login.html";
-  } catch (error) {
-    console.error("Delete profile error:", error);
-    setModalMessage(error.message || "Could not delete your profile. Please try again.");
+    window.location.replace("candidate-login.html");
+  } catch {
+    setModalMessage("Could not delete your profile. Please try again.");
 
     if (confirmBtn) {
       confirmBtn.disabled = false;
@@ -195,7 +196,6 @@ async function tryDeleteWithEdgeFunction() {
   const { error } = await settingsSupabase.functions.invoke("delete-candidate-account");
 
   if (error) {
-    console.warn("delete-candidate-account function unavailable; using client fallback.", error);
     return false;
   }
 
@@ -242,8 +242,6 @@ async function anonymizeApplications() {
 
   if (!error) return;
 
-  console.warn("Candidate deleted status unavailable; preserving applications with withdrawn status.", error);
-
   const { error: fallbackError } = await settingsSupabase
     .from("applications")
     .update({
@@ -258,8 +256,6 @@ async function anonymizeApplications() {
     .eq("candidate_id", currentUser.id);
 
   if (!fallbackError) return;
-
-  console.warn("Profile email may be required; hiding profile with minimal anonymization.", fallbackError);
 
   const { error: minimalError } = await settingsSupabase
     .from("candidate_profiles")
@@ -290,9 +286,7 @@ async function anonymizeConversations() {
     })
     .eq("candidate_id", currentUser.id);
 
-  if (error) {
-    console.warn("Could not anonymize conversations. This may require an Edge Function.", error);
-  }
+  if (error) return;
 }
 
 async function deleteCandidateMessages() {
@@ -301,9 +295,7 @@ async function deleteCandidateMessages() {
     .delete()
     .eq("candidate_id", currentUser.id);
 
-  if (error) {
-    console.warn("Could not delete candidate messages. This may require an Edge Function.", error);
-  }
+  if (error) return;
 }
 
 async function anonymizeCandidateProfile() {
@@ -334,8 +326,6 @@ async function anonymizeCandidateProfile() {
     .eq("id", currentUser.id);
 
   if (!error) return;
-
-  console.warn("Deletion marker columns unavailable; anonymizing existing candidate profile fields only.", error);
 
   const { error: fallbackError } = await settingsSupabase
     .from("candidate_profiles")

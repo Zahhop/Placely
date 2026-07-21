@@ -4,6 +4,7 @@ const form = document.getElementById("candidateLoginForm");
 const errorMessage = document.getElementById("errorMessage");
 const submitBtn = form?.querySelector(".login-btn");
 const resendBtn = document.getElementById("resendVerificationBtn");
+const createAccountBtn = document.getElementById("createAccountBtn");
 const keepSignedInInput = document.getElementById("keepSignedIn");
 
 let isSubmitting = false;
@@ -53,7 +54,8 @@ form.addEventListener("submit", async function (e) {
         return;
       }
 
-      throw error;
+      await showLoginFailure(email);
+      return;
     }
 
     if (!data.session || !data.user) {
@@ -66,7 +68,7 @@ form.addEventListener("submit", async function (e) {
       return;
     }
 
-    const accountType = await window.PlacelyAuth.detectAccountType(data.user);
+    const accountType = await getRecordedAccountType(data.user.id);
 
     if (accountType !== "candidate") {
       await window.PlacelyAuth.clearAuthState();
@@ -74,13 +76,28 @@ form.addEventListener("submit", async function (e) {
       return;
     }
 
-    await window.PlacelyAuth.ensureAccountProfiles(data.user, "candidate");
+    const profile = await getCandidateProfile(data.user.id);
+    if (!profile) {
+      await window.PlacelyAuth.clearAuthState();
+      showError("We could not verify your candidate profile. Please contact Placely support.");
+      return;
+    }
+
+    if (!window.PlacelyAuth.isCandidateOnboardingComplete(profile)) {
+      window.location.href = "candidate-setup.html";
+      return;
+    }
+
     window.location.href = await window.PlacelyAuth.getPostAuthDestination("candidate");
   } catch (error) {
-    showError(error.message || "Login failed.");
+    showError(getSafeLoginMessage(error));
   } finally {
     setSubmitting(false);
   }
+});
+
+createAccountBtn?.addEventListener("click", () => {
+  window.location.href = "candidate-signup.html";
 });
 
 resendBtn?.addEventListener("click", async () => {
@@ -159,4 +176,62 @@ function hideMessage() {
   errorMessage.style.display = "none";
   errorMessage.style.color = "";
   if (resendBtn) resendBtn.hidden = true;
+  if (createAccountBtn) createAccountBtn.hidden = true;
+}
+
+async function showLoginFailure(email) {
+  const accountExists = await canFindAccountByEmail(email);
+
+  if (accountExists === false) {
+    showError("No candidate account exists for that email.");
+    if (createAccountBtn) createAccountBtn.hidden = false;
+    return;
+  }
+
+  showError("Invalid email or password.");
+}
+
+async function canFindAccountByEmail(email) {
+  try {
+    const { data, error } = await placelySupabase
+      .from("profiles")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (error) return null;
+    return Boolean(data);
+  } catch {
+    return null;
+  }
+}
+
+async function getRecordedAccountType(userId) {
+  const { data, error } = await placelySupabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data?.role || null;
+}
+
+async function getCandidateProfile(userId) {
+  const { data, error } = await placelySupabase
+    .from("candidate_profiles")
+    .select("*")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data || null;
+}
+
+function getSafeLoginMessage(error) {
+  if (/invalid login credentials/i.test(error?.message || "")) {
+    return "Invalid email or password.";
+  }
+
+  return error?.message || "Login failed.";
 }
