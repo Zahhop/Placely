@@ -88,11 +88,12 @@ Deno.serve(async (req) => {
 
     const stripe = new Stripe(stripeSecretKey);
 
+    const billingEmail = employerProfile.company_email || user.email || "";
     let stripeCustomerId = employerProfile.stripe_customer_id || "";
 
-    if (!stripeCustomerId) {
+    async function createStripeCustomer() {
       const customer = await stripe.customers.create({
-        email: employerProfile.company_email || user.email || undefined,
+        email: billingEmail || undefined,
         name: employerProfile.company_name || user.email || "Placely Employer",
         metadata: {
           employer_id: user.id,
@@ -108,6 +109,35 @@ Deno.serve(async (req) => {
         .eq("id", user.id);
 
       if (customerUpdateError) throw customerUpdateError;
+    }
+
+    if (!stripeCustomerId) {
+      await createStripeCustomer();
+    } else {
+      const customer = await stripe.customers.retrieve(stripeCustomerId);
+
+      if (customer.deleted) {
+        await createStripeCustomer();
+      } else {
+        const expectedMetadata = {
+          ...customer.metadata,
+          employer_id: user.id,
+          product: "candidate_network"
+        };
+        const customerUpdates: Stripe.CustomerUpdateParams = {
+          metadata: expectedMetadata
+        };
+
+        if (billingEmail && customer.email !== billingEmail) {
+          customerUpdates.email = billingEmail;
+        }
+
+        if (employerProfile.company_name && customer.name !== employerProfile.company_name) {
+          customerUpdates.name = employerProfile.company_name;
+        }
+
+        await stripe.customers.update(stripeCustomerId, customerUpdates);
+      }
     }
 
     const successUrl = `${checkoutLocation.origin}${checkoutLocation.appPath}/employers/employer-upgrade-success.html?session_id={CHECKOUT_SESSION_ID}`;

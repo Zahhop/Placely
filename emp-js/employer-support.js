@@ -56,7 +56,6 @@ async function loadEmployerProfile() {
 
   const replyEmail = currentProfile.company_email || currentUser.email || "";
   if (replyEmailInput) replyEmailInput.value = replyEmail;
-  setText("sidebarCompanyName", currentProfile.company_name || "Employer");
 }
 
 function setupForm() {

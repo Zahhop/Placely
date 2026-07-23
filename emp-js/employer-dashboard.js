@@ -459,14 +459,18 @@ function parseSnapshot(snapshot) {
 function updateCompanyChrome() {
   const companyName = employerProfile.company_name || "Employer";
   const initials = getInitials(companyName);
+  const accountEmail = employerProfile.company_email || currentUser?.email || "";
 
   setText("companyNameTitle", companyName);
-  setText("sidebarCompanyName", companyName);
   setText("topCompanyName", companyName);
   setText("dashboardGreeting", getTimeGreeting());
 
-  renderCompanyAvatar("sidebarCompanyAvatar", companyName, initials);
   renderCompanyAvatar("topCompanyAvatar", companyName, initials);
+  window.updateEmployerAccountMenu?.({
+    companyName,
+    companyEmail: employerProfile.company_email || "",
+    email: accountEmail
+  });
 }
 
 function renderCompanyAvatar(id, companyName, initials) {
@@ -933,19 +937,17 @@ function renderSidebarPlanCard() {
   if (!card) return;
 
   if (hasCandidateNetworkAccess) {
-    card.className = "sidebar-plan-card pro";
-    card.innerHTML = `
-      <span class="plan-kicker">PRO ACCESS</span>
-      <h2>Full candidate network</h2>
-      <p>Browse, message, save, and connect with pre-screened candidates.</p>
-    `;
+    card.hidden = true;
+    card.replaceChildren();
+    card.className = "sidebar-plan-card";
     return;
   }
 
+  card.hidden = false;
   card.className = "sidebar-plan-card free";
   card.innerHTML = `
-    <span class="plan-kicker">FREE PLAN</span>
-    <h2>Upgrade to Pro</h2>
+    <span class="plan-kicker">GET ACCESS</span>
+    <h2>Unlock candidate search</h2>
     <p>Unlock:</p>
     <ul class="plan-feature-list">
       <li>Candidate Search</li>

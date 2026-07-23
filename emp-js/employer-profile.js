@@ -685,6 +685,15 @@ function setText(id, value) {
   }
 }
 
+function escapeHTML(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 function escapeAttribute(value) {
   return escapeHTML(value).replaceAll("`", "&#096;");
 }
