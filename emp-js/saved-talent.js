@@ -24,6 +24,7 @@ let currentUser = null;
 let allSavedCandidates = [];
 let filteredSavedCandidates = [];
 let hasCandidateAccess = false;
+let candidateAccessState = { state: "denied", status: "missing", active: false, pending: false };
 let savedTalentRowsByCandidateId = new Map();
 
 document.addEventListener("DOMContentLoaded", initSavedTalent);
@@ -35,9 +36,25 @@ async function initSavedTalent() {
   if (!user) return;
 
   currentUser = user;
-  hasCandidateAccess = await loadEmployerCandidateAccess(user.id);
+  candidateAccessState = await window.PlacelyAuth.requireEmployerCandidateAccess(savedSupabase, user.id, {
+    attempts: 5,
+    delayMs: 1800,
+    onPending: () => renderLockedSavedTalent({
+      title: "Payment is still processing",
+      message: "Placely is waiting for Stripe to confirm your Candidate Access before opening saved talent."
+    })
+  });
+  hasCandidateAccess = candidateAccessState.active;
   if (!hasCandidateAccess) {
-    renderLockedSavedTalent();
+    if (candidateAccessState.pending) {
+      renderLockedSavedTalent({
+        title: "Payment is still processing",
+        message: "Stripe payment was received, but Candidate Access has not been activated yet. Return to the dashboard and try again in a moment."
+      });
+      return;
+    }
+
+    redirectToCandidateAccess();
     return;
   }
   await loadSavedTalent();
@@ -69,24 +86,17 @@ async function requireEmployerLogin() {
   });
 }
 
-async function loadEmployerCandidateAccess(userId) {
-  const { data, error } = await savedSupabase
-    .from("employer_profiles")
-    .select("candidate_access, subscription_status")
-    .eq("id", userId)
-    .maybeSingle();
-
-  if (error || !data) return false;
-  return window.PlacelyAuth.hasCandidateSearchAccess(data);
+function redirectToCandidateAccess() {
+  window.location.replace("employer-dashboard.html#candidate-access");
 }
 
-function renderLockedSavedTalent() {
+function renderLockedSavedTalent(options = {}) {
   allSavedCandidates = [];
   filteredSavedCandidates = [];
   savedTalentRowsByCandidateId = new Map();
 
   if (savedTalentGrid) savedTalentGrid.innerHTML = "";
-  if (resultsText) resultsText.textContent = "Candidate Network access is required to view saved talent.";
+  if (resultsText) resultsText.textContent = options.message || "Candidate Network access is required to view saved talent.";
   if (savedCount) savedCount.textContent = "0";
   if (readyCount) readyCount.textContent = "0";
   if (tradeCount) tradeCount.textContent = "0";
@@ -96,8 +106,13 @@ function renderLockedSavedTalent() {
     emptyState.classList.remove("hidden");
     const title = emptyState.querySelector("h3, strong");
     const copy = emptyState.querySelector("p");
-    if (title) title.textContent = "Candidate Network access required";
-    if (copy) copy.textContent = "Get access from the employer dashboard before viewing saved candidates.";
+    const action = emptyState.querySelector("a");
+    if (title) title.textContent = options.title || "Candidate Network access required";
+    if (copy) copy.textContent = options.message || "Get access from the employer dashboard before viewing saved candidates.";
+    if (action) {
+      action.textContent = "Return to Dashboard";
+      action.href = "employer-dashboard.html#candidate-access";
+    }
   }
 }
 

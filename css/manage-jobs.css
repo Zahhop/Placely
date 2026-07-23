@@ -339,6 +339,11 @@ body[data-plan="free"] .nav-pro-badge {
   gap: 8px;
 }
 
+.sidebar-support-section {
+  display: grid;
+  gap: 8px;
+}
+
 body[data-plan="pro"] .sidebar-footer,
 body[data-plan="free"] .sidebar-footer {
   padding-top: 8px;

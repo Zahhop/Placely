@@ -38,6 +38,7 @@ let currentUser = null;
 let employerAccess = {
   candidate_access: false
 };
+let candidateAccessState = { state: "denied", status: "missing", active: false, pending: false };
 let hasCandidateAccess = false;
 let loadedCandidates = [];
 let filteredCandidates = [];
@@ -64,14 +65,24 @@ async function initFindCandidates() {
   if (!user) return;
 
   currentUser = user;
-  employerAccess = await loadEmployerAccess(user.id);
-  hasCandidateAccess = hasCandidateSearchAccess(employerAccess);
+  candidateAccessState = await window.PlacelyAuth.requireEmployerCandidateAccess(employerSupabase, user.id, {
+    attempts: 5,
+    delayMs: 1800,
+    onPending: () => renderPendingAccessState()
+  });
+  employerAccess = candidateAccessState;
+  hasCandidateAccess = candidateAccessState.active;
   await loadEmployerRecruitingContext(user.id);
 
   renderAccessState();
 
   if (!hasCandidateAccess) {
-    renderLockedNetworkState();
+    if (candidateAccessState.pending) {
+      renderPendingAccessState(true);
+      return;
+    }
+
+    redirectToCandidateAccess();
     return;
   }
 
@@ -152,27 +163,6 @@ async function requireEmployerLogin() {
     loginPath: "employer-login.html",
     candidateDashboardPath: "../candidates/candidate-dashboard.html"
   });
-}
-
-async function loadEmployerAccess(userId) {
-  const freeAccess = {
-    candidate_access: false
-  };
-
-  try {
-    const { data, error } = await employerSupabase
-      .from("employer_profiles")
-      .select("candidate_access, subscription_status")
-      .eq("id", userId)
-      .maybeSingle();
-
-    if (error) throw error;
-    if (data) return { ...freeAccess, ...data };
-  } catch {
-    return freeAccess;
-  }
-
-  return freeAccess;
 }
 
 async function loadCandidates() {
@@ -879,10 +869,35 @@ function renderAccessState() {
   }
 
   upgradeBanner.classList.remove("hidden");
-  accessStateText.textContent = "Candidate Network access required";
+  accessStateText.textContent = candidateAccessState.pending
+    ? "Payment is still processing"
+    : "Candidate Network access required";
 }
 
-function renderLockedNetworkState() {
+function redirectToCandidateAccess() {
+  window.location.replace("employer-dashboard.html#candidate-access");
+}
+
+function renderPendingAccessState(finalAttempt = false) {
+  candidateAccessState = {
+    state: "pending",
+    status: "pending",
+    active: false,
+    pending: true,
+    message: "Payment is still processing."
+  };
+  hasCandidateAccess = false;
+  renderAccessState();
+  renderLockedNetworkState({
+    title: "Payment is still processing",
+    message: finalAttempt
+      ? "Stripe payment was received, but Candidate Access has not been activated yet. Return to the dashboard and try again in a moment."
+      : "Placely is waiting for Stripe to confirm your Candidate Access before opening candidate search.",
+    action: finalAttempt ? "Return to Dashboard" : "Checking access..."
+  });
+}
+
+function renderLockedNetworkState(options = {}) {
   loadedCandidates = [];
   filteredCandidates = [];
   savedCandidates = new Set();
@@ -894,7 +909,7 @@ function renderLockedNetworkState() {
   if (activeFilterChips) activeFilterChips.innerHTML = "";
 
   if (resultCount?.parentElement) resultCount.parentElement.hidden = true;
-  resultsText.textContent = "Upgrade Candidate Network access to search and view candidate profiles.";
+  resultsText.textContent = options.message || "Upgrade Candidate Network access to search and view candidate profiles.";
   if (recommendedSignal) recommendedSignal.textContent = "Locked";
   if (fastStartCount) fastStartCount.textContent = "Locked";
   if (newThisWeekCount) newThisWeekCount.textContent = "Locked";
@@ -908,9 +923,9 @@ function renderLockedNetworkState() {
   const emptyTitle = emptyState?.querySelector("h3");
   const emptyMessage = emptyState?.querySelector("p");
 
-  if (emptyTitle) emptyTitle.textContent = "Candidate Network access required";
-  if (emptyMessage) emptyMessage.textContent = "Upgrade access to search visible candidate profiles, save talent, and message candidates.";
-  if (emptyClearBtn) emptyClearBtn.textContent = "Back to Dashboard";
+  if (emptyTitle) emptyTitle.textContent = options.title || "Candidate Network access required";
+  if (emptyMessage) emptyMessage.textContent = options.message || "Upgrade access to search visible candidate profiles, save talent, and message candidates.";
+  if (emptyClearBtn) emptyClearBtn.textContent = options.action || "Back to Dashboard";
 }
 
 function setSummaryFilter(filter) {
@@ -1432,10 +1447,6 @@ function getSplitValues(value) {
       seen.add(key);
       return true;
     });
-}
-
-function hasCandidateSearchAccess(profile) {
-  return window.PlacelyAuth.hasCandidateSearchAccess(profile);
 }
 
 function startCandidateCheckoutFromSearch() {
