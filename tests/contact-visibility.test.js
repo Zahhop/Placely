@@ -99,6 +99,11 @@ assert.equal(window.PlacelyAuth.validateImageFile({ name: "photo.jpg", type: "im
 assert.equal(window.PlacelyAuth.validateImageFile({ name: "photo.svg", type: "image/svg+xml", size: 1024 }, "candidatePhoto").valid, false);
 assert.equal(window.PlacelyAuth.validateImageFile({ name: "photo.jpg", type: "image/png", size: 1024 }, "candidatePhoto").valid, false);
 assert.equal(window.PlacelyAuth.validateImageFile({ name: "logo.webp", type: "image/webp", size: 3 * 1024 * 1024 }, "employerLogo").message, "Company logos must be smaller than 2 MB.");
+assert.equal(window.PlacelyAuth.getCandidateAccessState({ candidate_access: true, subscription_status: "active" }).state, "active");
+assert.equal(window.PlacelyAuth.getCandidateAccessState({ candidate_access: true, subscription_status: "trialing" }).state, "active");
+assert.equal(window.PlacelyAuth.getCandidateAccessState({ candidate_access: false, subscription_status: "pending" }).state, "pending");
+assert.equal(window.PlacelyAuth.getCandidateAccessState({ candidate_access: false, subscription_status: "unpaid" }).state, "denied");
+assert.equal(window.PlacelyAuth.getCandidateAccessState({}, new Error("network")).state, "error");
 
 assert.deepEqual(window.PlacelyAuth.getEmployerHiringRoles({
   hiring_roles: ["Electrician", "Welder"],

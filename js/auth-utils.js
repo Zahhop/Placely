@@ -575,14 +575,101 @@
   }
 
   function hasCandidateSearchAccess(profile = {}) {
-    if (profile.candidate_access !== true) return false;
+    return getCandidateAccessState(profile).state === "active";
+  }
 
-    if (Object.prototype.hasOwnProperty.call(profile, "subscription_status")) {
-      const status = String(profile.subscription_status || "").toLowerCase().trim();
-      return status === "active" || status === "trialing";
+  function normalizeCandidateAccessStatus(value) {
+    return String(value || "")
+      .toLowerCase()
+      .trim()
+      .replace(/[_\s-]+/g, "_");
+  }
+
+  function getCandidateAccessState(profile = {}, error = null) {
+    if (error) {
+      return {
+        state: "error",
+        status: "error",
+        active: false,
+        pending: false,
+        message: "We could not verify Candidate Access. Please return to the dashboard and try again."
+      };
     }
 
-    return true;
+    if (!profile || Object.keys(profile).length === 0) {
+      return {
+        state: "denied",
+        status: "missing",
+        active: false,
+        pending: false,
+        message: "Candidate Access required."
+      };
+    }
+
+    const status = normalizeCandidateAccessStatus(profile.subscription_status || profile.access_status || profile.status);
+    const activeStatus = status === "active" || status === "trialing";
+
+    if (profile.candidate_access === true && (!status || activeStatus)) {
+      return {
+        state: "active",
+        status: status || "active",
+        active: true,
+        pending: false,
+        message: "Candidate Access active."
+      };
+    }
+
+    if (["pending", "processing", "incomplete"].includes(status)) {
+      return {
+        state: "pending",
+        status,
+        active: false,
+        pending: true,
+        message: "Payment is still processing. We are checking your access status."
+      };
+    }
+
+    return {
+      state: "denied",
+      status: status || "inactive",
+      active: false,
+      pending: false,
+      message: "Candidate Access required."
+    };
+  }
+
+  async function loadEmployerCandidateAccessState(supabase, userId) {
+    try {
+      const { data, error } = await supabase
+        .from("employer_profiles")
+        .select("candidate_access, subscription_status")
+        .eq("id", userId)
+        .maybeSingle();
+
+      return getCandidateAccessState(data || {}, error);
+    } catch (error) {
+      return getCandidateAccessState({}, error);
+    }
+  }
+
+  async function requireEmployerCandidateAccess(supabase, userId, options = {}) {
+    const attempts = Math.max(1, Number(options.attempts || 1));
+    const delayMs = Math.max(250, Number(options.delayMs || 1500));
+    let state = await loadEmployerCandidateAccessState(supabase, userId);
+
+    for (let attempt = 1; attempt < attempts && state.pending; attempt += 1) {
+      if (typeof options.onPending === "function") options.onPending(state, attempt, attempts);
+      await delay(delayMs);
+      state = await loadEmployerCandidateAccessState(supabase, userId);
+    }
+
+    return state;
+  }
+
+  function delay(ms) {
+    return new Promise((resolve) => {
+      window.setTimeout(resolve, ms);
+    });
   }
 
   function rememberPendingVerification(email, accountType) {
@@ -929,6 +1016,10 @@
     getCandidateContactPreference,
     getVisibleCandidateContact,
     hasCandidateSearchAccess,
+    normalizeCandidateAccessStatus,
+    getCandidateAccessState,
+    loadEmployerCandidateAccessState,
+    requireEmployerCandidateAccess,
     isUnconfirmedError,
     rememberPendingVerification,
     getPendingVerification,
