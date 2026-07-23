@@ -130,16 +130,13 @@
           <p>Review candidates by job and move each applicant through your hiring process without mixing pipelines.</p>
         </div>
 
-        <div class="briefing-actions">
-          <a href="manage-jobs.html" class="secondary-btn">Manage Jobs</a>
-        </div>
       </section>
 
   <select id="jobFilter" class="hidden" aria-hidden="true">
     <option value="">Select job</option>
   </select>
 
-  <section class="job-toolbar-card" aria-label="Applicant pipeline controls">
+  <section class="job-toolbar-card pipeline-selector-card" aria-label="Applicant pipeline selector">
     <div class="job-toolbar-top">
       <div class="job-selector-wrap">
         <span class="control-label">Pipeline for</span>
@@ -159,7 +156,9 @@
 
       <a id="selectedJobManageLink" href="manage-jobs.html" class="quiet-btn">Manage Job</a>
     </div>
+  </section>
 
+  <section class="job-toolbar-card search-controls-card" aria-label="Applicant pipeline controls">
     <div class="pipeline-toolbar" aria-label="Applicant filters and actions">
       <div class="search-field">
         <label for="searchInput">Search applicants</label>

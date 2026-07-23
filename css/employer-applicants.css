@@ -1626,14 +1626,6 @@ body[data-plan="free"] .nav-logout:focus-visible {
   line-height: 1.45;
 }
 
-.pipeline-toolbar {
-  grid-template-columns: minmax(260px, 1fr) minmax(170px, 0.3fr) auto auto auto;
-}
-
-.pipeline-summary {
-  margin-top: 12px;
-}
-
 .pipeline-panel {
   margin-top: 12px;
   padding: 12px;
@@ -1642,13 +1634,12 @@ body[data-plan="free"] .nav-logout:focus-visible {
 .pipeline-board {
   grid-auto-columns: minmax(260px, 1fr);
   gap: 10px;
-  min-height: min(640px, calc(100vh - 320px));
+  min-height: 0;
 }
 
 .pipeline-column {
   min-width: 260px;
-  min-height: min(640px, calc(100vh - 320px));
-  max-height: min(720px, calc(100vh - 300px));
+  min-height: 220px;
 }
 
 .column-head {
@@ -1869,99 +1860,6 @@ body[data-plan="free"] .nav-logout:focus-visible {
   font-weight: 750;
 }
 
-/* Correction pass: top job selector, wide board, ultra-compact cards. */
-.job-toolbar-card {
-  margin-top: 18px;
-  padding: 14px;
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid #dbe3ef;
-  border-radius: 20px;
-  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.045);
-}
-
-.job-toolbar-top {
-  display: grid;
-  grid-template-columns: minmax(320px, 1fr) auto;
-  gap: 12px;
-  align-items: end;
-  margin-bottom: 12px;
-}
-
-.control-label {
-  display: block;
-  color: #64748b;
-  font-size: 11px;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 6px;
-}
-
-.job-selector-wrap {
-  position: relative;
-  min-width: 0;
-}
-
-.job-selector-button {
-  width: 100%;
-  min-height: 58px;
-  border: 1px solid #dbe3ef;
-  border-radius: 15px;
-  background: #fff;
-  padding: 10px 42px 10px 13px;
-  text-align: left;
-  cursor: pointer;
-  display: block;
-  position: relative;
-  transition: 0.2s ease;
-}
-
-.job-selector-button:hover {
-  border-color: #bfdbfe;
-  background: #f8fbff;
-}
-
-.selected-job-context {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.selected-job-title {
-  color: #0f172a;
-  font-size: 16px;
-  font-weight: 900;
-  line-height: 1.2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.selected-job-subtitle,
-.selected-job-counts {
-  color: #64748b;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1.35;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.selected-job-counts {
-  color: #2563eb;
-}
-
-.selector-chevron {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #64748b;
-  font-size: 13px;
-  font-weight: 900;
-}
-
 .job-selector-popover {
   position: absolute;
   top: calc(100% + 8px);
@@ -1998,506 +1896,6 @@ body[data-plan="free"] .nav-logout:focus-visible {
   grid-row: 1 / span 2;
   justify-content: flex-end;
   max-width: 190px;
-}
-
-.pipeline-toolbar {
-  margin-top: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  background: transparent;
-  grid-template-columns: minmax(260px, 1fr) minmax(160px, 0.24fr) auto auto auto;
-}
-
-.applicants-shell .job-toolbar-card {
-  margin-top: 0;
-  padding: 20px;
-  border-radius: 16px;
-}
-
-.applicants-shell .job-toolbar-top {
-  grid-template-columns: minmax(300px, 1fr) auto;
-  gap: 14px;
-  align-items: end;
-  margin-bottom: 16px;
-}
-
-.applicants-shell .job-selector-button {
-  min-height: 58px;
-  padding: 11px 44px 11px 14px;
-  border-radius: 14px;
-}
-
-.applicants-shell #selectedJobManageLink,
-.applicants-shell #filtersMenuBtn,
-.applicants-shell #refreshBtn,
-.applicants-shell #clearFiltersBtn {
-  min-height: 46px;
-  padding: 0 18px;
-  border-radius: 12px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-}
-
-.applicants-shell #selectedJobManageLink {
-  min-height: 58px;
-}
-
-.applicants-shell .pipeline-toolbar {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: flex-end;
-  gap: 8px;
-  row-gap: 14px;
-  width: 100%;
-  padding: 0;
-}
-
-.applicants-shell .search-field {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  flex: 1 1 auto;
-  min-width: 0;
-  width: 100%;
-  align-self: flex-end;
-}
-
-.applicants-shell .toolbar-field {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  flex: 0 0 auto;
-  min-width: 130px;
-  align-self: flex-end;
-}
-
-.applicants-shell .filter-menu-wrap {
-  min-width: max-content;
-  flex: 0 0 auto;
-  align-self: flex-end;
-  white-space: nowrap;
-}
-
-.applicants-shell .view-toggle {
-  display: flex;
-  width: auto;
-  min-width: max-content;
-  min-height: 40px;
-  padding: 4px;
-  gap: 4px;
-  border-radius: 12px;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  box-sizing: border-box;
-  flex: 0 0 auto;
-  align-self: flex-end;
-  white-space: nowrap;
-}
-
-.applicants-shell .view-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  min-height: 0;
-  height: 32px;
-  padding: 0 14px;
-  border-radius: 9px;
-  font-size: 13px;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.applicants-shell input,
-.applicants-shell select {
-  min-height: 46px;
-  padding: 0 14px;
-}
-
-.applicants-shell .toolbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: max-content;
-  min-width: max-content;
-  flex: 0 0 auto;
-  flex-shrink: 0;
-  align-self: flex-end;
-  white-space: nowrap;
-}
-
-.applicants-shell .job-toolbar-card {
-  padding: 20px;
-}
-
-.applicants-shell .job-toolbar-top {
-  gap: 16px;
-  align-items: end;
-  margin-bottom: 16px;
-}
-
-.applicants-shell .job-selector-wrap {
-  min-width: 0;
-}
-
-.applicants-shell .search-field label[for="searchInput"],
-.applicants-shell .toolbar-field label[for="sortFilter"] {
-  display: block;
-  margin: 0 0 8px;
-  line-height: 1.2;
-}
-
-.applicants-shell .job-selector-button {
-  min-height: 64px;
-  padding: 14px 52px 13px 16px;
-  border-radius: 14px;
-}
-
-.applicants-shell .selected-job-context {
-  min-width: 0;
-  gap: 4px;
-}
-
-.applicants-shell .selector-chevron {
-  right: 18px;
-}
-
-.applicants-shell #selectedJobManageLink {
-  min-height: 64px;
-  padding: 0 18px;
-}
-
-.applicants-shell .search-field input,
-.applicants-shell .toolbar-field select,
-.applicants-shell #filtersMenuBtn,
-.applicants-shell #clearFiltersBtn {
-  height: 48px;
-  min-height: 48px;
-  max-height: 48px;
-  padding-top: 0;
-  padding-bottom: 0;
-  border-radius: 12px;
-  line-height: 1;
-}
-
-.applicants-shell .toolbar-field select {
-  min-width: 130px;
-}
-
-.applicants-shell #filtersMenuBtn,
-.applicants-shell #clearFiltersBtn {
-  padding-left: 14px;
-  padding-right: 14px;
-  flex: 0 0 auto;
-  white-space: nowrap;
-  align-items: center;
-  justify-content: center;
-}
-
-.applicants-shell #refreshBtn.quiet-btn.button-link {
-  height: 40px;
-  min-height: 40px;
-  max-height: 40px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding-left: 14px;
-  padding-right: 14px;
-  flex: 0 0 auto;
-  white-space: nowrap;
-}
-
-.applicants-shell .pipeline-summary {
-  margin-top: 18px;
-  padding: 10px;
-  gap: 8px;
-  border-radius: 14px;
-}
-
-.applicants-shell .summary-pill {
-  min-height: 34px;
-  padding: 6px 10px;
-  gap: 7px;
-}
-
-.pipeline-panel {
-  margin-top: 18px;
-  padding: 10px;
-  border-radius: 20px;
-}
-
-.pipeline-board {
-  grid-auto-columns: minmax(250px, 1fr);
-  gap: 10px;
-  height: clamp(360px, calc(100vh - 330px), 640px);
-  min-height: 0;
-}
-
-.pipeline-column {
-  min-width: 250px;
-  min-height: 0;
-  height: 100%;
-  max-height: none;
-  border-radius: 16px;
-}
-
-.column-head {
-  padding: 9px 11px;
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background: #f8fafc;
-  border-radius: 16px 16px 0 0;
-}
-
-.column-title {
-  gap: 7px;
-}
-
-.stage-dot {
-  width: 7px;
-  height: 7px;
-}
-
-.count-badge {
-  min-width: 22px;
-  height: 20px;
-  font-size: 11px;
-}
-
-.column-body {
-  padding: 8px;
-  gap: 6px;
-}
-
-.applicant-card.compact {
-  min-height: 62px;
-  padding: 7px 8px;
-  grid-template-columns: 32px minmax(0, 1fr) 28px;
-  gap: 8px;
-  border-radius: 13px;
-  cursor: grab;
-  box-shadow: none;
-}
-
-.applicant-card.compact:hover {
-  transform: none;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
-}
-
-.applicant-card.compact .drag-grip {
-  display: none;
-}
-
-.applicant-card.compact .avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  font-size: 11px;
-}
-
-.applicant-card.compact .card-name {
-  min-width: 0;
-  display: grid;
-  gap: 1px;
-}
-
-.applicant-card.compact .card-name h3 {
-  font-size: 13px;
-  line-height: 1.18;
-}
-
-.applicant-card.compact .card-name p {
-  font-size: 11px;
-  line-height: 1.25;
-}
-
-.card-signal {
-  color: #64748b;
-  font-size: 10px;
-  font-weight: 850;
-  line-height: 1.2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.applicant-card.compact .card-micro-meta,
-.applicant-card.compact .card-job,
-.applicant-card.compact > .tag-row,
-.applicant-card.compact .card-footer {
-  display: none;
-}
-
-.applicant-card.compact .card-menu-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 10px;
-  font-size: 12px;
-}
-
-.move-menu {
-  top: 32px;
-}
-
-.column-empty {
-  padding: 12px 10px;
-  font-size: 12px;
-  line-height: 1.35;
-}
-
-.applicants-shell .pipeline-panel {
-  max-width: 100%;
-  overflow: hidden;
-  padding: 14px;
-  border-radius: 16px;
-}
-
-.applicants-shell .pipeline-board {
-  width: 100%;
-  max-width: 100%;
-  grid-auto-columns: minmax(292px, 1fr);
-  gap: 14px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 2px 2px 12px;
-  scroll-padding: 14px;
-}
-
-.applicants-shell .pipeline-column {
-  min-width: 292px;
-  border-color: #dbe3ef;
-  border-radius: 14px;
-  background: #f8fafc;
-  overflow: hidden;
-}
-
-.applicants-shell .column-head {
-  min-width: 0;
-  padding: 13px 14px;
-  gap: 10px;
-  border-bottom-color: #e2e8f0;
-  border-radius: 14px 14px 0 0;
-}
-
-.applicants-shell .column-title {
-  min-width: 0;
-  flex: 1 1 auto;
-  gap: 8px;
-}
-
-.applicants-shell .column-head h2 {
-  min-width: 0;
-  margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 14px;
-  line-height: 1.25;
-  font-weight: 800;
-}
-
-.applicants-shell .stage-dot {
-  width: 8px;
-  height: 8px;
-  flex: 0 0 auto;
-}
-
-.applicants-shell .count-badge {
-  flex: 0 0 auto;
-  min-width: 26px;
-  height: 24px;
-  padding: 0 7px;
-  border-radius: 999px;
-  font-size: 11.5px;
-  font-weight: 800;
-}
-
-.applicants-shell .column-body {
-  padding: 12px;
-  gap: 9px;
-}
-
-.applicants-shell .applicant-card.compact {
-  width: 100%;
-  min-width: 0;
-  min-height: 72px;
-  padding: 10px;
-  grid-template-columns: 36px minmax(0, 1fr) 30px;
-  gap: 10px;
-  align-items: center;
-  border-color: #dbe3ef;
-  border-radius: 12px;
-}
-
-.applicants-shell .applicant-card.compact .avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  align-self: center;
-}
-
-.applicants-shell .applicant-card.compact .card-name {
-  min-width: 0;
-  align-self: center;
-  gap: 3px;
-}
-
-.applicants-shell .applicant-card.compact .card-name h3,
-.applicants-shell .applicant-card.compact .card-name p,
-.applicants-shell .applicant-card.compact .card-signal {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.applicants-shell .applicant-card.compact .card-name h3 {
-  margin: 0;
-  font-size: 13.5px;
-  line-height: 1.25;
-  font-weight: 800;
-}
-
-.applicants-shell .applicant-card.compact .card-name p {
-  margin: 0;
-  font-size: 11.5px;
-  line-height: 1.3;
-  font-weight: 700;
-}
-
-.applicants-shell .applicant-card.compact .card-signal {
-  font-size: 10.5px;
-  line-height: 1.25;
-  font-weight: 800;
-}
-
-.applicants-shell .applicant-card.compact .card-menu-wrap {
-  width: 30px;
-  min-width: 30px;
-  justify-self: end;
-  align-self: center;
-}
-
-.applicants-shell .applicant-card.compact .card-menu-btn {
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
-}
-
-.applicants-shell .move-menu {
-  top: 36px;
-  right: 0;
-}
-
-.applicants-shell .column-empty {
-  padding: 16px 12px;
-  border-radius: 12px;
 }
 
 .board-empty {
@@ -2834,140 +2232,526 @@ body[data-plan="free"] .brand-mark,
 }
 
 /* =========================================================
-   FINAL TOOLBAR SPACING FIX — Applicants page only
+   Applicants page visual alignment
    ========================================================= */
 
+.applicants-shell {
+  gap: 0;
+}
+
+.applicants-shell .dashboard-briefing {
+  margin-bottom: 26px;
+}
+
+.applicants-shell .job-toolbar-card {
+  width: 100%;
+  margin-top: 0;
+  margin-bottom: 20px;
+  padding: 28px;
+  background: #fff;
+  border: 1px solid var(--pro-border, #dfe7f1);
+  border-radius: var(--pro-panel-radius, 12px);
+  box-shadow: var(--pro-shadow, 0 10px 26px rgba(15, 23, 42, 0.045));
+  box-sizing: border-box;
+}
+
+.applicants-shell .search-controls-card {
+  display: grid;
+  gap: 0;
+}
+
+.applicants-shell .job-toolbar-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: end;
+  margin-bottom: 0;
+}
+
+.applicants-shell .job-selector-wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.applicants-shell .control-label,
+.applicants-shell .search-field label[for="searchInput"],
+.applicants-shell .toolbar-field label[for="sortFilter"] {
+  display: block;
+  margin: 0 0 8px;
+  padding: 0;
+  color: var(--muted, #64748b);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
+  text-transform: none;
+  transform: none;
+}
+
+.applicants-shell .job-selector-button {
+  width: 100%;
+  min-height: 78px;
+  padding: 13px 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid var(--line, #e2e8f0);
+  border-color: var(--line, #e2e8f0);
+  border-radius: 12px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.applicants-shell .job-selector-button:hover {
+  border-color: #bfdbfe;
+  background: #f8fbff;
+}
+
+.applicants-shell .selector-chevron {
+  color: var(--muted, #64748b);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.applicants-shell .selected-job-context {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.applicants-shell .selected-job-title {
+  color: var(--ink, #0f172a);
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.applicants-shell .selected-job-subtitle,
+.applicants-shell .selected-job-counts {
+  color: var(--muted, #64748b);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.applicants-shell .selected-job-counts {
+  color: var(--blue, #2563eb);
+}
+
+.applicants-shell #selectedJobManageLink {
+  width: auto;
+  min-width: 112px;
+  height: 48px;
+  min-height: 48px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  align-self: end;
+  border-color: var(--line, #e2e8f0);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--blue, #2563eb);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: none;
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.applicants-shell #selectedJobManageLink:hover {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: var(--blue-dark, #1d4ed8);
+}
+
 .applicants-shell .pipeline-toolbar {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 150px auto auto auto !important;
-  align-items: end !important;
-  column-gap: 10px !important;
-  row-gap: 12px !important;
-  width: 100% !important;
-  padding: 10px 0 2px !important;
-  margin: 0 !important;
+  display: grid;
+  grid-template-columns: minmax(360px, 1fr) 160px auto auto auto;
+  align-items: end;
+  column-gap: 14px;
+  row-gap: 14px;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .applicants-shell .search-field,
 .applicants-shell .toolbar-field {
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: flex-end !important;
-  align-self: stretch !important;
-  min-width: 0 !important;
-  gap: 10px !important;
-}
-
-.applicants-shell .search-field label[for="searchInput"],
-.applicants-shell .toolbar-field label[for="sortFilter"] {
-  display: block !important;
-  position: static !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  line-height: 1.2 !important;
-  transform: none !important;
+  display: grid;
+  align-self: end;
+  justify-content: stretch;
+  justify-items: stretch;
+  min-width: 0;
+  width: auto;
+  gap: 0;
 }
 
 .applicants-shell .search-field input,
 .applicants-shell .toolbar-field select {
-  width: 100% !important;
-  height: 46px !important;
-  min-height: 46px !important;
-  max-height: 46px !important;
-  margin: 0 !important;
-  padding: 0 14px !important;
-  line-height: 1 !important;
-  box-sizing: border-box !important;
+  width: 100%;
+  height: 48px;
+  min-height: 48px;
+  margin: 0;
+  padding: 0 14px;
+  border-color: var(--line, #e2e8f0);
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 650;
+  line-height: 1;
+  box-sizing: border-box;
 }
 
 .applicants-shell .toolbar-field {
-  width: 150px !important;
-  min-width: 150px !important;
+  width: 160px;
+  min-width: 160px;
 }
 
 .applicants-shell .filter-menu-wrap,
 .applicants-shell .view-toggle,
 .applicants-shell .toolbar-actions {
-  align-self: end !important;
-  margin: 0 !important;
+  align-self: end;
+  margin: 0;
 }
 
 .applicants-shell #filtersMenuBtn,
-.applicants-shell #refreshBtn.quiet-btn.button-link {
-  height: 46px !important;
-  min-height: 46px !important;
-  max-height: 46px !important;
-  margin: 0 !important;
-  padding: 0 15px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  line-height: 1 !important;
-  white-space: nowrap !important;
-  box-sizing: border-box !important;
+.applicants-shell #refreshBtn.quiet-btn.button-link,
+.applicants-shell #clearFiltersBtn {
+  height: 48px;
+  min-height: 48px;
+  margin: 0;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border-color: var(--line, #e2e8f0);
+  background: #fff;
+  color: var(--blue, #2563eb);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .applicants-shell .view-toggle {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 2px !important;
-  width: max-content !important;
-  min-width: max-content !important;
-  height: 46px !important;
-  min-height: 46px !important;
-  max-height: 46px !important;
-  padding: 5px !important;
-  box-sizing: border-box !important;
-  white-space: nowrap !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: max-content;
+  min-width: max-content;
+  min-height: 48px;
+  padding: 4px;
+  border-radius: 12px;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .applicants-shell .view-btn {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  height: 34px !important;
-  min-height: 34px !important;
-  max-height: 34px !important;
-  margin: 0 !important;
-  padding: 0 14px !important;
-  line-height: 1 !important;
-  white-space: nowrap !important;
-  box-sizing: border-box !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  margin: 0;
+  padding: 0 14px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .applicants-shell .toolbar-actions {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  width: max-content !important;
-  min-width: max-content !important;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: max-content;
+  min-width: max-content;
 }
 
 .applicants-shell #clearFiltersBtn.hidden {
   display: none !important;
 }
 
+.applicants-shell .pipeline-summary {
+  margin-top: 18px;
+  padding: 0;
+  gap: 10px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.applicants-shell .summary-pill {
+  min-height: 36px;
+  padding: 6px 12px;
+  gap: 8px;
+  border-color: var(--line, #e2e8f0);
+}
+
+.applicants-shell .summary-pill span {
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
+.applicants-shell .summary-pill strong {
+  min-width: 24px;
+  height: 22px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.applicants-shell .pipeline-panel {
+  height: calc(100vh - 548px);
+  min-height: 340px;
+  margin-top: 0;
+  padding: 16px;
+  border-color: var(--pro-border, #dfe7f1);
+  border-radius: var(--pro-panel-radius, 12px);
+  box-shadow: var(--pro-shadow, 0 10px 26px rgba(15, 23, 42, 0.045));
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.applicants-shell .pipeline-board {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  min-height: 0;
+  grid-auto-columns: minmax(320px, 1fr);
+  align-items: stretch;
+  gap: 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 2px 12px;
+  scroll-padding: 16px;
+}
+
+.applicants-shell .pipeline-board.is-empty {
+  min-height: 180px;
+}
+
+.applicants-shell .pipeline-column {
+  min-width: 320px;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-color: var(--pro-border, #dfe7f1);
+  border-radius: var(--pro-panel-radius, 12px);
+  background: #f8fafc;
+  overflow: hidden;
+}
+
+.applicants-shell .column-head {
+  flex: 0 0 auto;
+  min-width: 0;
+  padding: 16px;
+  gap: 12px;
+  border-bottom-color: var(--line, #e2e8f0);
+  border-radius: var(--pro-panel-radius, 12px) var(--pro-panel-radius, 12px) 0 0;
+}
+
+.applicants-shell .column-title {
+  min-width: 0;
+  flex: 1 1 auto;
+  gap: 9px;
+}
+
+.applicants-shell .column-head h2 {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  line-height: 1.25;
+  font-weight: 800;
+}
+
+.applicants-shell .stage-dot {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 auto;
+}
+
+.applicants-shell .count-badge {
+  flex: 0 0 auto;
+  min-width: 28px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.applicants-shell .column-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 14px;
+  gap: 12px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.applicants-shell .applicant-card.compact {
+  width: 100%;
+  min-width: 0;
+  min-height: 92px;
+  padding: 14px;
+  grid-template-columns: 42px minmax(0, 1fr) 36px;
+  gap: 12px;
+  align-items: center;
+  border-color: var(--line, #e2e8f0);
+  border-radius: var(--pro-panel-radius, 12px);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.035);
+}
+
+.applicants-shell .applicant-card.compact:hover {
+  transform: none;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.055);
+}
+
+.applicants-shell .applicant-card.compact .avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  align-self: center;
+  font-size: 13px;
+}
+
+.applicants-shell .applicant-card.compact .card-name {
+  min-width: 0;
+  align-self: center;
+  gap: 4px;
+}
+
+.applicants-shell .applicant-card.compact .card-name h3,
+.applicants-shell .applicant-card.compact .card-name p,
+.applicants-shell .applicant-card.compact .card-signal {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.applicants-shell .applicant-card.compact .card-name h3 {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.25;
+  font-weight: 800;
+}
+
+.applicants-shell .applicant-card.compact .card-name p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.35;
+  font-weight: 650;
+}
+
+.applicants-shell .applicant-card.compact .card-signal {
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.applicants-shell .applicant-card.compact .card-menu-wrap {
+  width: 36px;
+  min-width: 36px;
+  justify-self: end;
+  align-self: center;
+}
+
+.applicants-shell .applicant-card.compact .card-menu-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.applicants-shell .move-menu {
+  top: 42px;
+  right: 0;
+}
+
+.applicants-shell .column-empty {
+  min-height: 110px;
+  padding: 20px 14px;
+  border-radius: var(--pro-panel-radius, 12px);
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 700;
+}
+
 @media (max-width: 1180px) {
   .applicants-shell .pipeline-toolbar {
-    grid-template-columns: minmax(0, 1fr) 150px auto auto auto !important;
+    grid-template-columns: 1fr minmax(188px, 220px) auto auto;
+  }
+
+  .applicants-shell .toolbar-actions {
+    grid-column: 1 / -1;
+    justify-self: start;
   }
 }
 
 @media (max-width: 980px) {
+  .applicants-shell .job-toolbar-top,
   .applicants-shell .pipeline-toolbar {
-    grid-template-columns: 1fr !important;
-    align-items: stretch !important;
+    grid-template-columns: 1fr;
+    align-items: stretch;
   }
 
   .applicants-shell .toolbar-field {
-    width: 100% !important;
-    min-width: 0 !important;
+    width: 100%;
+    min-width: 0;
   }
 
   .applicants-shell .filter-menu-wrap,
   .applicants-shell .view-toggle,
   .applicants-shell .toolbar-actions {
-    justify-self: start !important;
+    justify-self: start;
+  }
+
+  .applicants-shell #selectedJobManageLink {
+    width: auto;
+    min-width: 112px;
+    height: 48px;
+    min-height: 48px;
+    flex: 0 0 auto;
+  }
+
+  .applicants-shell .pipeline-panel {
+    height: calc(100vh - 620px);
+    min-height: 320px;
+  }
+
+  .applicants-shell .pipeline-board {
+    grid-auto-columns: minmax(280px, 86vw);
+  }
+
+  .applicants-shell .pipeline-column {
+    min-width: 280px;
   }
 }
