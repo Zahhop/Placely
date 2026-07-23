@@ -16,6 +16,10 @@ const pipelineBoard = document.getElementById("pipelineBoard");
 const archivedApplicants = document.getElementById("archivedApplicants");
 const loadingState = document.getElementById("loadingState");
 const pipelineSummary = document.getElementById("pipelineSummary");
+const activePipelinesCount = document.getElementById("activePipelinesCount");
+const totalApplicantsCount = document.getElementById("totalApplicantsCount");
+const inProgressApplicantsCount = document.getElementById("inProgressApplicantsCount");
+const hiredApplicantsCount = document.getElementById("hiredApplicantsCount");
 const selectedJobContext = document.getElementById("selectedJobContext");
 const selectedJobManageLink = document.getElementById("selectedJobManageLink");
 const jobSelectorBtn = document.getElementById("jobSelectorBtn");
@@ -32,6 +36,7 @@ const hasResumeFilter = document.getElementById("hasResumeFilter");
 const hasNotesFilter = document.getElementById("hasNotesFilter");
 const filtersMenuBtn = document.getElementById("filtersMenuBtn");
 const filtersPopover = document.getElementById("filtersPopover");
+const archivedViewBtn = document.getElementById("archivedViewBtn");
 const refreshBtn = document.getElementById("refreshBtn");
 const clearFiltersBtn = document.getElementById("clearFiltersBtn");
 const toast = document.getElementById("toast");
@@ -122,6 +127,15 @@ function setupEvents() {
       event.stopPropagation();
       const isOpen = !filtersPopover?.classList.contains("hidden");
       setFiltersOpen(!isOpen);
+    });
+  }
+
+  if (archivedViewBtn) {
+    archivedViewBtn.addEventListener("click", () => {
+      activeView = "archived";
+      closeMoveMenu();
+      setFiltersOpen(false);
+      renderApplicants();
     });
   }
 
@@ -496,6 +510,7 @@ function renderApplicants() {
   updateViewButtons();
   updateClearFilters();
   renderSelectedJobContext();
+  renderApplicantKpis();
 
   const selectedApps = getSelectedJobApplications();
   const filtered = getFilteredApplications(selectedApps);
@@ -504,11 +519,19 @@ function renderApplicants() {
 
   const activeApplications = filtered.filter((app) => !ARCHIVED_STATUSES.includes(app.normalized_status));
   const archived = filtered.filter((app) => ARCHIVED_STATUSES.includes(app.normalized_status));
+  const hired = activeApplications.filter((app) => getPipelineStage(app.normalized_status) === "hired");
 
   if (activeView === "archived") {
     pipelineBoard.classList.add("hidden");
     archivedApplicants.classList.remove("hidden");
     renderArchivedApplicants(archived, selectedApps);
+    return;
+  }
+
+  if (activeView === "hired") {
+    pipelineBoard.classList.add("hidden");
+    archivedApplicants.classList.remove("hidden");
+    renderHiredApplicants(hired, selectedApps);
     return;
   }
 
@@ -533,9 +556,11 @@ function renderSelectedJobContext() {
 
   const counts = getJobCounts(job.id);
   selectedJobContext.innerHTML = `
-    <span class="selected-job-title">${escapeHTML(job.job_title || "Untitled Job")}</span>
-    <span class="selected-job-subtitle">${escapeHTML(job.location || "Location not listed")} &middot; ${escapeHTML(job.employment_type || "Type not listed")} &middot; ${escapeHTML(capitalize(normalizeJobStatus(job.status)))}</span>
-    <span class="selected-job-counts">${counts.active} active &middot; ${counts.newCount} applied</span>
+    <span class="selected-job-mainline">
+      <span class="selected-job-title">${escapeHTML(job.job_title || "Untitled Job")}</span>
+      <span class="selected-job-meta">${escapeHTML(job.location || "Location not listed")} &middot; ${escapeHTML(job.employment_type || "Type not listed")} &middot; ${escapeHTML(capitalize(normalizeJobStatus(job.status)))}</span>
+    </span>
+    <span class="selected-job-counts">${counts.active} active &middot; ${counts.hired} hired</span>
   `;
   if (selectedJobManageLink) selectedJobManageLink.href = `edit-jobs.html?id=${encodeURIComponent(job.id)}`;
   if (selectedJobManageLink) selectedJobManageLink.textContent = "Manage Job";
@@ -594,7 +619,7 @@ function renderPipeline(activeApplications, selectedApps) {
           ${
             stageApps.length
               ? stageApps.map(renderApplicantCard).join("")
-              : `<div class="column-empty">${escapeHTML(stage.empty)}</div>`
+              : `<div class="column-empty"><strong>No applicants</strong><span>Drag and drop applicants here</span></div>`
           }
         </div>
       </section>
@@ -718,6 +743,73 @@ function renderArchivedApplicants(archived, selectedApps) {
       </article>
     `;
   }).join("");
+
+  archivedApplicants.querySelectorAll("[data-open-id]").forEach((button) => {
+    button.addEventListener("click", () => openApplicantDrawer(button.dataset.openId));
+  });
+
+  archivedApplicants.querySelectorAll("[data-restore-id]").forEach((select) => {
+    select.addEventListener("change", () => {
+      if (select.value) moveApplication(select.dataset.restoreId, select.value);
+    });
+  });
+}
+
+function renderHiredApplicants(hired, selectedApps) {
+  if (!archivedApplicants) return;
+
+  if (!employerJobs.length) {
+    archivedApplicants.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">PT</div>
+        <h3>No active jobs</h3>
+        <p>Hired applicants will appear here after an active job receives applications.</p>
+      </div>
+    `;
+    return;
+  }
+
+  if (!selectedApps.length) {
+    archivedApplicants.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">PT</div>
+        <h3>No applicants for this job yet</h3>
+        <p>Hired applicants for this selected job will appear here.</p>
+      </div>
+    `;
+    return;
+  }
+
+  if (!hired.length) {
+    archivedApplicants.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">PT</div>
+        <h3>No hired applicants match your filters</h3>
+        <p>Candidates moved to Hired will appear here.</p>
+      </div>
+    `;
+    return;
+  }
+
+  archivedApplicants.innerHTML = hired.map((app) => `
+    <article class="archive-card hired-card" data-id="${escapeHTML(app.id)}">
+      <div>
+        <h3>${escapeHTML(app.candidate_name)}</h3>
+        <p class="archive-meta">${escapeHTML(app.candidate_trade)} &middot; ${escapeHTML(app.candidate_location)}</p>
+      </div>
+      <div>
+        <span class="status-pill hired">${escapeHTML(getStatusLabel(app.normalized_status))}</span>
+        <p class="archive-meta">${escapeHTML(formatDate(app.hired_at || app.updated_at || app.created_at))}</p>
+      </div>
+      <div class="archive-actions">
+        <button type="button" class="quiet-btn" data-open-id="${escapeHTML(app.id)}">Details</button>
+        <select class="archive-restore-select" data-restore-id="${escapeHTML(app.id)}" aria-label="Move hired applicant stage">
+          <option value="">Move to...</option>
+          ${RESTORE_OPTIONS.map((option) => `<option value="${escapeHTML(option)}">${escapeHTML(getStatusLabel(option))}</option>`).join("")}
+        </select>
+      </div>
+    </article>
+  `).join("");
 
   archivedApplicants.querySelectorAll("[data-open-id]").forEach((button) => {
     button.addEventListener("click", () => openApplicantDrawer(button.dataset.openId));
@@ -1403,7 +1495,7 @@ function renderSummary(filtered) {
   const active = filtered.filter((app) => !ARCHIVED_STATUSES.includes(app.normalized_status));
   const countFor = (status) => active.filter((app) => getPipelineStage(app.normalized_status) === status).length;
   const summaryItems = [
-    { label: "Active", count: active.length },
+    { label: "All", count: active.length },
     ...STAGES.map((stage) => ({ label: stage.label, count: countFor(stage.id) }))
   ];
 
@@ -1415,6 +1507,17 @@ function renderSummary(filtered) {
   `).join("");
 }
 
+function renderApplicantKpis() {
+  const activeApplications = allApplications.filter((app) => !ARCHIVED_STATUSES.includes(app.normalized_status));
+  const inProgress = activeApplications.filter((app) => getPipelineStage(app.normalized_status) !== "hired");
+  const hired = activeApplications.filter((app) => getPipelineStage(app.normalized_status) === "hired");
+
+  if (activePipelinesCount) activePipelinesCount.textContent = employerJobs.length;
+  if (totalApplicantsCount) totalApplicantsCount.textContent = allApplications.length;
+  if (inProgressApplicantsCount) inProgressApplicantsCount.textContent = inProgress.length;
+  if (hiredApplicantsCount) hiredApplicantsCount.textContent = hired.length;
+}
+
 function getJobCounts(jobId) {
   const apps = allApplications.filter((app) => String(app.job_id) === String(jobId));
   const active = apps.filter((app) => !ARCHIVED_STATUSES.includes(app.normalized_status));
@@ -1424,6 +1527,7 @@ function getJobCounts(jobId) {
     active: active.length,
     newCount: active.filter((app) => getPipelineStage(app.normalized_status) === "new").length,
     interview: active.filter((app) => getPipelineStage(app.normalized_status) === "interview").length,
+    hired: active.filter((app) => getPipelineStage(app.normalized_status) === "hired").length,
     archived: apps.filter((app) => ARCHIVED_STATUSES.includes(app.normalized_status)).length
   };
 }

@@ -100,9 +100,9 @@
       </button>
 
       <form class="utility-search" role="search">
-        <label class="sr-only" for="globalApplicantsSearch">Search applicants or jobs</label>
+        <label class="sr-only" for="globalApplicantsSearch">Search candidates, jobs, or messages</label>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.97 12.04l3.25 3.24a1 1 0 0 1-1.42 1.42l-3.24-3.25A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/></svg>
-        <input id="globalApplicantsSearch" type="search" placeholder="Search applicants or jobs..." autocomplete="off" />
+        <input id="globalApplicantsSearch" type="search" placeholder="Search candidates, jobs, or messages..." autocomplete="off" />
         <span class="search-shortcut" aria-hidden="true">/</span>
       </form>
 
@@ -117,12 +117,12 @@
         </a>
         <a href="employer-profile.html" class="top-account">
           <span class="account-avatar small" id="topCompanyAvatar">PT</span>
-          <span id="topCompanyName">Employer</span>
+          <span id="topCompanyName">Placely Talent</span>
         </a>
       </div>
     </header>
 
-    <main class="employer-shell applicants-shell" data-plan="loading">
+    <main class="employer-shell applicants-shell" data-plan="pro">
 
       <section class="dashboard-briefing" aria-labelledby="applicantsTitle">
         <div class="briefing-copy">
@@ -130,6 +130,44 @@
           <p>Review candidates by job and move each applicant through your hiring process without mixing pipelines.</p>
         </div>
 
+      </section>
+
+      <section class="kpi-strip applicants-kpi-strip" aria-label="Applicant pipeline overview">
+        <div class="kpi-item applicants-active-kpi">
+          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 11a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm-8 1a3.5 3.5 0 1 0-3.5-3.5A3.5 3.5 0 0 0 8 12Zm8 2c-3.03 0-6 1.4-6 3.76V20a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2.24C22 15.4 19.03 14 16 14Zm-8 .5c-2.6 0-5 1.18-5 3.25V20a1 1 0 0 0 1 1h4.18A2.97 2.97 0 0 1 8 20v-2.24a5.01 5.01 0 0 1 1.25-3.17A8.43 8.43 0 0 0 8 14.5Z"/></svg></span>
+          <span class="kpi-copy">
+            <span class="kpi-label">Active Pipelines</span>
+            <strong id="activePipelinesCount">0</strong>
+            <span class="kpi-context">Currently active</span>
+          </span>
+        </div>
+
+        <div class="kpi-item applicants-total-kpi">
+          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.33 0-8 2.03-8 4.43V20a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1.57C20 16.03 16.33 14 12 14Z"/></svg></span>
+          <span class="kpi-copy">
+            <span class="kpi-label">Total Applicants</span>
+            <strong id="totalApplicantsCount">0</strong>
+            <span class="kpi-context">Across all jobs</span>
+          </span>
+        </div>
+
+        <div class="kpi-item applicants-progress-kpi">
+          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 1 3 3v1h2a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-7a3 3 0 0 1 3-3h2V6a3 3 0 0 1 3-3Zm-1 4h2V6a1 1 0 1 0-2 0v1Zm-4 5h10v-2H7v2Zm0 5h10v-3H7v3Z"/></svg></span>
+          <span class="kpi-copy">
+            <span class="kpi-label">In Progress</span>
+            <strong id="inProgressApplicantsCount">0</strong>
+            <span class="kpi-context">Moving through pipeline</span>
+          </span>
+        </div>
+
+        <div class="kpi-item applicants-hired-kpi">
+          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2 4 5.5v6.2c0 5.04 3.42 9.74 8 10.3 4.58-.56 8-5.26 8-10.3V5.5L12 2Zm3.75 7.7-4.28 4.28-1.92-1.93-1.42 1.42 3.34 3.34 5.7-5.7-1.42-1.41Z"/></svg></span>
+          <span class="kpi-copy">
+            <span class="kpi-label">Hired</span>
+            <strong id="hiredApplicantsCount">0</strong>
+            <span class="kpi-context">Ready to onboard</span>
+          </span>
+        </div>
       </section>
 
   <select id="jobFilter" class="hidden" aria-hidden="true">
@@ -161,8 +199,11 @@
   <section class="job-toolbar-card search-controls-card" aria-label="Applicant pipeline controls">
     <div class="pipeline-toolbar" aria-label="Applicant filters and actions">
       <div class="search-field">
-        <label for="searchInput">Search applicants</label>
-        <input id="searchInput" type="search" placeholder="Search selected job candidates..." autocomplete="off" />
+        <label class="sr-only" for="searchInput">Search applicants</label>
+        <div class="applicants-search-control">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.97 12.04l3.25 3.24a1 1 0 0 1-1.42 1.42l-3.24-3.25A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/></svg>
+          <input id="searchInput" type="search" placeholder="Search applicants in this pipeline..." autocomplete="off" />
+        </div>
       </div>
 
       <div class="toolbar-field">
@@ -197,12 +238,14 @@
             <input id="hasNotesFilter" type="checkbox" />
             Has notes
           </label>
+
+          <button type="button" id="archivedViewBtn" class="archive-view-action" role="menuitem">Archived applicants</button>
         </div>
       </div>
 
       <div class="view-toggle" role="group" aria-label="Applicant view">
         <button type="button" class="view-btn active" data-view="active">Active pipeline</button>
-        <button type="button" class="view-btn" data-view="archived">Archived</button>
+        <button type="button" class="view-btn" data-view="hired">Hired</button>
       </div>
 
       <div class="toolbar-actions">

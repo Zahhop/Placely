@@ -133,7 +133,7 @@ function setupEvents() {
   if (panelOverlay) panelOverlay.addEventListener("click", closeCandidatePanel);
 
   document.querySelectorAll(".summary-pill").forEach((button, index) => {
-    const filter = ["recommended", "available", "new", "saved"][index] || "recommended";
+    const filter = button.dataset.summaryFilter || ["recommended", "available", "new", "saved"][index] || "recommended";
     button.dataset.summaryFilter = filter;
     button.setAttribute("aria-pressed", filter === activeSummaryFilter ? "true" : "false");
     button.setAttribute("aria-label", `${getSummaryFilterLabel(filter)} view`);
@@ -332,8 +332,10 @@ function createCandidateRow(candidate, index) {
   const location = formatDisplayValue(candidate.location, "Location not listed");
   const experience = normalizeExperienceLabel(candidate.experience);
   const availability = normalizeAvailabilityLabel(candidate.availability);
+  const availabilityCategory = getAvailabilityCategory(candidate.availability);
   const tags = getCandidateTags(candidate);
   const isSaved = isCandidateSaved(id);
+  const isVerified = isCandidateVerified(candidate);
   const contextLabel = getCandidateContextLabel(candidate);
 
   row.className = `candidate-row${hasCandidateAccess ? "" : " locked"}${isSelected ? " active" : ""}`;
@@ -353,7 +355,10 @@ function createCandidateRow(candidate, index) {
       </div>
 
       <div>
-        <h3 class="candidate-name">${escapeHTML(name)}</h3>
+        <div class="candidate-name-line">
+          <h3 class="candidate-name">${escapeHTML(name)}</h3>
+          ${isVerified ? `<span class="verified-badge">Verified</span>` : ""}
+        </div>
         <p class="candidate-title">${escapeHTML(trade)}</p>
         <p class="candidate-meta sensitive">${escapeHTML(location)}</p>
         ${contextLabel ? `<p class="candidate-context-label">${escapeHTML(contextLabel)}</p>` : ""}
@@ -365,17 +370,19 @@ function createCandidateRow(candidate, index) {
     </div>
 
     <div class="candidate-cell">
-      <strong>${escapeHTML(availability)}</strong>
+      <strong class="availability-status availability-${escapeAttribute(availabilityCategory)}">${escapeHTML(availability)}</strong>
     </div>
 
     <div>
       <div class="tag-row">
-        ${tags.length ? tags.map((tag) => `<span>${escapeHTML(tag)}</span>`).join("") : `<span>Skills not listed</span>`}
+        ${tags.length ? tags.map((tag) => `<span>${escapeHTML(tag)}</span>`).join("") : `<span class="is-empty">Skills not listed</span>`}
       </div>
     </div>
 
     <div class="row-status">
-      ${isSaved ? `<span class="saved-pill">Saved</span>` : ""}
+      <button type="button" class="row-save-btn ${isSaved ? "saved" : ""}" data-action="save" data-id="${escapeAttribute(id)}" aria-label="${escapeAttribute(isSaved ? `Remove ${name} from saved talent` : `Save ${name} to saved talent`)}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a2 2 0 0 1 2 2v16a1 1 0 0 1-1.55.83L12 17.53l-6.45 4.3A1 1 0 0 1 4 21V5a2 2 0 0 1 2-2Zm0 2v14.13l5.45-3.63a1 1 0 0 1 1.1 0L18 19.13V5H6Z"/></svg>
+      </button>
       ${hasCandidateAccess ? "" : `<span class="locked-pill">Unlock</span>`}
       <button type="button" class="row-chevron" data-action="view" data-id="${escapeAttribute(id)}" aria-label="${escapeAttribute(hasCandidateAccess ? `View ${name}'s profile` : "Preview candidate profile")}">
         <span aria-hidden="true">&rsaquo;</span>
@@ -1039,6 +1046,22 @@ function getCandidateContextLabel(candidate) {
   return "";
 }
 
+function isCandidateVerified(candidate) {
+  const fields = [
+    candidate.verified,
+    candidate.is_verified,
+    candidate.profile_verified,
+    candidate.identity_verified,
+    candidate.verification_status
+  ];
+
+  return fields.some((value) => {
+    if (typeof value === "boolean") return value;
+    const text = clean(value);
+    return text === "verified" || text === "true" || text === "approved";
+  });
+}
+
 function matchesActiveJobTrade(candidate) {
   const candidateTrade = clean(candidate.trade);
   if (!candidateTrade) return false;
@@ -1244,13 +1267,7 @@ function getResultsText() {
   if (activeSummaryFilter === "available") parts.push("available now");
   if (activeSummaryFilter === "new") parts.push("recently joined");
 
-  if (!shouldShowResultCount()) {
-    return activeJobs.length
-      ? "Recommended candidates based on your active jobs."
-      : "Recommended candidates from the visible talent network.";
-  }
-
-  return `${count} candidate${count === 1 ? "" : "s"}${parts.length ? ` ${parts.join(", ")}` : ""}`;
+  return `${count} candidate${count === 1 ? "" : "s"} found${parts.length ? ` ${parts.join(", ")}` : ""}`;
 }
 
 function getEmptyResultsText() {
