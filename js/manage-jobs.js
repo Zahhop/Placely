@@ -15,13 +15,31 @@ const filterButtons = document.querySelectorAll(".filter-btn");
 const jobSearchInput = document.getElementById("jobSearchInput");
 const jobSortSelect = document.getElementById("jobSortSelect");
 const logoutBtn = document.getElementById("logoutBtn");
+const boostModal = document.getElementById("boostModal");
+const boostCloseBtn = document.getElementById("boostCloseBtn");
+const boostCancelBtn = document.getElementById("boostCancelBtn");
+const boostCheckoutBtn = document.getElementById("boostCheckoutBtn");
+const boostDurationOptions = document.getElementById("boostDurationOptions");
+const boostBudgetOptions = document.getElementById("boostBudgetOptions");
+const boostModalMessage = document.getElementById("boostModalMessage");
+const boostConfigurePanel = document.getElementById("boostConfigurePanel");
+const boostManagePanel = document.getElementById("boostManagePanel");
+
+const BOOST_DURATIONS = [3, 7, 14, 30];
+const BOOST_BUDGETS = [2500, 5000, 10000, 20000];
+const JOB_BOOSTS_ENABLED = window.PLACELY_FEATURES?.jobBoosts === true;
 
 let allJobs = [];
 let applicationCountsByJob = {};
 let reviewCountsByJob = {};
 let interviewCountsByJob = {};
+let activeBoostsByJob = {};
 let currentFilter = "all";
 let currentUserId = null;
+let selectedBoostJob = null;
+let selectedDurationDays = null;
+let selectedBudgetCents = null;
+let isCreatingBoostCheckout = false;
 
 document.addEventListener("DOMContentLoaded", initManageJobs);
 
@@ -30,12 +48,15 @@ async function initManageJobs() {
   setupLogout();
   setupFilters();
   setupSearchAndSort();
+  if (JOB_BOOSTS_ENABLED) setupBoostModal();
   setupDashboardShell();
 
   const user = await requireEmployerLogin();
   if (!user) return;
 
   currentUserId = user.id;
+  if (JOB_BOOSTS_ENABLED) await handleBoostReturnState();
+  else cleanBoostQueryParams();
   await loadEmployerJobs(user.id);
 }
 
@@ -80,10 +101,37 @@ async function loadEmployerJobs(userId) {
   }
 
   allJobs = data || [];
-  await loadApplicationCounts(userId);
+  await Promise.all([
+    loadApplicationCounts(userId),
+    loadActiveBoosts(userId)
+  ]);
 
   renderJobs();
   updateStats();
+}
+
+async function loadActiveBoosts(userId) {
+  if (!JOB_BOOSTS_ENABLED) {
+    activeBoostsByJob = {};
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("job_boosts")
+    .select("id, job_id, employer_id, status, budget_cents, currency, duration_days, starts_at, ends_at, stripe_checkout_session_id")
+    .eq("employer_id", userId)
+    .eq("status", "active")
+    .gt("ends_at", new Date().toISOString());
+
+  if (error) {
+    activeBoostsByJob = {};
+    return;
+  }
+
+  activeBoostsByJob = {};
+  (data || []).forEach((boost) => {
+    if (boost.job_id) activeBoostsByJob[String(boost.job_id)] = boost;
+  });
 }
 
 async function loadApplicationCounts(userId) {
@@ -187,12 +235,15 @@ function createJobCard(job) {
   const status = normalizeStatus(job.status);
   const posted = formatDate(job.created_at);
   const applicationCount = applicationCountsByJob[String(job.id)] || 0;
+  const activeBoost = JOB_BOOSTS_ENABLED ? activeBoostsByJob[String(job.id)] || null : null;
+  const boostButtonLabel = activeBoost ? "Manage Boost" : "Boost Job";
 
   card.innerHTML = `
     <div class="job-main">
       <div class="job-title-row">
         <h3>${escapeHTML(title)}</h3>
         <span class="status ${status}">${escapeHTML(capitalize(status))}</span>
+        ${activeBoost ? `<span class="status boosted">Boosted</span>` : ""}
       </div>
       <p class="job-company">${escapeHTML(company)}</p>
     </div>
@@ -219,52 +270,25 @@ function createJobCard(job) {
     <div class="job-activity">
       <p class="posted-date">${escapeHTML(posted)}</p>
       <strong class="applicant-count">${applicationCount} applicant${applicationCount === 1 ? "" : "s"}</strong>
+      ${activeBoost ? `<span class="boost-remaining">${escapeHTML(formatBoostRemaining(activeBoost.ends_at))}</span>` : ""}
     </div>
 
     <div class="job-actions">
+      ${JOB_BOOSTS_ENABLED ? `<button class="secondary boost-job-btn" type="button" data-job-id="${escapeHTML(job.id)}">${escapeHTML(boostButtonLabel)}</button>` : ""}
       <a class="primary" href="employer-applicants.html?job=${encodeURIComponent(job.id)}">Applicants</a>
       <a class="secondary" href="edit-jobs.html?id=${encodeURIComponent(job.id)}">Edit</a>
-      ${
-        status === "paused"
-          ? `<button class="more-action" type="button" aria-label="Activate ${escapeHTML(title)}" title="Activate" data-id="${escapeHTML(job.id)}" data-status="active">...</button>`
-          : `<button class="more-action" type="button" aria-label="Pause ${escapeHTML(title)}" title="Pause" data-id="${escapeHTML(job.id)}" data-status="paused">...</button>`
-      }
     </div>
   `;
 
-  const statusButton = card.querySelector("button[data-status]");
+  const boostButton = card.querySelector(".boost-job-btn");
 
-  if (statusButton) {
-    statusButton.addEventListener("click", () => {
-      updateJobStatus(job.id, statusButton.dataset.status);
+  if (boostButton) {
+    boostButton.addEventListener("click", () => {
+      openBoostModal(job);
     });
   }
 
   return card;
-}
-
-async function updateJobStatus(jobId, newStatus) {
-  const { error } = await supabaseClient
-    .from(JOBS_TABLE)
-    .update({ status: newStatus })
-    .eq("id", jobId)
-    .eq("employer_id", currentUserId);
-
-  if (error) {
-    alert("Could not update this job. Please try again.");
-    return;
-  }
-
-  allJobs = allJobs.map((job) => {
-    if (String(job.id) === String(jobId)) {
-      return { ...job, status: newStatus };
-    }
-
-    return job;
-  });
-
-  renderJobs();
-  updateStats();
 }
 
 function updateStats() {
@@ -324,6 +348,253 @@ function setupLogout() {
   });
 }
 
+function setupBoostModal() {
+  if (!JOB_BOOSTS_ENABLED) return;
+
+  renderBoostOptionButtons();
+  boostCloseBtn?.addEventListener("click", closeBoostModal);
+  boostCancelBtn?.addEventListener("click", closeBoostModal);
+  boostCheckoutBtn?.addEventListener("click", startBoostCheckout);
+
+  boostModal?.addEventListener("click", (event) => {
+    if (event.target === boostModal) closeBoostModal();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && boostModal && !boostModal.hidden) closeBoostModal();
+  });
+}
+
+function renderBoostOptionButtons() {
+  if (boostDurationOptions) {
+    boostDurationOptions.innerHTML = BOOST_DURATIONS.map((days) => `
+      <button type="button" class="boost-option" data-duration="${days}">${days} days</button>
+    `).join("");
+
+    boostDurationOptions.querySelectorAll("[data-duration]").forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedDurationDays = Number(button.dataset.duration);
+        updateBoostSelectionUI();
+      });
+    });
+  }
+
+  if (boostBudgetOptions) {
+    boostBudgetOptions.innerHTML = BOOST_BUDGETS.map((cents) => `
+      <button type="button" class="boost-option" data-budget="${cents}">${formatBudget(cents)}</button>
+    `).join("");
+
+    boostBudgetOptions.querySelectorAll("[data-budget]").forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedBudgetCents = Number(button.dataset.budget);
+        updateBoostSelectionUI();
+      });
+    });
+  }
+}
+
+function openBoostModal(job) {
+  if (!JOB_BOOSTS_ENABLED) return;
+
+  selectedBoostJob = job;
+  selectedDurationDays = null;
+  selectedBudgetCents = null;
+  isCreatingBoostCheckout = false;
+  setBoostMessage("");
+
+  const activeBoost = activeBoostsByJob[String(job.id)] || null;
+  const title = job.job_title || "Untitled job";
+  const company = job.company_name || "Placely Talent";
+  const location = job.location || "Location not listed";
+
+  setText("boostModalTitle", activeBoost ? "Manage boost" : "Boost this job");
+  setText(
+    "boostModalDescription",
+    activeBoost
+      ? "This boost is active. Changes to budget or duration are not available in V1."
+      : "Increase the visibility of this role and reach more relevant candidates."
+  );
+  setText("boostJobTitle", title);
+  setText("boostJobMeta", `${company} - ${location}`);
+
+  if (activeBoost) {
+    showBoostManagement(activeBoost);
+  } else {
+    showBoostConfiguration(job);
+  }
+
+  if (boostModal) boostModal.hidden = false;
+}
+
+function showBoostConfiguration(job) {
+  if (boostConfigurePanel) boostConfigurePanel.hidden = false;
+  if (boostManagePanel) boostManagePanel.hidden = true;
+  if (boostCheckoutBtn) {
+    boostCheckoutBtn.hidden = false;
+    boostCheckoutBtn.disabled = true;
+    boostCheckoutBtn.textContent = "Continue to Payment";
+  }
+  if (boostCancelBtn) boostCancelBtn.textContent = "Cancel";
+
+  setText("boostSummaryJob", job.job_title || "Untitled job");
+  updateBoostSelectionUI();
+}
+
+function showBoostManagement(boost) {
+  if (boostConfigurePanel) boostConfigurePanel.hidden = true;
+  if (boostManagePanel) boostManagePanel.hidden = false;
+  if (boostCheckoutBtn) boostCheckoutBtn.hidden = true;
+  if (boostCancelBtn) boostCancelBtn.textContent = "Close";
+
+  setText("boostManageStatus", capitalize(boost.status || "active"));
+  setText("boostManageBudget", formatBudget(boost.budget_cents));
+  setText("boostManageStart", formatCalendarDate(boost.starts_at));
+  setText("boostManageEnd", formatCalendarDate(boost.ends_at));
+  setText("boostManageRemaining", formatBoostRemaining(boost.ends_at));
+}
+
+function updateBoostSelectionUI() {
+  boostDurationOptions?.querySelectorAll("[data-duration]").forEach((button) => {
+    button.classList.toggle("active", Number(button.dataset.duration) === selectedDurationDays);
+  });
+
+  boostBudgetOptions?.querySelectorAll("[data-budget]").forEach((button) => {
+    button.classList.toggle("active", Number(button.dataset.budget) === selectedBudgetCents);
+  });
+
+  setText("boostSummaryDuration", selectedDurationDays ? `${selectedDurationDays} days` : "-");
+  setText("boostSummaryBudget", selectedBudgetCents ? formatBudget(selectedBudgetCents) : "-");
+  setText("boostSummaryEndDate", selectedDurationDays ? formatCalendarDate(getEstimatedEndDate(selectedDurationDays)) : "-");
+
+  const eligibilityError = getBoostEligibilityError(selectedBoostJob);
+  if (eligibilityError) setBoostMessage(eligibilityError);
+  else setBoostMessage("");
+
+  if (boostCheckoutBtn) {
+    boostCheckoutBtn.disabled = Boolean(eligibilityError) || !selectedDurationDays || !selectedBudgetCents || isCreatingBoostCheckout;
+  }
+}
+
+function getBoostEligibilityError(job) {
+  if (!job) return "Choose a job to boost.";
+  if (String(job.employer_id || "") !== String(currentUserId || "")) return "You can only boost jobs owned by your employer account.";
+  if (normalizeStatus(job.status) !== "active") return "Only active jobs can be boosted.";
+  if (activeBoostsByJob[String(job.id)]) return "This job already has an active boost.";
+  return "";
+}
+
+async function startBoostCheckout() {
+  if (!JOB_BOOSTS_ENABLED) return;
+  if (!selectedBoostJob || isCreatingBoostCheckout) return;
+
+  const eligibilityError = getBoostEligibilityError(selectedBoostJob);
+  if (eligibilityError) {
+    setBoostMessage(eligibilityError);
+    updateBoostSelectionUI();
+    return;
+  }
+
+  if (!selectedDurationDays || !selectedBudgetCents) {
+    setBoostMessage("Choose a boost duration and budget.");
+    updateBoostSelectionUI();
+    return;
+  }
+
+  isCreatingBoostCheckout = true;
+  setBoostMessage("Creating secure checkout...");
+  if (boostCheckoutBtn) {
+    boostCheckoutBtn.disabled = true;
+    boostCheckoutBtn.textContent = "Opening...";
+  }
+
+  try {
+    const { data, error } = await supabaseClient.functions.invoke("create-job-boost-checkout", {
+      body: {
+        job_id: selectedBoostJob.id,
+        duration_days: selectedDurationDays,
+        budget_cents: selectedBudgetCents,
+        origin: window.location.origin,
+        appPath: getAppPath()
+      }
+    });
+
+    if (error) throw error;
+    if (!data?.url) throw new Error("Missing checkout URL.");
+
+    window.location.href = data.url;
+  } catch (error) {
+    setBoostMessage(getBoostCheckoutErrorMessage(error));
+    isCreatingBoostCheckout = false;
+    if (boostCheckoutBtn) {
+      boostCheckoutBtn.textContent = "Continue to Payment";
+    }
+    updateBoostSelectionUI();
+  }
+}
+
+function getBoostCheckoutErrorMessage(error) {
+  const status = error?.context?.status || error?.status || 0;
+  if (status === 401) return "Your session has expired. Please log in again.";
+  if (status === 403) return "This job cannot be boosted by your employer account.";
+  if (status === 409) return "This job is not eligible for a boost right now.";
+  if (status === 400) return "Choose a valid boost duration and budget.";
+  return "We could not start checkout. Please try again.";
+}
+
+async function handleBoostReturnState() {
+  const params = new URLSearchParams(window.location.search);
+  const boostState = params.get("boost");
+  const sessionId = params.get("session_id");
+
+  if (boostState === "cancelled") {
+    alert("Boost checkout was cancelled. No boost was activated.");
+    cleanBoostQueryParams();
+    return;
+  }
+
+  if (boostState !== "processing" || !sessionId) return;
+
+  alert("Confirming your boost. This may take a moment after payment.");
+  await pollBoostActivation(sessionId);
+  cleanBoostQueryParams();
+}
+
+async function pollBoostActivation(sessionId) {
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const { data, error } = await supabaseClient
+      .from("job_boosts")
+      .select("id, job_id, status, ends_at")
+      .eq("stripe_checkout_session_id", sessionId)
+      .maybeSingle();
+
+    if (!error && data?.status === "active") {
+      alert("Your job boost is active.");
+      return;
+    }
+
+    await delay(1500);
+  }
+
+  alert("Payment was received and your boost is still being confirmed. Refresh this page in a moment.");
+}
+
+function cleanBoostQueryParams() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("boost");
+  url.searchParams.delete("session_id");
+  window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
+}
+
+function closeBoostModal() {
+  if (boostModal) boostModal.hidden = true;
+}
+
+function setBoostMessage(message, type = "error") {
+  if (!boostModalMessage) return;
+  boostModalMessage.textContent = message || "";
+  boostModalMessage.classList.toggle("success", type === "success");
+}
+
 function setupDashboardShell() {
   const body = document.body;
   const sidebar = document.getElementById("dashboardSidebar");
@@ -375,11 +646,50 @@ function normalizeStatus(status) {
     return "draft";
   }
 
-  if (["paused", "inactive", "closed"].includes(clean)) {
+  if (["paused", "inactive", "closed", "archived", "deleted", "removed"].includes(clean)) {
     return "paused";
   }
 
   return "active";
+}
+
+function formatBudget(cents) {
+  return `$${Math.round(Number(cents || 0) / 100)} CAD`;
+}
+
+function getEstimatedEndDate(days) {
+  return new Date(Date.now() + Number(days || 0) * 86400000);
+}
+
+function formatCalendarDate(value) {
+  if (!value) return "-";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleDateString("en-CA", {
+    month: "short",
+    day: "numeric",
+    year: "numeric"
+  });
+}
+
+function formatBoostRemaining(value) {
+  const end = new Date(value);
+  if (Number.isNaN(end.getTime())) return "Boost active";
+  const remainingMs = end.getTime() - Date.now();
+  if (remainingMs <= 0) return "Boost ending";
+  const days = Math.ceil(remainingMs / 86400000);
+  return `${days} day${days === 1 ? "" : "s"} remaining`;
+}
+
+function getAppPath() {
+  const path = window.location.pathname;
+  return path.includes("/Placely/") || path.endsWith("/Placely") ? "/Placely" : "";
+}
+
+function delay(ms) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
 }
 
 function formatDate(dateString) {
@@ -418,4 +728,9 @@ function escapeHTML(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function setText(id, value) {
+  const element = document.getElementById(id);
+  if (element) element.textContent = value || "";
 }

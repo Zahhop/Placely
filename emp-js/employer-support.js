@@ -101,8 +101,8 @@ async function submitSupportRequest(event) {
     supportForm.reset();
     replyEmailInput.value = payload.reply_email;
     sourcePageInput.value = payload.source_page;
-  } catch {
-    setMessage("We could not send your support request. Please try again.");
+  } catch (error) {
+    setMessage(await getSupportErrorMessage(error));
   } finally {
     isSubmittingSupport = false;
     if (sendSupportBtn) {
@@ -120,6 +120,28 @@ function getSupportPayload() {
     reply_email: clean(replyEmailInput?.value),
     source_page: clean(sourcePageInput?.value)
   };
+}
+
+async function getSupportErrorMessage(error) {
+  const status = error?.context?.status || error?.status || 0;
+
+  if (status === 401) return "Your session has expired. Please log in again.";
+  if (status === 403) return "This support form is available to employer accounts.";
+  if (status === 409) return "Your employer profile could not be found. Please complete your profile and try again.";
+  if (status === 400) return await readSupportErrorBody(error) || "Please check the support form and try again.";
+
+  return "We could not send your support request. Please try again.";
+}
+
+async function readSupportErrorBody(error) {
+  try {
+    const response = error?.context;
+    if (!response?.clone) return "";
+    const body = await response.clone().json();
+    return clean(body?.error);
+  } catch {
+    return "";
+  }
 }
 
 function validateSupportPayload(payload) {

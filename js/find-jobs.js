@@ -9,6 +9,8 @@ let currentUser = null;
 let savedJobIds = [];
 let employerLogos = {};
 let employerProfiles = {};
+let activeBoostsByJob = {};
+const JOB_BOOSTS_ENABLED = window.PLACELY_FEATURES?.jobBoosts === true;
 
 const jobsList = document.getElementById("jobsList");
 const jobDetails = document.getElementById("jobDetails");
@@ -53,6 +55,7 @@ function normalizeJob(job) {
     requirements: job.required_skills || "Requirements not listed.",
     benefits: job.benefits || "",
     status: job.status || "active",
+    boosted: JOB_BOOSTS_ENABLED && Boolean(activeBoostsByJob[String(job.id)]),
     created_at: job.created_at,
     raw: job
   };
@@ -142,9 +145,11 @@ async function loadJobs() {
     return;
   }
 
+  if (JOB_BOOSTS_ENABLED) await loadActiveBoosts(data || []);
+  else activeBoostsByJob = {};
   allJobs = (data || []).map(normalizeJob);
   await loadEmployerLogos(allJobs);
-  filteredJobs = [...allJobs];
+  filteredJobs = sortJobsByBoost([...allJobs]);
 
   populateLocations();
   renderJobs();
@@ -160,6 +165,33 @@ async function loadJobs() {
   } else if (filteredJobs.length) {
     selectJob(filteredJobs[0].id);
   }
+}
+
+async function loadActiveBoosts(jobs) {
+  if (!JOB_BOOSTS_ENABLED) {
+    activeBoostsByJob = {};
+    return;
+  }
+
+  const jobIds = jobs.map((job) => job.id).filter(Boolean);
+  activeBoostsByJob = {};
+  if (!jobIds.length) return;
+
+  const { data, error } = await jobsSupabase
+    .from("job_boosts")
+    .select("id, job_id, status, ends_at")
+    .in("job_id", jobIds)
+    .eq("status", "active")
+    .gt("ends_at", new Date().toISOString());
+
+  if (error) {
+    activeBoostsByJob = {};
+    return;
+  }
+
+  (data || []).forEach((boost) => {
+    if (boost.job_id) activeBoostsByJob[String(boost.job_id)] = boost;
+  });
 }
 
 function populateLocations() {
@@ -237,6 +269,7 @@ function renderJobCard(job) {
       </div>
 
       <div class="job-tags">
+        ${job.boosted ? `<span class="promoted-tag">Promoted</span>` : ""}
         <span>${escapeHTML(job.pay)}</span>
         <span>${escapeHTML(job.type)}</span>
         <span>${escapeHTML(job.trade)}</span>
@@ -298,6 +331,7 @@ function renderJobDetails() {
 
           <div>
             <span class="small-label">Selected Role</span>
+            ${selectedJob.boosted ? `<span class="promoted-tag detail-promoted">Promoted</span>` : ""}
             <h2>${escapeHTML(selectedJob.title)}</h2>
             <p>${escapeHTML(selectedJob.company)} &middot; ${escapeHTML(selectedJob.location)}</p>
           </div>
@@ -393,7 +427,7 @@ function filterJobs() {
   const location = locationFilter.value;
   const type = typeFilter.value;
 
-  filteredJobs = allJobs.filter((job) => {
+  filteredJobs = sortJobsByBoost(allJobs.filter((job) => {
     const matchesKeyword =
       !keyword ||
       job.title.toLowerCase().includes(keyword) ||
@@ -405,7 +439,7 @@ function filterJobs() {
     const matchesType = !type || job.type === type;
 
     return matchesKeyword && matchesLocation && matchesType;
-  });
+  }));
 
   selectedJob = filteredJobs[0] || null;
   renderJobs();
@@ -522,6 +556,14 @@ function truncateText(value, limit) {
   const text = String(value || "");
   if (text.length <= limit) return text;
   return `${text.slice(0, limit).trim()}...`;
+}
+
+function sortJobsByBoost(jobs) {
+  return jobs.sort((a, b) => {
+    if (!JOB_BOOSTS_ENABLED) return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    if (a.boosted !== b.boosted) return a.boosted ? -1 : 1;
+    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+  });
 }
 
 searchBtn.addEventListener("click", filterJobs);
