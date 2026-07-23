@@ -51,8 +51,9 @@
     }
 
     normalizeActiveLinks();
-    ensureSidebarSupportLink();
+    ensureSidebarUtilitySection();
     ensureHeaderSupportLink();
+    ensureTopAccountMenu();
     wireLogoutButton();
   }
 
@@ -114,7 +115,7 @@
 
   function renderSidebarLink(label, href, section, iconPath, options = {}) {
     const classes = ["employer-nav-link", "nav-item", options.extraClass || ""].filter(Boolean);
-    if (section === activeSection) classes.push("active");
+    if (options.active || section === activeSection) classes.push("active");
     const gated = options.gated ? ' data-plan-gated="candidate-network"' : "";
     const id = options.id ? ` id="${options.id}"` : "";
     const lock = options.gated ? '<span class="nav-lock" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h1Zm2 0h6V8a3 3 0 0 0-6 0v2Z"/></svg></span><span class="nav-pro-badge">Pro</span>' : "";
@@ -180,21 +181,53 @@
     }
   }
 
-  function ensureSidebarSupportLink() {
+  function ensureSidebarUtilitySection() {
     const footer = document.querySelector(".sidebar-footer");
-    if (!footer || document.getElementById("employerSupportSidebarLink")) return;
+    if (!footer) return;
 
-    const support = document.createElement("section");
-    support.className = "sidebar-support-section";
-    support.innerHTML = `
-      <span class="nav-label">Support</span>
-      <a href="employer-support.html" id="employerSupportSidebarLink" class="employer-nav-link nav-item ${activeSection === "support" ? "active" : ""}">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10v5a3 3 0 0 1-3 3h-2v-8h3a8 8 0 1 0-16 0h3v8H5a3 3 0 0 1-3-3v-5A10 10 0 0 1 12 2Zm-3 8h2v10H9V10Zm4 0h2v10h-2V10Z"/></svg>
-        <span>Support</span>
-      </a>
+    footer.querySelectorAll(".sidebar-account, .sidebar-support-section, .sidebar-utility-section").forEach((element) => {
+      element.remove();
+    });
+
+    const planCard = ensureSidebarPlanCard(footer);
+    const logoutButton = ensureSidebarLogoutButton(footer);
+    const utilitySection = document.createElement("section");
+    utilitySection.className = "sidebar-utility-section";
+    utilitySection.innerHTML = `
+      ${renderSidebarLink("Support", "employer-support.html", "support", "M12 2a10 10 0 0 1 10 10v5a3 3 0 0 1-3 3h-2v-8h3a8 8 0 1 0-16 0h3v8H5a3 3 0 0 1-3-3v-5A10 10 0 0 1 12 2Zm-3 8h2v10H9V10Zm4 0h2v10h-2V10Z", { id: "employerSupportSidebarLink" })}
+      ${renderSidebarLink("Settings", "employer-profile.html", "settings", "M19.43 12.98c.04-.32.07-.65.07-.98s-.02-.66-.07-.98l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.6-.22l-2.49 1a7.28 7.28 0 0 0-1.69-.98L14.5 2.42A.5.5 0 0 0 14 2h-4a.5.5 0 0 0-.5.42L9.12 5.07c-.61.24-1.18.56-1.69.98l-2.49-1a.5.5 0 0 0-.6.22l-2 3.46a.5.5 0 0 0 .12.64l2.11 1.65c-.04.32-.07.65-.07.98s.02.66.07.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46c.13.22.39.31.62.22l2.47-1c.51.4 1.07.73 1.69.98l.38 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.38-2.65c.61-.25 1.18-.58 1.69-.98l2.47 1c.23.09.49 0 .62-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z", { id: "employerSettingsSidebarLink", active: currentPage === "employer-profile.html" })}
     `;
 
-    footer.insertBefore(support, footer.firstElementChild);
+    utilitySection.appendChild(logoutButton);
+    footer.replaceChildren(...[planCard, utilitySection].filter(Boolean));
+    wireLogoutButton();
+  }
+
+  function ensureSidebarPlanCard(footer) {
+    let planCard = document.getElementById("sidebarPlanCard");
+
+    if (!planCard) {
+      planCard = document.createElement("section");
+      planCard.id = "sidebarPlanCard";
+      planCard.className = "sidebar-plan-card";
+      planCard.setAttribute("aria-live", "polite");
+    }
+
+    if (!planCard.innerHTML.trim()) {
+      planCard.hidden = true;
+    }
+
+    return planCard;
+  }
+
+  function ensureSidebarLogoutButton(footer) {
+    const existing = footer.querySelector("#logoutBtn") || document.getElementById("logoutBtn");
+    const logoutButton = existing instanceof HTMLButtonElement ? existing : document.createElement("button");
+    logoutButton.type = "button";
+    logoutButton.id = "logoutBtn";
+    logoutButton.className = "logout-btn nav-logout";
+    logoutButton.textContent = "Logout";
+    return logoutButton;
   }
 
   function ensureHeaderSupportLink() {
@@ -209,10 +242,155 @@
     nav.insertBefore(support, logout || null);
   }
 
+  function ensureTopAccountMenu() {
+    const topAccount = document.querySelector(".utility-actions .top-account");
+    if (!topAccount || document.getElementById("employerAccountMenu")) return;
+
+    const accountButton = document.createElement("button");
+    accountButton.type = "button";
+    accountButton.className = topAccount.className;
+    accountButton.id = topAccount.id || "topAccountButton";
+    accountButton.innerHTML = topAccount.innerHTML;
+    accountButton.setAttribute("aria-haspopup", "menu");
+    accountButton.setAttribute("aria-expanded", "false");
+    accountButton.setAttribute("aria-controls", "employerAccountMenu");
+
+    const wrap = document.createElement("div");
+    wrap.className = "top-account-menu-wrap";
+
+    const menu = document.createElement("div");
+    menu.id = "employerAccountMenu";
+    menu.className = "top-account-menu";
+    menu.hidden = true;
+    menu.setAttribute("role", "menu");
+    menu.setAttribute("aria-label", "Employer account menu");
+    menu.innerHTML = renderTopAccountMenu();
+
+    wrap.append(accountButton, menu);
+    topAccount.replaceWith(wrap);
+
+    accountButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setTopAccountMenuOpen(!isTopAccountMenuOpen());
+    });
+
+    menu.addEventListener("click", (event) => {
+      const logoutAction = event.target.closest?.("[data-account-logout]");
+      if (logoutAction) {
+        event.preventDefault();
+        setTopAccountMenuOpen(false);
+        handleAccountMenuLogout();
+        return;
+      }
+
+      if (event.target.closest?.("a[href]")) {
+        setTopAccountMenuOpen(false);
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!isTopAccountMenuOpen()) return;
+      if (event.target.closest?.(".top-account-menu-wrap")) return;
+      setTopAccountMenuOpen(false);
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || !isTopAccountMenuOpen()) return;
+      setTopAccountMenuOpen(false);
+      accountButton.focus();
+    });
+
+    updateTopAccountMenu();
+  }
+
+  function renderTopAccountMenu() {
+    return `
+      <div class="top-account-menu-header">
+        <strong id="accountMenuCompanyName">Employer</strong>
+        <span id="accountMenuEmail">Account details loading</span>
+      </div>
+      <div class="top-account-menu-list">
+        <a href="employer-profile.html" role="menuitem">Company Profile</a>
+        <a href="employer-profile.html" role="menuitem">Settings</a>
+        <a href="employer-dashboard.html#candidate-access" role="menuitem">Candidate Access</a>
+        <a href="employer-support.html" role="menuitem">Support</a>
+        <button type="button" role="menuitem" data-account-logout>Logout</button>
+      </div>
+    `;
+  }
+
+  function isTopAccountMenuOpen() {
+    const menu = document.getElementById("employerAccountMenu");
+    return Boolean(menu && !menu.hidden);
+  }
+
+  function setTopAccountMenuOpen(open) {
+    const button = document.getElementById("topAccountButton");
+    const menu = document.getElementById("employerAccountMenu");
+    if (!button || !menu) return;
+
+    button.setAttribute("aria-expanded", String(open));
+    menu.hidden = !open;
+
+    if (open) {
+      closeOtherHeaderMenus(menu);
+    }
+  }
+
+  function closeOtherHeaderMenus(currentMenu) {
+    document.querySelectorAll(".top-account-menu").forEach((menu) => {
+      if (menu !== currentMenu) menu.hidden = true;
+    });
+  }
+
+  function updateTopAccountMenu(profile = {}) {
+    const buttonName = document.getElementById("topCompanyName")?.textContent?.trim();
+    const companyName = String(profile.companyName || buttonName || "Employer").trim();
+    const accountEmail = String(profile.email || profile.companyEmail || "").trim();
+
+    const nameElement = document.getElementById("accountMenuCompanyName");
+    const emailElement = document.getElementById("accountMenuEmail");
+
+    if (nameElement) nameElement.textContent = companyName;
+    if (emailElement) emailElement.textContent = accountEmail || "Account details unavailable";
+  }
+
+  async function handleAccountMenuLogout() {
+    if (typeof window.handleLogout === "function") {
+      await window.handleLogout();
+      return;
+    }
+
+    await handleLogout();
+  }
+
   function applyCandidateAccessUI(hasAccess) {
     window.currentEmployerCandidateAccess = hasAccess === true;
     applyCandidateNavbarUI(hasAccess);
+    applySidebarPlanCardUI(hasAccess);
     applyCandidateDashboardUI(hasAccess);
+  }
+
+  function applySidebarPlanCardUI(hasAccess) {
+    const card = document.getElementById("sidebarPlanCard");
+    if (!card) return;
+
+    if (hasAccess) {
+      card.hidden = true;
+      card.replaceChildren();
+      card.className = "sidebar-plan-card";
+      return;
+    }
+
+    card.hidden = false;
+    card.className = "sidebar-plan-card free";
+    card.innerHTML = `
+      <span class="plan-kicker">GET ACCESS</span>
+      <h2>Unlock candidate search</h2>
+      <p>Find, save, and message pre-screened talent from your employer workspace.</p>
+      <a class="plan-card-action" href="employer-dashboard.html#candidate-access">GET ACCESS</a>
+    `;
   }
 
   function applyCandidateNavbarUI(hasAccess) {
@@ -327,4 +505,5 @@
   }
 
   window.applyCandidateAccessUI = applyCandidateAccessUI;
+  window.updateEmployerAccountMenu = updateTopAccountMenu;
 })();
