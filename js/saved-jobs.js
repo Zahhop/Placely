@@ -28,6 +28,15 @@ function clean(value, fallback = "Not listed") {
   return value || fallback;
 }
 
+function escapeHTML(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 function formatDate(value) {
   if (!value) return "—";
 
@@ -40,6 +49,7 @@ function formatDate(value) {
 async function loadSavedJobs() {
   const user = await verifyCandidateAccess(savedSupabase, {
     loginPath: "../candidates/candidate-login.html",
+    setupPath: "../candidates/candidate-setup.html",
     employerDashboardPath: "../employers/employer-dashboard.html"
   });
 
@@ -58,6 +68,9 @@ async function loadSavedJobs() {
         company_name,
         location,
         employment_type,
+        compensation_type,
+        compensation_min,
+        compensation_max,
         pay_range,
         experience_level,
         job_description,
@@ -68,12 +81,10 @@ async function loadSavedJobs() {
     .order("saved_at", { ascending: false });
 
   if (error) {
-    console.error("Error loading saved jobs:", error);
-
     savedJobsList.innerHTML = `
       <div class="empty-state">
         <strong>Could not load saved jobs</strong>
-        <p>${error.message}</p>
+        <p>Please refresh the page and try again.</p>
       </div>
     `;
 
@@ -127,7 +138,7 @@ function renderSavedJobs() {
 
           <div class="tags">
             <span>${clean(job.employment_type, "Job Type")}</span>
-            <span>${clean(job.pay_range, "Pay not listed")}</span>
+            <span>${escapeHTML(window.PlacelyAuth.formatCompensationFromRecord(job))}</span>
             <span>${clean(job.experience_level, "Experience not listed")}</span>
           </div>
         </div>
@@ -149,7 +160,6 @@ async function removeSavedJob(savedRowId) {
     .eq("candidate_id", currentUser.id);
 
   if (error) {
-    console.error("Remove saved job error:", error);
     showToast("Could not remove saved job.");
     return;
   }

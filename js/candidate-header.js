@@ -16,8 +16,8 @@
     }
 
     const inPublicFolder = window.location.pathname.includes("/public/");
-    window.location.href = inPublicFolder
+    window.location.replace(inPublicFolder
       ? "../candidates/candidate-login.html"
-      : "candidate-login.html";
+      : "candidate-login.html");
   });
 })();

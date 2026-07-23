@@ -1,3 +1,4 @@
+html.auth-booting body { visibility: hidden; }
 .settings-layout {
   display: grid;
   gap: 18px;

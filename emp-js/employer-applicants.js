@@ -1,9 +1,5 @@
 const applicantsSupabase = window.employerSupabase;
 
-if (!applicantsSupabase) {
-  console.error("Employer Supabase client was not initialized.");
-}
-
 const STAGES = [
   { id: "new", label: "Applied", empty: "No applicants" },
   { id: "reviewing", label: "Reviewing", empty: "Drag applicants here" },
@@ -85,9 +81,8 @@ async function initApplicants() {
 
     await loadEmployerShellProfile();
     await loadApplicants();
-  } catch (error) {
-    console.error("Applicants page failed to initialize.", error);
-    renderLoadError("Could not load Applicants", "Refresh the page or check the browser console for details.");
+  } catch {
+    renderLoadError("Could not load Applicants", "Refresh the page and try again.");
   } finally {
     document.documentElement.classList.remove("dashboard-booting");
   }
@@ -158,7 +153,7 @@ function setupEvents() {
   if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {
       await window.PlacelyAuth.clearAuthState();
-      window.location.href = "employer-login.html";
+      window.location.replace("employer-login.html");
     });
   }
 }
@@ -174,19 +169,17 @@ async function loadEmployerShellProfile() {
       .eq("id", currentUser.id)
       .maybeSingle();
 
-    if (error) {
-      console.warn("Employer shell profile unavailable.", error);
-    } else {
+    if (!error) {
       profile = data;
     }
-  } catch (error) {
-    console.warn("Employer shell profile unavailable.", error);
+  } catch {
+    profile = null;
   }
 
   const companyName = profile?.company_name || fallbackName;
   const initials = getInitials(companyName);
-  const logoUrl = profile?.company_logo_url || profile?.company_logo || profile?.company_logo_preview || "";
-  const hasCandidateAccess = profile?.candidate_access === true;
+  const logoUrl = getEmployerLogoUrl(profile?.company_logo_url || profile?.company_logo || profile?.company_logo_preview || "");
+  const hasCandidateAccess = window.PlacelyAuth.hasCandidateSearchAccess(profile || {});
 
   document.body.dataset.plan = hasCandidateAccess ? "pro" : "free";
   document.querySelector(".applicants-shell")?.setAttribute("data-plan", hasCandidateAccess ? "pro" : "free");
@@ -341,6 +334,7 @@ async function hydrateApplications(applications) {
       candidate_location: snapshot.location || app.location || candidate.location || "Location not listed",
       candidate_email: snapshot.email || app.candidate_email || candidate.email || "",
       candidate_phone: snapshot.phone || app.candidate_phone || candidate.phone || "",
+      shown_contact_method: snapshot.shown_contact_method || app.shown_contact_method || candidate.shown_contact_method || "",
       candidate_experience: snapshot.experience || candidate.experience || "Experience not listed",
       candidate_availability: snapshot.availability || candidate.availability || "Availability not listed",
       candidate_contact_method: snapshot.contact_method || candidate.contact_method || "",
@@ -619,8 +613,8 @@ function renderApplicantCard(app) {
     <article class="applicant-card compact ${isUpdating ? "updating" : ""}" data-id="${escapeHTML(app.id)}" draggable="${isUpdating ? "false" : "true"}" tabindex="0" aria-label="Open details for ${escapeHTML(app.candidate_name)}">
       <div class="avatar">
         ${
-          app.candidate_photo
-            ? `<img src="${escapeHTML(app.candidate_photo)}" alt="">`
+          getCandidatePhotoUrl(app.candidate_photo)
+            ? `<img src="${escapeHTML(getCandidatePhotoUrl(app.candidate_photo))}" alt="">`
             : escapeHTML(getInitials(app.candidate_name))
         }
       </div>
@@ -1026,9 +1020,7 @@ async function recordStatusHistory(applicationId, previousStatus, newStatus) {
       changed_by: currentUser.id
     }]);
 
-  if (error) {
-    console.warn("Status history was not recorded. Run the applicant pipeline SQL migration to enable it.", error);
-  }
+  if (error) return;
 }
 
 async function loadStatusHistory(applicationId) {
@@ -1042,9 +1034,7 @@ async function loadStatusHistory(applicationId) {
 
   statusHistoryCache.set(String(applicationId), error ? [] : data || []);
 
-  if (error) {
-    console.warn("Status history unavailable. Run the applicant pipeline SQL migration to enable it.", error);
-  }
+  if (error) return;
 
   if (String(selectedApplicationId) === String(applicationId) && activeDrawerTab === "activity") {
     renderDetail();
@@ -1096,8 +1086,8 @@ function renderDetail() {
     <div class="detail-head applicant-detail-head">
       <div class="avatar large">
         ${
-          app.candidate_photo
-            ? `<img src="${escapeHTML(app.candidate_photo)}" alt="">`
+          getCandidatePhotoUrl(app.candidate_photo)
+            ? `<img src="${escapeHTML(getCandidatePhotoUrl(app.candidate_photo))}" alt="">`
             : escapeHTML(getInitials(app.candidate_name))
         }
       </div>
@@ -1146,7 +1136,7 @@ function renderDetail() {
       <button type="button" class="drawer-action primary" data-message-id="${escapeHTML(app.id)}" ${canAct ? "" : "disabled"}>Message</button>
       ${
         hasResume(app)
-          ? `<button type="button" class="drawer-action" data-resume-candidate-id="${escapeHTML(app.candidate_id)}">Resume</button>`
+          ? `<button type="button" class="drawer-action" data-resume-candidate-id="${escapeHTML(app.candidate_id)}" data-resume-application-id="${escapeHTML(app.id)}">Resume</button>`
           : `<span class="drawer-action disabled">No Resume</span>`
       }
     </div>
@@ -1168,6 +1158,7 @@ function renderDrawerTab(app) {
 
 function renderOverviewTab(app) {
   const tags = getTags(app);
+  const visibleContact = window.PlacelyAuth.getVisibleCandidateContact(app);
 
   return `
     <div class="detail-section">
@@ -1178,8 +1169,8 @@ function renderOverviewTab(app) {
     <div class="detail-section">
       <h3>Profile details</h3>
       <div class="detail-grid">
-        <div class="detail-row"><span>Email</span><strong>${escapeHTML(app.candidate_email || "Not listed")}</strong></div>
-        <div class="detail-row"><span>Phone</span><strong>${escapeHTML(app.candidate_phone || "Not listed")}</strong></div>
+        ${visibleContact.showEmail ? renderDetailRow("Email", app.candidate_email || "Not listed") : ""}
+        ${visibleContact.showPhone ? renderDetailRow("Phone", app.candidate_phone || "Not listed") : ""}
         <div class="detail-row"><span>Location</span><strong>${escapeHTML(app.candidate_location || "Not listed")}</strong></div>
         <div class="detail-row"><span>Trade</span><strong>${escapeHTML(app.candidate_trade || "Not listed")}</strong></div>
       </div>
@@ -1192,6 +1183,10 @@ function renderOverviewTab(app) {
       </div>
     </div>
   `;
+}
+
+function renderDetailRow(label, value) {
+  return `<div class="detail-row"><span>${escapeHTML(label)}</span><strong>${escapeHTML(value)}</strong></div>`;
 }
 
 function renderApplicationTab(app) {
@@ -1277,7 +1272,7 @@ function bindDrawerActions(app) {
   });
 
   applicantDetail.querySelectorAll("[data-resume-candidate-id]").forEach((button) => {
-    button.addEventListener("click", () => openApplicantResume(button.dataset.resumeCandidateId));
+    button.addEventListener("click", () => openApplicantResume(button.dataset.resumeCandidateId, button.dataset.resumeApplicationId));
   });
 
   applicantDetail.querySelectorAll("[data-tab]").forEach((button) => {
@@ -1352,7 +1347,7 @@ async function messageCandidate(applicationId) {
   window.location.href = buildMessageFallbackUrl(app);
 }
 
-async function openApplicantResume(candidateId) {
+async function openApplicantResume(candidateId, applicationId) {
   if (!candidateId) {
     showToast("Resume could not be opened.", "error");
     return;
@@ -1360,12 +1355,12 @@ async function openApplicantResume(candidateId) {
 
   const { data, error } = await applicantsSupabase.functions.invoke("get-candidate-resume-url", {
     body: {
-      candidate_id: candidateId
+      candidate_id: candidateId,
+      application_id: applicationId || null
     }
   });
 
   if (error || !data?.url) {
-    console.error("Applicant resume signed URL error:", error);
     showToast(data?.error || "Resume could not be opened.", "error");
     return;
   }
@@ -1704,14 +1699,7 @@ function getMissingColumnName(error) {
   return match?.[1] || "";
 }
 
-function logSupabaseError(label, error) {
-  console.error(label, {
-    message: error.message,
-    details: error.details,
-    hint: error.hint,
-    code: error.code
-  });
-}
+function logSupabaseError() {}
 
 function escapeHTML(value) {
   return String(value || "")
@@ -1720,4 +1708,12 @@ function escapeHTML(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function getEmployerLogoUrl(value) {
+  return window.PlacelyAuth?.getPublicImageUrl?.(applicantsSupabase, "employer-logos", value) || String(value || "");
+}
+
+function getCandidatePhotoUrl(value) {
+  return window.PlacelyAuth?.getPublicImageUrl?.(applicantsSupabase, "candidate_photos", value) || String(value || "");
 }

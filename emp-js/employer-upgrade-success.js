@@ -1,9 +1,5 @@
 const upgradeSuccessSupabase = window.employerSupabase;
 
-if (!upgradeSuccessSupabase) {
-  console.error("Employer Supabase client was not initialized.");
-}
-
 const statusText = document.getElementById("upgradeStatusText");
 const findCandidatesBtn = document.getElementById("findCandidatesBtn");
 
@@ -24,9 +20,9 @@ async function waitForCandidateAccess(userId) {
   const maxAttempts = 8;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    const profile = await loadEmployerSubscription(userId);
+    const accessState = await window.PlacelyAuth.loadEmployerCandidateAccessState(upgradeSuccessSupabase, userId);
 
-    if (hasCandidateSearchAccess(profile)) {
+    if (accessState.active) {
       if (statusText) statusText.textContent = "Candidate Network access is active. Redirecting to candidate search...";
       if (findCandidatesBtn) findCandidatesBtn.classList.remove("hidden");
 
@@ -37,34 +33,14 @@ async function waitForCandidateAccess(userId) {
     }
 
     if (statusText) {
-      statusText.textContent =
-        attempt < maxAttempts
-          ? "Payment received. Waiting for subscription confirmation..."
-          : "Payment is still being confirmed. You can return to the dashboard and try Candidate Network again in a moment.";
+      const stillTrying = attempt < maxAttempts && (accessState.pending || accessState.state === "denied");
+      statusText.textContent = stillTrying
+        ? "Payment received. Waiting for subscription confirmation..."
+        : "Payment is still being confirmed. You can return to the dashboard and try Candidate Network again in a moment.";
     }
 
     await delay(2000);
   }
-}
-
-async function loadEmployerSubscription(userId) {
-  try {
-    const { data, error } = await upgradeSuccessSupabase
-      .from("employer_profiles")
-      .select("candidate_access")
-      .eq("id", userId)
-      .maybeSingle();
-
-    if (error) throw error;
-    return data || {};
-  } catch (error) {
-    console.warn("Could not confirm candidate access yet.", error);
-    return {};
-  }
-}
-
-function hasCandidateSearchAccess(profile) {
-  return profile?.candidate_access === true;
 }
 
 function delay(ms) {

@@ -1,3 +1,4 @@
+html.auth-booting body { visibility: hidden; }
 header {
   height: 76px;
   padding: 18px 8%;

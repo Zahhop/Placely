@@ -1,3 +1,4 @@
+html.auth-booting body { visibility: hidden; }
 /* Restored standalone employer shell rules from the pre-shared-CSS dashboard state. */
 * {
   box-sizing: border-box;
@@ -334,6 +335,11 @@ body[data-plan="free"] .nav-pro-badge {
 }
 
 .sidebar-footer {
+  display: grid;
+  gap: 8px;
+}
+
+.sidebar-support-section {
   display: grid;
   gap: 8px;
 }

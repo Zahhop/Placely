@@ -16,6 +16,7 @@ let currentUser = null;
 let allApplications = [];
 let selectedApplicationId = null;
 let pendingWithdrawApplicationId = null;
+const applicationSchemaFallbackColumns = {};
 
 document.addEventListener("DOMContentLoaded", initApplications);
 
@@ -64,8 +65,6 @@ async function loadApplications() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Applications load error:", error);
-
     applicationsList.innerHTML = `
       <div class="empty-state">
         <div class="empty-icon">!</div>
@@ -96,9 +95,7 @@ async function hydrateApplications(applications) {
       .select("*")
       .in("id", jobIds);
 
-    if (jobsError) {
-      console.warn("Could not load application job details:", jobsError);
-    } else {
+    if (!jobsError) {
       (jobs || []).forEach((job) => {
         jobsById[String(job.id)] = job;
       });
@@ -119,9 +116,7 @@ async function hydrateApplications(applications) {
       .select("*")
       .in("id", employerIds);
 
-    if (employerError) {
-      console.warn("Could not load employer profile logos:", employerError);
-    } else {
+    if (!employerError) {
       (employerProfiles || []).forEach((profile) => {
         employerProfilesById[String(profile.id)] = profile;
       });
@@ -140,7 +135,7 @@ async function hydrateApplications(applications) {
       company_name: app.company_name || job.company_name || employerProfile.company_name || "Company",
       location: app.location || job.location || employerProfile.location || "Location not listed",
       employment_type: app.employment_type || job.employment_type || "Job type not listed",
-      pay_range: app.pay_range || job.pay_range || "Pay not listed",
+      pay_range: window.PlacelyAuth.formatCompensationFromRecord(app, "") || window.PlacelyAuth.formatCompensationFromRecord(job),
       company_logo_url: app.company_logo_url || getCompanyLogoUrl(employerProfile),
       company_photo_url: app.company_photo_url || employerProfile.company_photo_url || ""
     };
@@ -211,7 +206,7 @@ function renderApplicationCard(app) {
   const jobTitle = app.job_title || "Untitled Job";
   const location = app.location || "Location not listed";
   const employmentType = app.employment_type || "Job type not listed";
-  const payRange = app.pay_range || "Pay not listed";
+  const payRange = window.PlacelyAuth.formatCompensationFromRecord(app);
   const appliedDate = formatDate(app.created_at);
   const initials = getInitials(companyName);
   const companyLogoUrl = getCompanyLogoUrl(app);
@@ -316,7 +311,7 @@ function renderApplicationDetail() {
       <div class="readonly-grid">
         <div><span>Company</span><strong>${escapeHTML(app.company_name || "Company")}</strong></div>
         <div><span>Job Type</span><strong>${escapeHTML(app.employment_type || "Job type not listed")}</strong></div>
-        <div><span>Pay</span><strong>${escapeHTML(app.pay_range || "Pay not listed")}</strong></div>
+        <div><span>Pay</span><strong>${escapeHTML(window.PlacelyAuth.formatCompensationFromRecord(app))}</strong></div>
         <div><span>Submitted</span><strong>${escapeHTML(formatDate(app.created_at))}</strong></div>
         <div><span>Status</span><strong>${escapeHTML(getStatusLabel(status))}</strong></div>
         <div><span>Last Updated</span><strong>${escapeHTML(formatDate(app.updated_at))}</strong></div>
@@ -402,7 +397,6 @@ async function confirmWithdrawApplication() {
   );
 
   if (error) {
-    logSupabaseError("Withdraw application error:", error);
     showToast("Could not withdraw application. Please try again.");
 
     if (confirmWithdrawBtn) {
@@ -437,13 +431,12 @@ async function updateApplicationWithSchemaFallback(applicationId, payload) {
 
     if (!error) {
       if (removedColumns.length) {
-        console.warn("Application withdrawn after removing missing columns:", removedColumns);
+        applicationSchemaFallbackColumns.withdraw = removedColumns;
       }
 
       return { error: null };
     }
 
-    logSupabaseError("Withdraw application error:", error);
     const missingColumn = getMissingColumnName(error);
 
     if (!missingColumn || !(missingColumn in safePayload)) {
@@ -564,7 +557,7 @@ function getStatusLabel(status) {
 function getCompanyLogoUrl(source) {
   if (!source) return "";
 
-  return (
+  const value = (
     source.company_logo_url ||
     source.company_photo_url ||
     source.profile_photo_url ||
@@ -573,6 +566,8 @@ function getCompanyLogoUrl(source) {
     source.company_logo_preview ||
     ""
   );
+
+  return window.PlacelyAuth?.getPublicImageUrl?.(applicationsSupabase, "employer-logos", value) || value;
 }
 
 function parseSnapshot(snapshot) {
@@ -618,8 +613,7 @@ async function handleFollowUp(applicationId) {
     .maybeSingle();
 
   if (findError) {
-    console.error("Conversation lookup error:", findError);
-    alert("Could not open this employer conversation. Please try again.");
+    showToast("Could not open this employer conversation. Please try again.");
     return;
   }
 
@@ -655,8 +649,7 @@ async function handleFollowUp(applicationId) {
     .single();
 
   if (error) {
-    console.error("Conversation create error:", error);
-    alert("No conversation has been started with this employer yet.");
+    showToast("No conversation has been started with this employer yet.");
     return;
   }
 
@@ -734,15 +727,6 @@ function getMissingColumnName(error) {
     text.match(/Could not find the '([^']+)'/i);
 
   return match?.[1] || "";
-}
-
-function logSupabaseError(label, error) {
-  console.error(label, {
-    message: error.message,
-    details: error.details,
-    hint: error.hint,
-    code: error.code
-  });
 }
 
 function escapeHTML(value) {

@@ -59,9 +59,9 @@ async function loadConversations() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Conversation load error:", error);
     conversationsData = [];
     activeConversationId = null;
+    showNoConversationState();
     return;
   }
 
@@ -75,14 +75,15 @@ async function loadConversations() {
         conversation.company_name ||
         "Employer";
 
-      const logoUrl =
+      const logoUrl = getEmployerLogoUrl(
         employerProfile?.company_logo_url ||
         employerProfile?.logo_url ||
         employerProfile?.company_logo ||
         employerProfile?.company_logo_preview ||
         conversation.company_logo_url ||
         conversation.logo_url ||
-        "";
+        ""
+      );
 
       const latest = await getLatestMessage(conversation.id);
       const unreadCount = await getUnreadCount(conversation.id);
@@ -121,7 +122,6 @@ async function getEmployerProfile(employerId) {
     .maybeSingle();
 
   if (error) {
-    console.error("Employer profile load error:", error);
     return null;
   }
 
@@ -271,10 +271,10 @@ async function loadMessages(conversationId) {
     .from("messages")
     .select("*")
     .eq("conversation_id", conversationId)
+    .eq("candidate_id", currentUser.id)
     .order("created_at", { ascending: true });
 
   if (error) {
-    console.error("Message load error:", error);
     chatMessages.innerHTML = `
       <div class="empty-message">
         <h3>Could not load messages</h3>
@@ -352,7 +352,7 @@ async function markConversationRead(conversation) {
     .eq("sender_type", "employer");
 
   if (error) {
-    console.error("Mark read error:", error);
+    return;
   }
 }
 
@@ -403,7 +403,6 @@ async function sendMessage(event) {
   setSendingState(false);
 
   if (error) {
-    console.error("Send message error:", error);
     activeMessages = activeMessages.filter((message) => message.id !== tempMessage.id);
     await openConversation(conversation.id);
     if (composerStatus) composerStatus.textContent = "Message could not be sent.";
@@ -441,7 +440,7 @@ function subscribeToMessages(conversationId) {
       },
       async (payload) => {
         const message = payload.new;
-        if (!message || activeMessages.some((item) => String(item.id) === String(message.id))) return;
+        if (!message || String(message.candidate_id) !== String(currentUser.id) || activeMessages.some((item) => String(item.id) === String(message.id))) return;
 
         const pendingMatch = activeMessages.find((item) => (
           item.pending &&
@@ -581,12 +580,12 @@ async function getLatestMessage(conversationId) {
     .from("messages")
     .select("*")
     .eq("conversation_id", conversationId)
+    .eq("candidate_id", currentUser.id)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
   if (error) {
-    console.error("Latest message error:", error);
     return null;
   }
 
@@ -603,7 +602,6 @@ async function getUnreadCount(conversationId) {
     .neq("read_by_candidate", true);
 
   if (error) {
-    console.error("Unread count error:", error);
     return 0;
   }
 
@@ -616,6 +614,10 @@ function renderAvatar(url, initials, altText) {
   }
 
   return `<span>${escapeHTML(initials || "PT")}</span>`;
+}
+
+function getEmployerLogoUrl(value) {
+  return window.PlacelyAuth?.getPublicImageUrl?.(candidateMessagesSupabase, "employer-logos", value) || String(value || "");
 }
 
 function getActiveConversation() {

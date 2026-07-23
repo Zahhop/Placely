@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en" class="auth-booting">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Support | Placely Talent</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/manage-jobs.css" />
+  <link rel="stylesheet" href="../css/employer-support.css" />
+</head>
+
+<body data-plan="pro">
+<div class="dashboard-shell manage-jobs-page support-page">
+  <aside class="dashboard-sidebar" id="dashboardSidebar" aria-label="Employer navigation">
+    <div class="sidebar-brand">
+      <a href="employer-dashboard.html" class="brand-mark" aria-label="Placely Talent dashboard">P</a>
+      <div>
+        <a href="employer-dashboard.html" class="brand-name">PLACELY TALENT</a>
+        <span>Employer Platform</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav" data-employer-nav aria-label="Employer sections"></nav>
+
+    <div class="sidebar-footer">
+      <section class="sidebar-plan-card" id="sidebarPlanCard" aria-live="polite"></section>
+
+      <a href="employer-profile.html" class="sidebar-account" aria-label="Open company profile">
+        <span class="account-avatar" id="sidebarCompanyAvatar">PT</span>
+        <span class="account-copy">
+          <strong id="sidebarCompanyName">Employer</strong>
+          <span>Employer account</span>
+        </span>
+      </a>
+      <button type="button" id="logoutBtn" class="logout-btn nav-logout">Logout</button>
+    </div>
+  </aside>
+
+  <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+
+  <div class="dashboard-workspace">
+    <header class="utility-bar">
+      <button type="button" class="mobile-menu-btn" id="sidebarToggle" aria-controls="dashboardSidebar" aria-expanded="false">
+        <span class="sr-only">Open navigation</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v2H4V7Zm0 4h16v2H4v-2Zm0 4h16v2H4v-2Z"/></svg>
+      </button>
+    </header>
+
+    <main class="support-shell">
+      <section class="page-hero support-hero">
+        <div>
+          <span class="eyebrow">SUPPORT</span>
+          <h1>Support</h1>
+          <p>Tell us what you need help with and the Placely team will get back to you.</p>
+        </div>
+      </section>
+
+      <section class="support-panel">
+        <form id="supportForm" class="support-form" novalidate>
+          <div class="form-grid">
+            <label class="form-group">
+              <span>Support category</span>
+              <select id="supportCategory" required>
+                <option value="">Choose a category</option>
+                <option>Account or login</option>
+                <option>Billing or Candidate Access</option>
+                <option>Job posting</option>
+                <option>Candidates or saved talent</option>
+                <option>Applications</option>
+                <option>Messaging</option>
+                <option>Company profile</option>
+                <option>Technical issue</option>
+                <option>Feedback or feature request</option>
+                <option>Other</option>
+              </select>
+            </label>
+
+            <label class="form-group">
+              <span>Reply email</span>
+              <input id="replyEmail" type="email" autocomplete="email" required />
+            </label>
+
+            <label class="form-group full">
+              <span>Subject</span>
+              <input id="supportSubject" type="text" maxlength="120" required />
+            </label>
+
+            <label class="form-group full">
+              <span>Description</span>
+              <textarea id="supportDescription" maxlength="5000" required></textarea>
+              <small>Include what you were trying to do, what happened, and any error message you saw.</small>
+            </label>
+
+            <label class="form-group full">
+              <span>Page context</span>
+              <input id="sourcePage" type="text" readonly />
+            </label>
+          </div>
+
+          <div id="supportMessage" class="support-message" role="status" aria-live="polite"></div>
+
+          <div class="form-actions">
+            <button type="submit" class="primary-btn" id="sendSupportBtn">Send Support Request</button>
+            <a href="employer-dashboard.html" class="secondary-btn">Return to Dashboard</a>
+          </div>
+        </form>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
+<script src="../js/auth-utils.js"></script>
+<script src="../js/auth-guards.js"></script>
+<script src="../emp-js/employer-navbar.js"></script>
+<script src="../emp-js/employer-support.js"></script>
+</body>
+</html>

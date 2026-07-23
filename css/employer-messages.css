@@ -1,3 +1,4 @@
+html.auth-booting body { visibility: hidden; }
 .messages-page .messages-shell {
   padding-bottom: 32px;
 }

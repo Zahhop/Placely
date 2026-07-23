@@ -1,7 +1,5 @@
 const placelySupabase = window.employerSupabase;
 
-console.log("Employer Supabase ready:", Boolean(placelySupabase));
-
 const ROUTES = {
   login: "employer-login.html",
   mainLogin: "../public/login.html",
@@ -32,7 +30,6 @@ function showToast(message) {
   const toast = document.getElementById("toast");
 
   if (!toast) {
-    console.warn(message);
     return;
   }
 
@@ -75,7 +72,7 @@ function getInitials(name) {
   return initials || "PT";
 }
 
-function getSafeImageUrl(value) {
+function getSafeImageUrl(value, bucket = "") {
   const url = String(value || "").trim();
   if (!url) return "";
 
@@ -83,13 +80,16 @@ function getSafeImageUrl(value) {
   if (["null", "undefined", "none"].includes(lowered)) return "";
   if (lowered.startsWith("javascript:")) return "";
   if (url.startsWith("//")) return `https:${url}`;
+  if (!/^https?:\/\//i.test(url) && bucket) {
+    return window.PlacelyAuth?.getPublicImageUrl?.(placelySupabase, bucket, url) || "";
+  }
 
   return url;
 }
 
 function renderAvatarMarkup(name, photoUrl, className = "avatar", altText = "") {
   const initials = getInitials(name);
-  const safePhotoUrl = getSafeImageUrl(photoUrl);
+  const safePhotoUrl = getSafeImageUrl(photoUrl, "candidate_photos");
   const fallback = `<span class="avatar-fallback">${escapeHTML(initials)}</span>`;
 
   if (!safePhotoUrl) {
@@ -201,7 +201,6 @@ async function guardedLoad(key, loader) {
     await loader();
   } catch (error) {
     sectionErrors[key] = error;
-    console.error(`Dashboard ${key} load error:`, error);
   }
 }
 
@@ -309,7 +308,6 @@ async function loadCandidateProfiles(candidateIds) {
     .in("id", candidateIds);
 
   if (error) {
-    console.warn("Dashboard candidate profile hydration failed.", error);
     return {};
   }
 
@@ -318,11 +316,9 @@ async function loadCandidateProfiles(candidateIds) {
 
 async function loadSavedCandidates(userId) {
   const savedRows = await loadSavedTalentRows(userId);
-  const legacyIds = getLocalSavedCandidateIds();
   const candidateIds = [
     ...new Set([
-      ...savedRows.map((row) => String(row.candidate_id || "").trim()).filter(Boolean),
-      ...legacyIds
+      ...savedRows.map((row) => String(row.candidate_id || "").trim()).filter(Boolean)
     ])
   ];
 
@@ -361,7 +357,6 @@ async function loadSavedTalentRows(userId) {
     .eq("employer_id", userId);
 
   if (error) {
-    console.warn("Dashboard saved_talent table load failed; using legacy local saved IDs if present.", error);
     return [];
   }
 
@@ -388,7 +383,6 @@ async function loadConversationsAndMessages(userId) {
     .limit(30);
 
   if (messagesError) {
-    console.warn("Recent dashboard messages unavailable.", messagesError);
     latestMessages = [];
   } else {
     latestMessages = await hydrateMessageCandidates(messagesData || []);
@@ -402,7 +396,6 @@ async function loadConversationsAndMessages(userId) {
     .eq("read_by_employer", false);
 
   if (countError) {
-    console.warn("Unread message count unavailable; message metric will show conversations only.", countError);
     unreadMessageCount = 0;
     return;
   }
@@ -420,7 +413,6 @@ async function hydrateMessageCandidates(messages) {
     .in("id", candidateIds);
 
   if (error) {
-    console.warn("Dashboard message candidate hydration failed.", error);
     return messages;
   }
 
@@ -492,7 +484,7 @@ function renderCompanyAvatar(id, companyName, initials) {
 
 function renderAvatarInner(name, photoUrl, altText, fallbackInitials) {
   const initials = fallbackInitials || getInitials(name);
-  const safePhotoUrl = getSafeImageUrl(photoUrl);
+  const safePhotoUrl = getSafeImageUrl(photoUrl, "employer-logos");
   const fallback = `<span class="avatar-fallback">${escapeHTML(initials)}</span>`;
 
   if (!safePhotoUrl) return fallback;
@@ -1117,7 +1109,7 @@ function renderDashboard() {
 
 async function handleLogout() {
   await window.PlacelyAuth.clearAuthState();
-  window.location.href = ROUTES.mainLogin;
+  window.location.replace(ROUTES.mainLogin);
 }
 
 window.handleLogout = handleLogout;
@@ -1161,7 +1153,6 @@ function cleanDashboardQueryParams() {
 
 async function loadEmployerDashboard() {
   if (!placelySupabase) {
-    console.error("Employer Supabase client was not initialized.");
     revealDashboardShell();
     return;
   }
@@ -1176,13 +1167,12 @@ async function loadEmployerDashboard() {
 
   try {
     await loadEmployerProfile(user.id);
-  } catch (error) {
-    console.error("Employer profile error:", error);
+  } catch {
     window.location.href = ROUTES.login;
     return;
   }
 
-  const hasCandidateAccess = employerProfile?.candidate_access === true;
+  const hasCandidateAccess = window.PlacelyAuth.hasCandidateSearchAccess(employerProfile);
   hasCandidateNetworkAccess = hasCandidateAccess;
   window.applyCandidateAccessUI?.(hasCandidateNetworkAccess);
   applyPlanChrome();

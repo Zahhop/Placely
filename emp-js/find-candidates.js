@@ -1,9 +1,5 @@
 const employerSupabase = window.employerSupabase;
 
-if (!employerSupabase) {
-  console.error("Employer Supabase client was not initialized.");
-}
-
 const candidatesGrid = document.getElementById("candidatesGrid");
 const emptyState = document.getElementById("emptyState");
 const resultsText = document.getElementById("resultsText");
@@ -42,6 +38,7 @@ let currentUser = null;
 let employerAccess = {
   candidate_access: false
 };
+let candidateAccessState = { state: "denied", status: "missing", active: false, pending: false };
 let hasCandidateAccess = false;
 let loadedCandidates = [];
 let filteredCandidates = [];
@@ -68,14 +65,24 @@ async function initFindCandidates() {
   if (!user) return;
 
   currentUser = user;
-  employerAccess = await loadEmployerAccess(user.id);
-  hasCandidateAccess = hasCandidateSearchAccess(employerAccess);
+  candidateAccessState = await window.PlacelyAuth.requireEmployerCandidateAccess(employerSupabase, user.id, {
+    attempts: 5,
+    delayMs: 1800,
+    onPending: () => renderPendingAccessState()
+  });
+  employerAccess = candidateAccessState;
+  hasCandidateAccess = candidateAccessState.active;
   await loadEmployerRecruitingContext(user.id);
 
   renderAccessState();
 
   if (!hasCandidateAccess) {
-    renderLockedNetworkState();
+    if (candidateAccessState.pending) {
+      renderPendingAccessState(true);
+      return;
+    }
+
+    redirectToCandidateAccess();
     return;
   }
 
@@ -119,7 +126,7 @@ function setupEvents() {
       clearFilters();
     });
   }
-  if (upgradeAccessBtn) upgradeAccessBtn.addEventListener("click", showUpgradeComingSoon);
+  if (upgradeAccessBtn) upgradeAccessBtn.addEventListener("click", startCandidateCheckoutFromSearch);
   if (loadMoreBtn) loadMoreBtn.addEventListener("click", loadMoreCandidates);
 
   if (closePanelBtn) closePanelBtn.addEventListener("click", closeCandidatePanel);
@@ -146,7 +153,7 @@ function setupEvents() {
   if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {
       await window.PlacelyAuth.clearAuthState();
-      window.location.href = "employer-login.html";
+      window.location.replace("employer-login.html");
     });
   }
 }
@@ -156,28 +163,6 @@ async function requireEmployerLogin() {
     loginPath: "employer-login.html",
     candidateDashboardPath: "../candidates/candidate-dashboard.html"
   });
-}
-
-async function loadEmployerAccess(userId) {
-  const freeAccess = {
-    candidate_access: false
-  };
-
-  try {
-    const { data, error } = await employerSupabase
-      .from("employer_profiles")
-      .select("candidate_access")
-      .eq("id", userId)
-      .maybeSingle();
-
-    if (error) throw error;
-    if (data) return { ...freeAccess, ...data };
-  } catch (error) {
-    console.warn("Employer subscription fields unavailable; defaulting candidate access to free.", error);
-    return freeAccess;
-  }
-
-  return freeAccess;
 }
 
 async function loadCandidates() {
@@ -202,8 +187,7 @@ async function loadCandidates() {
     populateTradeFilter();
     applyFilters();
     return true;
-  } catch (error) {
-    console.error("Error loading candidates:", error);
+  } catch {
     loadedCandidates = [];
     filteredCandidates = [];
     updateStats();
@@ -235,8 +219,7 @@ async function loadEmployerRecruitingContext(userId) {
     if (!jobsResult.error) {
       activeJobs = (jobsResult.data || []).filter((job) => normalizeJobStatus(job.status) === "active");
     }
-  } catch (error) {
-    console.warn("Employer recruiting context unavailable; using default candidate ordering.", error);
+  } catch {
     employerProfile = {};
     activeJobs = [];
   }
@@ -363,8 +346,8 @@ function createCandidateRow(candidate, index) {
     <div class="candidate-identity">
       <div class="avatar">
         ${
-          hasCandidateAccess && candidate.profile_photo_url
-            ? `<img src="${escapeAttribute(candidate.profile_photo_url)}" alt="Candidate photo">`
+          hasCandidateAccess && getCandidatePhotoUrl(candidate.profile_photo_url)
+            ? `<img src="${escapeAttribute(getCandidatePhotoUrl(candidate.profile_photo_url))}" alt="Candidate photo">`
             : `${escapeHTML(getInitials(name))}`
         }
       </div>
@@ -464,6 +447,7 @@ function renderCandidateDetail(candidate) {
   const preferredContact = formatDisplayValue(candidate.contact_method || candidate.shown_contact_method, "Not listed");
   const email = formatDisplayValue(candidate.email, "Email not listed");
   const phone = formatDisplayValue(candidate.phone, "Phone not listed");
+  const visibleContact = window.PlacelyAuth.getVisibleCandidateContact(candidate);
   const hasResume = Boolean(normalizeText(candidate.resume_path || candidate.resume_url));
   const createdAt = formatDate(candidate.created_at);
 
@@ -473,8 +457,8 @@ function renderCandidateDetail(candidate) {
         <div class="detail-head">
           <div class="avatar large">
             ${
-              candidate.profile_photo_url
-                ? `<img src="${escapeAttribute(candidate.profile_photo_url)}" alt="Candidate photo">`
+              getCandidatePhotoUrl(candidate.profile_photo_url)
+                ? `<img src="${escapeAttribute(getCandidatePhotoUrl(candidate.profile_photo_url))}" alt="Candidate photo">`
                 : `${escapeHTML(getInitials(name))}`
             }
           </div>
@@ -524,8 +508,8 @@ function renderCandidateDetail(candidate) {
         <div class="section-kicker">Contact</div>
         <div class="profile-contact-list">
           ${renderContactRow("Preferred contact", preferredContact)}
-          ${renderContactRow("Email", email)}
-          ${renderContactRow("Phone", phone)}
+          ${visibleContact.showEmail ? renderContactRow("Email", email) : ""}
+          ${visibleContact.showPhone ? renderContactRow("Phone", phone) : ""}
         </div>
       </section>
 
@@ -678,8 +662,7 @@ async function toggleSaveCandidate(candidate) {
 
     localStorage.setItem("placelySavedCandidates", JSON.stringify([...savedCandidates]));
     localStorage.setItem("placelySavedCandidateDates", JSON.stringify(savedDates));
-  } catch (error) {
-    console.error(wasSaved ? "Remove saved candidate error:" : "Save candidate error:", error);
+  } catch {
     savedCandidates = previousSavedCandidates;
     savedTalentRowsByCandidateId = previousSavedRows;
     showToast(wasSaved ? "Could not remove candidate." : "Could not save candidate.");
@@ -723,7 +706,6 @@ async function openCandidateResume(candidateId) {
   });
 
   if (error || !data?.url) {
-    console.error("Candidate resume signed URL error:", error);
     showToast(data?.error || "Resume could not be opened.");
     return;
   }
@@ -742,7 +724,7 @@ async function getEmployerName(userId) {
 }
 
 async function loadSavedCandidates() {
-  savedCandidates = new Set(getLocalSavedCandidateIds());
+  savedCandidates = new Set();
   savedTalentRowsByCandidateId = new Map();
 
   if (!currentUser) return;
@@ -759,8 +741,7 @@ async function loadSavedCandidates() {
     savedCandidates = new Set(savedTalentRowsByCandidateId.keys());
     localStorage.setItem("placelySavedCandidates", JSON.stringify([...savedCandidates]));
     savedRefreshWarningShown = false;
-  } catch (error) {
-    console.warn("Saved talent table unavailable; using local saved candidate cache.", error);
+  } catch {
     if (!savedRefreshWarningShown) {
       showToast("Saved candidates could not be refreshed.");
       savedRefreshWarningShown = true;
@@ -787,7 +768,6 @@ async function saveTalentRecord(candidateId) {
     .limit(10);
 
   if (existingError) {
-    console.error("Find saved talent record error:", existingError);
     throw existingError;
   }
 
@@ -804,7 +784,6 @@ async function saveTalentRecord(candidateId) {
     .maybeSingle();
 
   if (error) {
-    console.error("Save candidate error:", error);
     throw error;
   }
 
@@ -890,10 +869,35 @@ function renderAccessState() {
   }
 
   upgradeBanner.classList.remove("hidden");
-  accessStateText.textContent = "Candidate Network access required";
+  accessStateText.textContent = candidateAccessState.pending
+    ? "Payment is still processing"
+    : "Candidate Network access required";
 }
 
-function renderLockedNetworkState() {
+function redirectToCandidateAccess() {
+  window.location.replace("employer-dashboard.html#candidate-access");
+}
+
+function renderPendingAccessState(finalAttempt = false) {
+  candidateAccessState = {
+    state: "pending",
+    status: "pending",
+    active: false,
+    pending: true,
+    message: "Payment is still processing."
+  };
+  hasCandidateAccess = false;
+  renderAccessState();
+  renderLockedNetworkState({
+    title: "Payment is still processing",
+    message: finalAttempt
+      ? "Stripe payment was received, but Candidate Access has not been activated yet. Return to the dashboard and try again in a moment."
+      : "Placely is waiting for Stripe to confirm your Candidate Access before opening candidate search.",
+    action: finalAttempt ? "Return to Dashboard" : "Checking access..."
+  });
+}
+
+function renderLockedNetworkState(options = {}) {
   loadedCandidates = [];
   filteredCandidates = [];
   savedCandidates = new Set();
@@ -905,7 +909,7 @@ function renderLockedNetworkState() {
   if (activeFilterChips) activeFilterChips.innerHTML = "";
 
   if (resultCount?.parentElement) resultCount.parentElement.hidden = true;
-  resultsText.textContent = "Upgrade Candidate Network access to search and view candidate profiles.";
+  resultsText.textContent = options.message || "Upgrade Candidate Network access to search and view candidate profiles.";
   if (recommendedSignal) recommendedSignal.textContent = "Locked";
   if (fastStartCount) fastStartCount.textContent = "Locked";
   if (newThisWeekCount) newThisWeekCount.textContent = "Locked";
@@ -919,9 +923,9 @@ function renderLockedNetworkState() {
   const emptyTitle = emptyState?.querySelector("h3");
   const emptyMessage = emptyState?.querySelector("p");
 
-  if (emptyTitle) emptyTitle.textContent = "Candidate Network access required";
-  if (emptyMessage) emptyMessage.textContent = "Upgrade access to search visible candidate profiles, save talent, and message candidates.";
-  if (emptyClearBtn) emptyClearBtn.textContent = "Back to Dashboard";
+  if (emptyTitle) emptyTitle.textContent = options.title || "Candidate Network access required";
+  if (emptyMessage) emptyMessage.textContent = options.message || "Upgrade access to search visible candidate profiles, save talent, and message candidates.";
+  if (emptyClearBtn) emptyClearBtn.textContent = options.action || "Back to Dashboard";
 }
 
 function setSummaryFilter(filter) {
@@ -1422,8 +1426,7 @@ function trapDrawerFocus(event) {
 }
 
 function showUpgradeComingSoon() {
-  // TODO: Replace this placeholder with Stripe checkout or a hosted billing flow.
-  showToast("Billing is coming soon. Candidate Network access will unlock full profiles, saving, and messaging.");
+  startCandidateCheckoutFromSearch();
 }
 
 function getCandidateTags(candidate) {
@@ -1446,8 +1449,13 @@ function getSplitValues(value) {
     });
 }
 
-function hasCandidateSearchAccess(profile) {
-  return profile?.candidate_access === true;
+function startCandidateCheckoutFromSearch() {
+  if (typeof window.startCandidateCheckout === "function") {
+    window.startCandidateCheckout();
+    return;
+  }
+
+  window.location.href = "employer-dashboard.html#candidate-access";
 }
 
 function isWithinLastDays(value, days) {
@@ -1537,11 +1545,14 @@ function escapeAttribute(value) {
   return escapeHTML(value).replaceAll("`", "&#096;");
 }
 
+function getCandidatePhotoUrl(value) {
+  return window.PlacelyAuth?.getPublicImageUrl?.(employerSupabase, "candidate_photos", value) || String(value || "");
+}
+
 function showToast(message) {
   const toast = document.getElementById("toast");
 
   if (!toast) {
-    console.warn(message);
     return;
   }
 

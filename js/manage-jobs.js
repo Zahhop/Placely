@@ -1,9 +1,5 @@
 const supabaseClient = window.employerSupabase;
 
-if (!supabaseClient) {
-  console.error("Employer Supabase client was not initialized.");
-}
-
 const JOBS_TABLE = "jobs";
 
 const jobsGrid = document.getElementById("jobsGrid");
@@ -77,7 +73,6 @@ async function loadEmployerJobs(userId) {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Error loading employer jobs:", error);
     allJobs = [];
     renderJobs();
     updateStats();
@@ -98,7 +93,6 @@ async function loadApplicationCounts(userId) {
     .eq("employer_id", userId);
 
   if (error) {
-    console.warn("Could not load job application counts:", error);
     applicationCountsByJob = {};
     reviewCountsByJob = {};
     interviewCountsByJob = {};
@@ -146,6 +140,7 @@ function renderJobs() {
           job.company_name,
           job.location,
           job.employment_type,
+          window.PlacelyAuth.formatCompensationFromRecord(job, ""),
           job.pay_range,
           job.experience_level,
           job.job_description,
@@ -185,7 +180,7 @@ function createJobCard(job) {
   const company = job.company_name || "Placely Talent";
   const location = job.location || "Location not listed";
   const type = job.employment_type || "Employment type not listed";
-  const pay = job.pay_range || "Pay not listed";
+  const pay = window.PlacelyAuth.formatCompensationFromRecord(job);
   const experience = job.experience_level || "Experience not listed";
   const description = job.job_description || "No job description added yet.";
   const skills = parseSkills(job.required_skills);
@@ -256,8 +251,7 @@ async function updateJobStatus(jobId, newStatus) {
     .eq("employer_id", currentUserId);
 
   if (error) {
-    console.error("Error updating job status:", error);
-    alert("Could not update this job. Check your Supabase RLS update policy.");
+    alert("Could not update this job. Please try again.");
     return;
   }
 
@@ -324,13 +318,9 @@ function setupLogout() {
   logoutBtn.addEventListener("click", async () => {
     try {
       await window.PlacelyAuth.clearAuthState();
-    } catch (error) {
-      console.error("Logout error:", error);
-      alert("Logout failed. Try again.");
-      return;
-    }
+    } catch {}
 
-    window.location.href = "employer-login.html";
+    window.location.replace("employer-login.html");
   });
 }
 

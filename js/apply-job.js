@@ -18,6 +18,7 @@ let currentUser = null;
 let selectedJob = null;
 let candidateProfile = null;
 let existingApplication = null;
+const schemaFallbackColumns = {};
 
 document.addEventListener("DOMContentLoaded", initApplyPage);
 
@@ -61,10 +62,7 @@ async function verifyCandidateRole(userId) {
     .eq("id", userId)
     .maybeSingle();
 
-  if (error) {
-    console.error("Candidate role check error:", error);
-    return true;
-  }
+  if (error) return true;
 
   if (data?.role && data.role !== "candidate") {
     window.location.href = "../employers/employer-dashboard.html";
@@ -96,8 +94,12 @@ async function loadJob(jobId) {
     .maybeSingle();
 
   if (error || !data) {
-    console.error("Apply job load error:", error);
     showFatalState("Job could not be loaded", "This posting may have been removed or is no longer available.");
+    return;
+  }
+
+  if (data.status && data.status !== "active") {
+    showFatalState("This job is no longer open", "The employer has closed this posting, so new applications are not available.");
     return;
   }
 
@@ -116,25 +118,13 @@ async function loadCandidateProfile(userId) {
     .eq("id", userId)
     .maybeSingle();
 
-  if (error) {
-    console.error("Candidate profile load error:", error);
+  if (error || !data) {
+    await window.PlacelyAuth.clearAuthState();
+    window.location.replace("candidate-login.html");
+    return;
   }
 
-  candidateProfile = data || {
-    id: userId,
-    full_name: currentUser.email?.split("@")[0] || "Candidate",
-    email: currentUser.email || "",
-    phone: "",
-    location: "",
-    trade: "",
-    experience: "",
-    availability: "",
-    skills: "",
-    certifications: "",
-    resume_path: "",
-    resume_url: "",
-    profile_photo_url: ""
-  };
+  candidateProfile = data;
 }
 
 async function checkDuplicateApplication(jobId, candidateId) {
@@ -146,7 +136,7 @@ async function checkDuplicateApplication(jobId, candidateId) {
     .maybeSingle();
 
   if (error) {
-    console.error("Duplicate application check error:", error);
+    showToast("Could not check your application status.");
     return;
   }
 
@@ -232,7 +222,6 @@ async function reapplyToJob() {
   const { error } = await updateApplicationWithSchemaFallback(existingApplication.id, updatePayload);
 
   if (error) {
-    logSupabaseError("Re-apply error:", error);
     showToast("Could not re-apply to this job.");
 
     if (confirmReapplyBtn) {
@@ -259,7 +248,7 @@ function renderJobSummary() {
   const company = selectedJob.company_name || "Employer";
   const location = selectedJob.location || "Location not listed";
   const type = selectedJob.employment_type || "Job type not listed";
-  const pay = selectedJob.pay_range || "Pay not listed";
+  const pay = window.PlacelyAuth.formatCompensationFromRecord(selectedJob);
   const experience = selectedJob.experience_level || "Experience not listed";
   const description = selectedJob.job_description || "No description provided yet.";
   const requirements = selectedJob.required_skills || "Requirements not listed.";
@@ -301,8 +290,8 @@ function renderCandidateSummary() {
   candidateSummary.innerHTML = `
     <div class="candidate-photo">
       ${
-        candidateProfile.profile_photo_url
-          ? `<img src="${escapeHTML(candidateProfile.profile_photo_url)}" alt="${escapeHTML(name)}">`
+        getCandidatePhotoUrl(candidateProfile.profile_photo_url)
+          ? `<img src="${escapeHTML(getCandidatePhotoUrl(candidateProfile.profile_photo_url))}" alt="${escapeHTML(name)}">`
           : escapeHTML(initials)
       }
     </div>
@@ -379,14 +368,14 @@ async function submitApplication(event) {
     company_name: selectedJob.company_name || "Employer",
     location: selectedJob.location || "",
     employment_type: selectedJob.employment_type || "",
-    pay_range: selectedJob.pay_range || "",
+    pay_range: window.PlacelyAuth.formatCompensationFromRecord(selectedJob, "") || selectedJob.pay_range || "",
     status: "submitted",
     cover_letter: coverLetter.value.trim(),
     additional_notes: additionalNotes.value.trim(),
     candidate_snapshot: snapshot,
     candidate_name: snapshot.full_name,
-    candidate_email: snapshot.email,
-    candidate_phone: snapshot.phone,
+    candidate_email: snapshot.email || null,
+    candidate_phone: snapshot.phone || null,
     candidate_role: snapshot.trade,
     resume_path: snapshot.resume_path,
     resume_url: null,
@@ -412,7 +401,6 @@ async function submitApplication(event) {
       return;
     }
 
-    logSupabaseError("Application submit error:", error);
     setMessage("Could not submit application. Check the required Supabase columns and RLS policy.");
     return;
   }
@@ -432,13 +420,11 @@ async function insertApplicationWithSchemaFallback(payload) {
 
     if (!error) {
       if (removedColumns.length) {
-        console.warn("Application submitted after removing missing columns:", removedColumns);
+        schemaFallbackColumns.applicationInsert = removedColumns;
       }
 
       return { error: null };
     }
-
-    logSupabaseError("Application submit error:", error);
 
     const missingColumn = getMissingColumnName(error);
 
@@ -473,13 +459,12 @@ async function updateApplicationWithSchemaFallback(applicationId, payload) {
 
     if (!error) {
       if (removedColumns.length) {
-        console.warn("Application re-applied after removing missing columns:", removedColumns);
+        schemaFallbackColumns.applicationUpdate = removedColumns;
       }
 
       return { error: null };
     }
 
-    logSupabaseError("Re-apply error:", error);
     const missingColumn = getMissingColumnName(error);
 
     if (!missingColumn || !(missingColumn in safePayload)) {
@@ -513,20 +498,17 @@ function getMissingColumnName(error) {
   return match?.[1] || "";
 }
 
-function logSupabaseError(label, error) {
-  console.error(label, {
-    message: error.message,
-    details: error.details,
-    hint: error.hint,
-    code: error.code
-  });
-}
 
 function buildCandidateSnapshot() {
+  const contact = window.PlacelyAuth.getVisibleCandidateContact(candidateProfile);
+  const shownContactMethod = window.PlacelyAuth.normalizeCandidateContactPreference(candidateProfile.shown_contact_method) || contact.preference;
+
   return {
     full_name: candidateProfile.full_name || "Candidate",
-    email: candidateProfile.email || currentUser.email || "",
-    phone: candidateProfile.phone || "",
+    email: contact.showEmail ? candidateProfile.email || currentUser.email || "" : "",
+    phone: contact.showPhone ? candidateProfile.phone || "" : "",
+    shown_contact_method: shownContactMethod,
+    contact_method: candidateProfile.contact_method || "",
     location: candidateProfile.location || "",
     trade: candidateProfile.trade || "",
     experience: candidateProfile.experience || "",
@@ -647,4 +629,8 @@ function escapeHTML(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function getCandidatePhotoUrl(value) {
+  return window.PlacelyAuth?.getPublicImageUrl?.(applySupabase, "candidate_photos", value) || String(value || "");
 }

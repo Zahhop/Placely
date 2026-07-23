@@ -37,6 +37,8 @@ async function initDashboard() {
     loadConversations(user.id)
   ]);
 
+  if (!dashboardProfile.id) return;
+
   renderDashboard();
 }
 
@@ -47,29 +49,15 @@ async function loadProfile(user) {
     .eq("id", user.id)
     .maybeSingle();
 
-  if (error) {
-    console.error("Error loading candidate profile:", error);
+  if (error || !data) {
+    await window.PlacelyAuth.clearAuthState();
+    window.location.replace(ROUTES.login);
+    return;
   }
 
-  dashboardProfile = data
-    ? {
-        ...data,
-        email: data.email || user.email || ""
-      }
-    : {
-    id: user.id,
-    full_name: user.email?.split("@")[0] || "Candidate",
-    email: user.email,
-    trade: "",
-    location: "",
-    experience: "",
-    availability: "",
-    phone: "",
-    contact_method: "",
-    resume_path: "",
-    resume_url: "",
-    profile_photo_url: "",
-    avatar_url: ""
+  dashboardProfile = {
+    ...data,
+    email: data.email || user.email || ""
   };
 }
 
@@ -82,7 +70,6 @@ async function loadApplications(userId) {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Candidate dashboard applications error:", error);
     applications = [];
     return;
   }
@@ -97,7 +84,6 @@ async function loadSavedCount(userId) {
     .eq("candidate_id", userId);
 
   if (error) {
-    console.error("Saved jobs count error:", error);
     setText("saved_jobs_count", "0");
     return;
   }
@@ -114,7 +100,6 @@ async function loadUnreadMessageCount(userId) {
     .eq("read_by_candidate", false);
 
   if (error) {
-    console.error("Candidate unread message count error:", error);
     setText("candidateMessagesCount", "0");
     setText("messages_subtext", "No unread messages");
     return;
@@ -137,7 +122,6 @@ async function loadConversations(userId) {
     .limit(3);
 
   if (error) {
-    console.error("Recent conversations error:", error);
     conversations = [];
     return;
   }
@@ -169,7 +153,6 @@ async function getEmployerProfile(employerId) {
     .maybeSingle();
 
   if (error) {
-    console.error("Employer profile load error:", error);
     return null;
   }
 
@@ -358,11 +341,11 @@ function setText(id, value) {
 async function handleLogout() {
   try {
     await window.PlacelyAuth.clearAuthState();
-  } catch (error) {
-    console.error("Logout error:", error);
+  } catch {
+    sessionStorage.removeItem("placelyAuthGuardRedirecting");
   }
 
-  window.location.href = ROUTES.login;
+  window.location.replace(ROUTES.login);
 }
 
 function escapeHTML(value) {

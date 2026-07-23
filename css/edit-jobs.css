@@ -1,3 +1,4 @@
+html.auth-booting body { visibility: hidden; }
 * {
   margin: 0;
   padding: 0;
@@ -213,6 +214,21 @@ textarea {
   font-weight: 700;
   outline: none;
   transition: 0.2s ease;
+}
+
+.field-hint,
+.field-error {
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.field-hint {
+  color: #64748b;
+}
+
+.field-error {
+  color: #dc2626;
 }
 
 textarea {

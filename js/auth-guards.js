@@ -1,68 +1,184 @@
-async function verifyCandidateAccess(supabaseClient, options = {}) {
-  const loginPath = options.loginPath || "candidate-login.html";
-  const employerDashboardPath = options.employerDashboardPath || "../employers/employer-dashboard.html";
+(function () {
+  const DEFAULT_ROUTES = {
+    candidate: {
+      loginPath: "candidate-login.html",
+      setupPath: "candidate-setup.html",
+      dashboardPath: "candidate-dashboard.html",
+      oppositeDashboardPath: "../employers/employer-dashboard.html"
+    },
+    employer: {
+      loginPath: "employer-login.html",
+      setupPath: "employer-setup.html",
+      dashboardPath: "employer-dashboard.html",
+      oppositeDashboardPath: "../candidates/candidate-dashboard.html"
+    }
+  };
 
-  const { data: { user }, error } = await supabaseClient.auth.getUser();
+  function redirectTo(path) {
+    if (!path) return;
 
-  if (error || !user) {
-    window.location.href = loginPath;
-    return null;
+    const target = new URL(path, window.location.href).href;
+    if (target === window.location.href) return;
+
+    sessionStorage.setItem("placelyAuthGuardRedirecting", "1");
+    window.location.replace(target);
   }
 
-  if (!window.PlacelyAuth.isEmailConfirmed(user)) {
-    window.PlacelyAuth.rememberPendingVerification(user.email, "candidate");
-    window.location.href = window.PlacelyAuth.getVerifyEmailUrl("candidate");
-    return null;
+  function revealProtectedPage() {
+    sessionStorage.removeItem("placelyAuthGuardRedirecting");
+    document.documentElement.classList.remove("auth-booting", "dashboard-booting");
   }
 
-  const accountType = await window.PlacelyAuth.detectAccountType(user);
+  function getRoutes(accountType, options = {}) {
+    const defaults = DEFAULT_ROUTES[accountType];
 
-  if (accountType === "candidate") {
-    return user;
+    return {
+      loginPath: options.loginPath || defaults.loginPath,
+      setupPath: options.setupPath || defaults.setupPath,
+      dashboardPath: options.dashboardPath || defaults.dashboardPath,
+      oppositeDashboardPath:
+        options.oppositeDashboardPath ||
+        options.candidateDashboardPath ||
+        options.employerDashboardPath ||
+        defaults.oppositeDashboardPath
+    };
   }
 
-  if (accountType === "employer") {
-    window.location.href = employerDashboardPath;
-    return null;
+  async function signOutAndRedirect(loginPath) {
+    try {
+      await window.PlacelyAuth.clearAuthState();
+    } catch {
+      sessionStorage.removeItem("placelyAuthGuardRedirecting");
+    }
+
+    redirectTo(loginPath);
   }
 
-  await window.PlacelyAuth.clearAuthState();
-  window.location.href = loginPath;
-  return null;
-}
+  async function loadAccountState(supabaseClient, accountType, user) {
+    const profileTable = accountType === "employer" ? "employer_profiles" : "candidate_profiles";
 
-async function verifyEmployerAccess(supabaseClient, options = {}) {
-  const loginPath = options.loginPath || "employer-login.html";
-  const candidateDashboardPath = options.candidateDashboardPath || "../candidates/candidate-dashboard.html";
+    const account = await supabaseClient
+      .from("profiles")
+      .select("id, role")
+      .eq("id", user.id)
+      .maybeSingle();
 
-  const { data: { user }, error } = await supabaseClient.auth.getUser();
+    if (account.error && !window.PlacelyAuth.isMissingRowError(account.error)) {
+      throw account.error;
+    }
 
-  if (error || !user) {
-    window.location.href = loginPath;
-    return null;
+    const role = account.data?.role || null;
+
+    const profile = await supabaseClient
+      .from(profileTable)
+      .select("*")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profile.error && !window.PlacelyAuth.isMissingRowError(profile.error)) {
+      throw profile.error;
+    }
+
+    return {
+      role,
+      profile: profile.data || null,
+      onboardingComplete: window.PlacelyAuth.isProfileOnboardingComplete(accountType, profile.data)
+    };
   }
 
-  if (!window.PlacelyAuth.isEmailConfirmed(user)) {
-    window.PlacelyAuth.rememberPendingVerification(user.email, "employer");
-    window.location.href = window.PlacelyAuth.getVerifyEmailUrl("employer");
-    return null;
+  async function verifyAuthAccess(supabaseClient, options = {}) {
+    const accountType = options.accountType === "employer" ? "employer" : "candidate";
+    const routes = getRoutes(accountType, options);
+    const requireOnboarding = options.requireOnboarding !== false;
+    const requireIncompleteOnboarding = options.requireIncompleteOnboarding === true;
+
+    if (!supabaseClient) {
+      await signOutAndRedirect(routes.loginPath);
+      return null;
+    }
+
+    const {
+      data: { user },
+      error
+    } = await supabaseClient.auth.getUser();
+
+    if (error || !user) {
+      await signOutAndRedirect(routes.loginPath);
+      return null;
+    }
+
+    if (!window.PlacelyAuth.isEmailConfirmed(user)) {
+      window.PlacelyAuth.rememberPendingVerification(user.email, accountType);
+      redirectTo(window.PlacelyAuth.getVerifyEmailUrl(accountType));
+      return null;
+    }
+
+    let state;
+    try {
+      state = await loadAccountState(supabaseClient, accountType, user);
+    } catch {
+      await signOutAndRedirect(routes.loginPath);
+      return null;
+    }
+
+    if (!state.role) {
+      await signOutAndRedirect(routes.loginPath);
+      return null;
+    }
+
+    if (state.role !== accountType) {
+      if (state.role === "employer" || state.role === "candidate") {
+        redirectTo(routes.oppositeDashboardPath);
+        return null;
+      }
+
+      await signOutAndRedirect(routes.loginPath);
+      return null;
+    }
+
+    if (!state.profile) {
+      await signOutAndRedirect(routes.loginPath);
+      return null;
+    }
+
+    if (requireIncompleteOnboarding && state.onboardingComplete) {
+      redirectTo(routes.dashboardPath);
+      return null;
+    }
+
+    if (requireOnboarding && !state.onboardingComplete) {
+      redirectTo(routes.setupPath);
+      return null;
+    }
+
+    revealProtectedPage();
+    return {
+      user,
+      profile: state.profile,
+      role: state.role,
+      onboardingComplete: state.onboardingComplete
+    };
   }
 
-  const accountType = await window.PlacelyAuth.detectAccountType(user);
+  async function verifyCandidateAccess(supabaseClient, options = {}) {
+    const result = await verifyAuthAccess(supabaseClient, {
+      ...options,
+      accountType: "candidate"
+    });
 
-  if (accountType === "employer") {
-    return user;
+    return result?.user || null;
   }
 
-  if (accountType === "candidate") {
-    window.location.href = candidateDashboardPath;
-    return null;
+  async function verifyEmployerAccess(supabaseClient, options = {}) {
+    const result = await verifyAuthAccess(supabaseClient, {
+      ...options,
+      accountType: "employer"
+    });
+
+    return result?.user || null;
   }
 
-  await window.PlacelyAuth.clearAuthState();
-  window.location.href = loginPath;
-  return null;
-}
-
-window.verifyCandidateAccess = verifyCandidateAccess;
-window.verifyEmployerAccess = verifyEmployerAccess;
+  window.verifyAuthAccess = verifyAuthAccess;
+  window.verifyCandidateAccess = verifyCandidateAccess;
+  window.verifyEmployerAccess = verifyEmployerAccess;
+})();
