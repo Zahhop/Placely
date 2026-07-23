@@ -7,9 +7,10 @@ window.SUPABASE_URL = SUPABASE_URL;
 window.SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
 window.PLACELY_AUTH_STORAGE_KEY = PLACELY_AUTH_STORAGE_KEY;
 window.PLACELY_AUTH_PERSISTENCE_KEY = PLACELY_AUTH_PERSISTENCE_KEY;
-// Hiring Requests is intentionally disabled for Placely V1; infrastructure is preserved for future reactivation.
+// V1-disabled features keep their infrastructure preserved for future reactivation.
 window.PLACELY_FEATURES = {
-  hiringRequests: false
+  hiringRequests: false,
+  jobBoosts: false
 };
 
 function createPlacelyStorageAdapter(storage) {

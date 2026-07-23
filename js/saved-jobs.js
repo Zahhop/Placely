@@ -2,6 +2,8 @@ const savedSupabase = window.PlacelyAuth.client();
 
 let currentUser = null;
 let savedRows = [];
+let activeBoostsByJob = {};
+const JOB_BOOSTS_ENABLED = window.PLACELY_FEATURES?.jobBoosts === true;
 
 const savedJobsList = document.getElementById("savedJobsList");
 const savedCount = document.getElementById("savedCount");
@@ -92,8 +94,37 @@ async function loadSavedJobs() {
   }
 
   savedRows = data || [];
+  if (JOB_BOOSTS_ENABLED) await loadActiveBoosts(savedRows);
+  else activeBoostsByJob = {};
 
   renderSavedJobs();
+}
+
+async function loadActiveBoosts(rows) {
+  if (!JOB_BOOSTS_ENABLED) {
+    activeBoostsByJob = {};
+    return;
+  }
+
+  const jobIds = rows.map((row) => row.jobs?.id || row.job_id).filter(Boolean);
+  activeBoostsByJob = {};
+  if (!jobIds.length) return;
+
+  const { data, error } = await savedSupabase
+    .from("job_boosts")
+    .select("id, job_id, status, ends_at")
+    .in("job_id", jobIds)
+    .eq("status", "active")
+    .gt("ends_at", new Date().toISOString());
+
+  if (error) {
+    activeBoostsByJob = {};
+    return;
+  }
+
+  (data || []).forEach((boost) => {
+    if (boost.job_id) activeBoostsByJob[String(boost.job_id)] = boost;
+  });
 }
 
 function renderSavedJobs() {
@@ -134,6 +165,7 @@ function renderSavedJobs() {
       <article class="saved-card">
         <div>
           <h3>${clean(job.job_title, "Untitled Job")}</h3>
+          ${activeBoostsByJob[String(job.id)] ? `<span class="promoted-tag">Promoted</span>` : ""}
           <p>${clean(job.company_name, "Employer")} · ${clean(job.location)} · Saved ${formatDate(row.saved_at)}</p>
 
           <div class="tags">

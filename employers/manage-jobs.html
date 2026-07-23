@@ -217,6 +217,60 @@
   </div>
 </div>
 
+<div id="boostModal" class="boost-modal-backdrop" hidden>
+  <section class="boost-modal" role="dialog" aria-modal="true" aria-labelledby="boostModalTitle">
+    <div class="boost-modal-header">
+      <div>
+        <h2 id="boostModalTitle">Boost this job</h2>
+        <p id="boostModalDescription">Increase the visibility of this role and reach more relevant candidates.</p>
+      </div>
+      <button type="button" class="boost-close-btn" id="boostCloseBtn" aria-label="Close boost modal">×</button>
+    </div>
+
+    <div class="boost-job-summary">
+      <strong id="boostJobTitle">Job title</strong>
+      <span id="boostJobMeta">Company · Location</span>
+    </div>
+
+    <div id="boostConfigurePanel" class="boost-configure-panel">
+      <div class="boost-option-group">
+        <span class="boost-option-label">Duration</span>
+        <div class="boost-options" id="boostDurationOptions" aria-label="Boost duration"></div>
+      </div>
+
+      <div class="boost-option-group">
+        <span class="boost-option-label">Budget</span>
+        <div class="boost-options" id="boostBudgetOptions" aria-label="Boost budget"></div>
+      </div>
+
+      <div class="boost-summary-box">
+        <div><span>Job</span><strong id="boostSummaryJob">-</strong></div>
+        <div><span>Duration</span><strong id="boostSummaryDuration">-</strong></div>
+        <div><span>Budget</span><strong id="boostSummaryBudget">-</strong></div>
+        <div><span>Estimated end date</span><strong id="boostSummaryEndDate">-</strong></div>
+        <p>Your job will receive increased placement across Placely during the selected boost period.</p>
+      </div>
+    </div>
+
+    <div id="boostManagePanel" class="boost-manage-panel" hidden>
+      <div class="boost-summary-box">
+        <div><span>Status</span><strong id="boostManageStatus">-</strong></div>
+        <div><span>Budget</span><strong id="boostManageBudget">-</strong></div>
+        <div><span>Start date</span><strong id="boostManageStart">-</strong></div>
+        <div><span>End date</span><strong id="boostManageEnd">-</strong></div>
+        <div><span>Time remaining</span><strong id="boostManageRemaining">-</strong></div>
+      </div>
+    </div>
+
+    <p id="boostModalMessage" class="boost-modal-message" role="status" aria-live="polite"></p>
+
+    <div class="boost-modal-actions">
+      <button type="button" class="secondary-btn" id="boostCancelBtn">Cancel</button>
+      <button type="button" class="primary-btn" id="boostCheckoutBtn" disabled>Continue to Payment</button>
+    </div>
+  </section>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/config.js"></script>
 <script src="../js/auth-utils.js"></script>

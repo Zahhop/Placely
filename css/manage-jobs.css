@@ -1717,6 +1717,11 @@ body[data-plan="pro"] .manage-shell {
   color: #3730a3;
 }
 
+.status.boosted {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
 .job-company {
   margin: 10px 0 0;
   color: var(--muted);
@@ -1814,12 +1819,180 @@ body[data-plan="pro"] .manage-shell {
   background: #eff6ff;
 }
 
-.job-actions .more-action {
-  width: 42px;
-  padding: 0;
+.boost-remaining {
+  color: var(--warning);
+  font-size: 12.5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.boost-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.48);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.boost-modal {
+  width: min(560px, 100%);
+  max-height: min(760px, calc(100vh - 48px));
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22);
+  padding: 24px;
+}
+
+.boost-modal-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.boost-modal-header h2 {
+  margin: 0 0 8px;
   color: var(--ink);
-  font-size: 18px;
-  letter-spacing: 0.08em;
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.boost-modal-header p,
+.boost-modal-message,
+.boost-summary-box p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.boost-close-btn {
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--muted-strong);
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.boost-job-summary {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f8fafc;
+  display: grid;
+  gap: 5px;
+  margin-bottom: 18px;
+}
+
+.boost-job-summary strong {
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.boost-job-summary span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.boost-configure-panel,
+.boost-manage-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.boost-option-group {
+  display: grid;
+  gap: 10px;
+}
+
+.boost-option-label {
+  color: var(--muted-strong);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.boost-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.boost-option {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--blue);
+  cursor: pointer;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.boost-option.active {
+  border-color: var(--blue);
+  background: #eff6ff;
+}
+
+.boost-summary-box {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fbfdff;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.boost-summary-box div {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.boost-summary-box strong {
+  color: var(--ink);
+  text-align: right;
+  font-weight: 800;
+}
+
+.boost-modal-message {
+  min-height: 22px;
+  margin-top: 16px;
+  color: var(--warning);
+  font-weight: 700;
+}
+
+.boost-modal-message.success {
+  color: var(--success);
+}
+
+.boost-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.boost-modal-actions .primary-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .manage-jobs-panel .empty-state {
@@ -1894,8 +2067,18 @@ body[data-plan="pro"] .manage-shell {
     padding: 20px;
   }
 
-  .job-actions a {
+  .job-actions a,
+  .job-actions button {
     flex: 1 1 auto;
+  }
+
+  .boost-modal-backdrop {
+    padding: 16px;
+    align-items: flex-end;
+  }
+
+  .boost-modal-actions {
+    flex-direction: column-reverse;
   }
 }
 
