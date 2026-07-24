@@ -3,6 +3,9 @@ const settingsSupabase = window.PlacelyAuth.client();
 let currentUser = null;
 let currentProfile = null;
 
+const settingsSearchForm = getEl("settingsSearchForm");
+const settingsSearchInput = getEl("settingsSearchInput");
+
 const notificationIds = [
   "notifyEmployerMessages",
   "notifyApplicationStatus",
@@ -35,16 +38,32 @@ function setText(id, value) {
 }
 
 async function initSettings() {
-  currentUser = await verifyCandidateAccess(settingsSupabase, {
-    loginPath: "candidate-login.html",
-    employerDashboardPath: "../employers/employer-dashboard.html"
-  });
+  setupShellControls();
 
-  if (!currentUser) return;
+  try {
+    currentUser = await verifyCandidateAccess(settingsSupabase, {
+      loginPath: "candidate-login.html",
+      employerDashboardPath: "../employers/employer-dashboard.html"
+    });
 
-  setupNotificationToggles();
-  setupDeleteModal();
-  await loadCandidateProfile();
+    if (!currentUser) return;
+
+    setupNotificationToggles();
+    setupDeleteModal();
+    await Promise.all([
+      loadCandidateProfile(),
+      loadHeaderCounts(currentUser.id)
+    ]);
+    hydrateHeader();
+  } catch (error) {
+    console.error("Candidate settings failed to load", {
+      code: error?.code,
+      message: error?.message
+    });
+    showToast("We could not load account settings. Please refresh and try again.");
+  } finally {
+    revealSettings();
+  }
 }
 
 async function loadCandidateProfile() {
@@ -68,6 +87,25 @@ async function loadCandidateProfile() {
     "settingsVisibility",
     currentProfile.profile_visible === false ? "Hidden from employers" : "Visible to employers"
   );
+}
+
+async function loadHeaderCounts(userId) {
+  const [{ count: unreadCount }, { count: notificationCount }] = await Promise.all([
+    settingsSupabase
+      .from("messages")
+      .select("*", { count: "exact", head: true })
+      .eq("candidate_id", userId)
+      .eq("sender_type", "employer")
+      .eq("read_by_candidate", false),
+    settingsSupabase
+      .from("applications")
+      .select("*", { count: "exact", head: true })
+      .eq("candidate_id", userId)
+      .in("status", ["reviewing", "interview", "offer"])
+  ]);
+
+  updateBadge("topUnreadBadge", unreadCount || 0);
+  updateBadge("topNotificationBadge", notificationCount || 0);
 }
 
 function setupNotificationToggles() {
@@ -349,6 +387,154 @@ async function anonymizeCandidateProfile() {
     .eq("id", currentUser.id);
 
   if (fallbackError) throw fallbackError;
+}
+
+function setupShellControls() {
+  getEl("logoutBtn")?.addEventListener("click", handleLogout);
+  getEl("accountMenuLogoutBtn")?.addEventListener("click", handleLogout);
+  bindAccountMenu();
+  bindMobileSidebar();
+  bindHeaderSearch();
+}
+
+function hydrateHeader() {
+  const fullName = currentProfile?.full_name || "Candidate";
+  const firstName = fullName.split(" ")[0] || "Candidate";
+  const email = currentProfile?.email || currentUser?.email || "No email on file";
+
+  setText("topCandidateName", firstName);
+  setText("accountMenuCandidateName", fullName);
+  setText("accountMenuEmail", email);
+
+  const avatar = getEl("topCandidateAvatar");
+  if (!avatar) return;
+
+  const initials = getInitials(fullName || email);
+  const photoUrl = resolveCandidatePhotoUrl(currentProfile || {});
+  avatar.innerHTML = photoUrl
+    ? `<img src="${escapeHTML(photoUrl)}" alt="" loading="lazy" /><span class="avatar-fallback">${escapeHTML(initials)}</span>`
+    : escapeHTML(initials);
+}
+
+function bindAccountMenu() {
+  const button = getEl("candidateAccountButton");
+  const menu = getEl("candidateAccountMenu");
+  if (!button || !menu) return;
+
+  const closeMenu = ({ restoreFocus = false } = {}) => {
+    menu.hidden = true;
+    button.setAttribute("aria-expanded", "false");
+    if (restoreFocus) button.focus();
+  };
+
+  const openMenu = () => {
+    menu.hidden = false;
+    button.setAttribute("aria-expanded", "true");
+    menu.querySelector("[role='menuitem']")?.focus();
+  };
+
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (menu.hidden) openMenu();
+    else closeMenu();
+  });
+
+  menu.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (event.target.closest("a")) closeMenu();
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!menu.hidden && !event.target.closest(".top-account-menu-wrap")) closeMenu();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !menu.hidden) closeMenu({ restoreFocus: true });
+  });
+}
+
+function bindMobileSidebar() {
+  const toggle = getEl("sidebarToggle");
+  const backdrop = getEl("sidebarBackdrop");
+  if (!toggle || !backdrop) return;
+
+  const setSidebarOpen = (isOpen) => {
+    document.body.classList.toggle("sidebar-open", isOpen);
+    toggle.setAttribute("aria-expanded", String(isOpen));
+    backdrop.hidden = !isOpen;
+  };
+
+  toggle.addEventListener("click", () => setSidebarOpen(!document.body.classList.contains("sidebar-open")));
+  backdrop.addEventListener("click", () => setSidebarOpen(false));
+
+  document.querySelectorAll(".candidate-nav-link").forEach((link) => {
+    link.addEventListener("click", () => setSidebarOpen(false));
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 980) setSidebarOpen(false);
+  });
+}
+
+function bindHeaderSearch() {
+  if (!settingsSearchForm || !settingsSearchInput) return;
+
+  settingsSearchForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const query = settingsSearchInput.value.trim();
+    const url = new URL("../public/find-jobs.html?role=candidate", window.location.href);
+    if (query) url.searchParams.set("keyword", query);
+    window.location.href = url.toString();
+  });
+}
+
+function updateBadge(id, value) {
+  const badge = getEl(id);
+  if (!badge) return;
+
+  const count = Number(value) || 0;
+  badge.hidden = count <= 0;
+  badge.textContent = count > 9 ? "9+" : String(count);
+}
+
+function resolveCandidatePhotoUrl(profile) {
+  const rawUrl = profile.profile_photo_url || profile.profile_photo || profile.avatar_url || profile.photo_url || "";
+  if (!rawUrl) return "";
+  if (/^https?:\/\//i.test(rawUrl)) return rawUrl;
+  return window.PlacelyAuth.getPublicImageUrl(settingsSupabase, "candidate-photos", rawUrl);
+}
+
+function getInitials(value) {
+  const words = String(value || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (!words.length) return "PT";
+  return words.slice(0, 2).map((word) => word[0]).join("").toUpperCase();
+}
+
+async function handleLogout() {
+  try {
+    await window.PlacelyAuth.clearAuthState();
+  } catch {
+    sessionStorage.removeItem("placelyAuthGuardRedirecting");
+  }
+
+  window.location.replace("candidate-login.html");
+}
+
+function revealSettings() {
+  document.documentElement.classList.remove("settings-booting");
+}
+
+function escapeHTML(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 document.addEventListener("DOMContentLoaded", initSettings);

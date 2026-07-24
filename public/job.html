@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Job | Placely Talent</title>
+  <meta name="description" content="View this public Placely Talent job posting." />
+  <link id="canonicalJobUrl" rel="canonical" href="" />
+  <meta property="og:title" content="Placely Talent Job" />
+  <meta property="og:description" content="View this public Placely Talent job posting." />
+
+  <!-- TODO: For full SEO coverage, prerender or server-render this page so crawlers receive job-specific metadata and JSON-LD before client JavaScript runs. -->
+
+  <link rel="stylesheet" href="../css/candidate-dashboard.css" />
+  <link rel="stylesheet" href="../css/find-jobs.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+
+<body class="public-job-page">
+  <header class="public-job-header">
+    <div class="logo-wrapper">
+      <a href="../index.html" class="logo">PLACELY TALENT</a>
+      <div class="logo-subtitle">Talent Platform</div>
+    </div>
+
+    <div class="public-job-actions">
+      <a href="find-jobs.html?role=candidate" class="secondary-btn">Browse Jobs</a>
+      <a href="../candidates/candidate-login.html" class="primary-btn">Candidate Login</a>
+    </div>
+  </header>
+
+  <main id="publicJobShell" class="public-job-shell" aria-live="polite">
+    <div class="job-details-empty">
+      <span class="eyebrow">Job Details</span>
+      <h1>Loading job</h1>
+      <p>Checking whether this role is still active.</p>
+    </div>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/auth-utils.js"></script>
+  <script src="../js/job-url-utils.js"></script>
+  <script src="../js/job-seo-utils.js"></script>
+  <script src="../js/public-job-detail.js"></script>
+</body>
+</html>

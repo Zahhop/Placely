@@ -11,8 +11,11 @@ const withdrawModal = document.getElementById("withdrawModal");
 const withdrawModalOverlay = document.getElementById("withdrawModalOverlay");
 const cancelWithdrawBtn = document.getElementById("cancelWithdrawBtn");
 const confirmWithdrawBtn = document.getElementById("confirmWithdrawBtn");
+const applicationHeaderSearchForm = document.getElementById("applicationHeaderSearchForm");
+const applicationHeaderSearchInput = document.getElementById("applicationHeaderSearchInput");
 
 let currentUser = null;
+let currentProfile = {};
 let allApplications = [];
 let selectedApplicationId = null;
 let pendingWithdrawApplicationId = null;
@@ -30,10 +33,15 @@ async function initApplications() {
   currentUser = user;
 
   setupEvents();
+  await loadCandidateProfile(user);
   await loadApplications();
+  hydrateHeader();
+  document.documentElement.classList.remove("applications-booting");
 }
 
 function setupEvents() {
+  setupDashboardShell();
+
   if (applicationSearch) {
     applicationSearch.addEventListener("input", renderApplications);
   }
@@ -47,12 +55,118 @@ function setupEvents() {
   if (withdrawModalOverlay) withdrawModalOverlay.addEventListener("click", closeWithdrawModal);
   if (cancelWithdrawBtn) cancelWithdrawBtn.addEventListener("click", closeWithdrawModal);
   if (confirmWithdrawBtn) confirmWithdrawBtn.addEventListener("click", confirmWithdrawApplication);
+  if (applicationHeaderSearchForm) {
+    applicationHeaderSearchForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!applicationSearch || !applicationHeaderSearchInput) return;
+      applicationSearch.value = applicationHeaderSearchInput.value.trim();
+      renderApplications();
+      applicationSearch.focus();
+    });
+  }
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       closeApplicationModal();
       closeWithdrawModal();
     }
+  });
+}
+
+async function loadCandidateProfile(user) {
+  const { data } = await applicationsSupabase
+    .from("candidate_profiles")
+    .select("id, full_name, email, profile_photo_url, profile_photo, avatar_url, photo_url")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  currentProfile = {
+    ...(data || {}),
+    email: data?.email || user.email || ""
+  };
+}
+
+function hydrateHeader() {
+  const fullName = currentProfile.full_name || "Candidate";
+  const firstName = fullName.split(" ")[0] || "Candidate";
+  const email = currentProfile.email || currentUser?.email || "No email on file";
+
+  setText("topCandidateName", firstName);
+  setText("accountMenuCandidateName", fullName);
+  setText("accountMenuEmail", email);
+
+  const avatar = document.getElementById("topCandidateAvatar");
+  if (!avatar) return;
+
+  const initials = getInitials(fullName || email);
+  const photoUrl = resolveCandidatePhotoUrl(currentProfile);
+  avatar.innerHTML = photoUrl
+    ? `<img src="${escapeHTML(photoUrl)}" alt="" loading="lazy" /><span class="avatar-fallback">${escapeHTML(initials)}</span>`
+    : escapeHTML(initials);
+}
+
+function setupDashboardShell() {
+  document.getElementById("logoutBtn")?.addEventListener("click", handleLogout);
+  document.getElementById("accountMenuLogoutBtn")?.addEventListener("click", handleLogout);
+  bindAccountMenu();
+  bindMobileSidebar();
+}
+
+function bindAccountMenu() {
+  const button = document.getElementById("candidateAccountButton");
+  const menu = document.getElementById("candidateAccountMenu");
+  if (!button || !menu) return;
+
+  const closeMenu = ({ restoreFocus = false } = {}) => {
+    menu.hidden = true;
+    button.setAttribute("aria-expanded", "false");
+    if (restoreFocus) button.focus();
+  };
+
+  const openMenu = () => {
+    menu.hidden = false;
+    button.setAttribute("aria-expanded", "true");
+    menu.querySelector("[role='menuitem']")?.focus();
+  };
+
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (menu.hidden) openMenu();
+    else closeMenu();
+  });
+
+  menu.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (event.target.closest("a")) closeMenu();
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!menu.hidden && !event.target.closest(".top-account-menu-wrap")) closeMenu();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !menu.hidden) closeMenu({ restoreFocus: true });
+  });
+}
+
+function bindMobileSidebar() {
+  const toggle = document.getElementById("sidebarToggle");
+  const backdrop = document.getElementById("sidebarBackdrop");
+  if (!toggle || !backdrop) return;
+
+  const setSidebarOpen = (isOpen) => {
+    document.body.classList.toggle("sidebar-open", isOpen);
+    toggle.setAttribute("aria-expanded", String(isOpen));
+    backdrop.hidden = !isOpen;
+  };
+
+  toggle.addEventListener("click", () => {
+    setSidebarOpen(!document.body.classList.contains("sidebar-open"));
+  });
+  backdrop.addEventListener("click", () => setSidebarOpen(false));
+
+  document.querySelectorAll(".candidate-nav-link").forEach((link) => {
+    link.addEventListener("click", () => setSidebarOpen(false));
   });
 }
 
@@ -67,9 +181,9 @@ async function loadApplications() {
   if (error) {
     applicationsList.innerHTML = `
       <div class="empty-state">
-        <div class="empty-icon">!</div>
         <strong>Could not load applications</strong>
         <p>Please refresh the page and try again.</p>
+        <button type="button" class="card-btn" onclick="window.location.reload()">Retry</button>
       </div>
     `;
     return;
@@ -78,7 +192,6 @@ async function loadApplications() {
   allApplications = await hydrateApplications(applications || []);
 
   updateStats();
-  updateNextAction();
   renderApplications();
 }
 
@@ -175,10 +288,9 @@ function renderApplications() {
   if (!allApplications.length) {
     applicationsList.innerHTML = `
       <div class="empty-state">
-        <div class="empty-icon">↗</div>
         <strong>No applications yet</strong>
-        <p>When you apply to jobs, your applications will appear here.</p>
-        <a href="../public/find-jobs.html?role=candidate">Browse Jobs</a>
+        <p>Browse open roles and apply to opportunities that match your experience.</p>
+        <a href="../public/find-jobs.html?role=candidate" class="primary-btn">Find Jobs</a>
       </div>
     `;
     return;
@@ -187,7 +299,6 @@ function renderApplications() {
   if (!list.length) {
     applicationsList.innerHTML = `
       <div class="empty-state">
-        <div class="empty-icon">⌕</div>
         <strong>No matching applications</strong>
         <p>Try searching another company, role, location, or status.</p>
       </div>
@@ -206,7 +317,7 @@ function renderApplicationCard(app) {
   const jobTitle = app.job_title || "Untitled Job";
   const location = app.location || "Location not listed";
   const employmentType = app.employment_type || "Job type not listed";
-  const payRange = window.PlacelyAuth.formatCompensationFromRecord(app);
+  const payRange = app.pay_range || window.PlacelyAuth.formatCompensationFromRecord(app);
   const appliedDate = formatDate(app.created_at);
   const initials = getInitials(companyName);
   const companyLogoUrl = getCompanyLogoUrl(app);
@@ -239,20 +350,20 @@ function renderApplicationCard(app) {
       </div>
 
       <div class="application-actions">
-        <button class="card-btn" onclick="viewApplication('${escapeHTML(app.id)}')">
+        <button class="primary-row-btn" onclick="viewApplication('${escapeHTML(app.id)}')">
           View Application
         </button>
 
-        <button class="danger-outline-btn" onclick="openWithdrawModal('${escapeHTML(app.id)}')">
-          Withdraw Application
+        <button class="card-btn" onclick="viewJob('${escapeHTML(app.job_id || "")}')">
+          View Job
         </button>
 
         <button class="follow-up-btn" onclick="handleFollowUp('${escapeHTML(app.id)}')">
           Follow Up
         </button>
 
-        <button class="card-btn" onclick="viewJob('${escapeHTML(app.job_id || "")}')">
-          View Job
+        <button class="danger-outline-btn" onclick="openWithdrawModal('${escapeHTML(app.id)}')">
+          Withdraw
         </button>
       </div>
     </article>
@@ -413,7 +524,6 @@ async function confirmWithdrawApplication() {
   closeWithdrawModal();
   closeApplicationModal();
   updateStats();
-  updateNextAction();
   renderApplications();
   showToast("Application withdrawn.");
 }
@@ -476,52 +586,6 @@ function updateStats() {
   setText("reviewing_count", reviewing);
   setText("interviewing_count", interviewing);
   setText("offers_count", offers);
-}
-
-function updateNextAction() {
-  const card = document.getElementById("nextActionCard");
-  if (!card) return;
-
-  const offers = allApplications.filter(
-    (app) => normalizeStatus(app.status) === "offer"
-  ).length;
-
-  const interviews = allApplications.filter(
-    (app) => normalizeStatus(app.status) === "interview"
-  ).length;
-
-  const active = allApplications.filter((app) =>
-    ["submitted", "reviewing", "interview"].includes(normalizeStatus(app.status))
-  ).length;
-
-  if (offers > 0) {
-    card.innerHTML = `
-      <strong>You have an offer to review</strong>
-      <p>Review the details carefully and respond quickly so the employer can move forward.</p>
-    `;
-    return;
-  }
-
-  if (interviews > 0) {
-    card.innerHTML = `
-      <strong>Prepare for your next interview</strong>
-      <p>Review the job details, your certifications, availability, and recent work experience.</p>
-    `;
-    return;
-  }
-
-  if (active > 0) {
-    card.innerHTML = `
-      <strong>${active} active application${active === 1 ? "" : "s"}</strong>
-      <p>Keep an eye on messages and follow up professionally if an employer has not responded yet.</p>
-    `;
-    return;
-  }
-
-  card.innerHTML = `
-    <strong>Build your opportunity pipeline</strong>
-    <p>Apply to strong matches and keep your profile ready for employers reviewing candidates.</p>
-  `;
 }
 
 function normalizeStatus(status) {
@@ -669,6 +733,30 @@ function viewJob(jobId) {
   }
 
   window.location.href = `../public/find-jobs.html?role=candidate&job=${jobId}`;
+}
+
+function resolveCandidatePhotoUrl(profile) {
+  const rawUrl =
+    profile.profile_photo_url ||
+    profile.profile_photo ||
+    profile.avatar_url ||
+    profile.photo_url ||
+    "";
+
+  if (!rawUrl) return "";
+  if (/^https?:\/\//i.test(rawUrl)) return rawUrl;
+
+  return window.PlacelyAuth.getPublicImageUrl(applicationsSupabase, "candidate-photos", rawUrl);
+}
+
+async function handleLogout() {
+  try {
+    await window.PlacelyAuth.clearAuthState();
+  } catch {
+    sessionStorage.removeItem("placelyAuthGuardRedirecting");
+  }
+
+  window.location.replace("candidate-login.html");
 }
 
 function formatDate(value) {

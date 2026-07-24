@@ -6,40 +6,58 @@ const ROUTES = {
   messages: "candidate-messages.html",
   jobs: "../public/find-jobs.html?role=candidate",
   saved: "../public/saved-jobs.html",
-  applications: "candidate-applications.html"
+  applications: "candidate-applications.html",
+  settings: "candidate-settings.html",
+  support: "mailto:hello@placelytalent.com"
 };
 
 let currentUser = null;
 let dashboardProfile = {};
 let applications = [];
 let conversations = [];
+let suggestedJobs = [];
+let savedJobsCount = 0;
+let unreadMessagesCount = 0;
 
 document.addEventListener("DOMContentLoaded", initDashboard);
 
 async function initDashboard() {
-  const user = await verifyCandidateAccess(candidateSupabase, {
-    loginPath: ROUTES.login,
-    employerDashboardPath: "../employers/employer-dashboard.html"
-  });
+  bindStaticControls();
 
-  if (!user) return;
+  try {
+    const user = await verifyCandidateAccess(candidateSupabase, {
+      loginPath: ROUTES.login,
+      employerDashboardPath: "../employers/employer-dashboard.html"
+    });
 
-  currentUser = user;
+    if (!user) return;
 
-  const logoutBtn = document.getElementById("logoutBtn");
-  if (logoutBtn) logoutBtn.onclick = handleLogout;
+    currentUser = user;
 
-  await Promise.all([
-    loadProfile(user),
-    loadApplications(user.id),
-    loadSavedCount(user.id),
-    loadUnreadMessageCount(user.id),
-    loadConversations(user.id)
-  ]);
+    await Promise.all([
+      loadProfile(user),
+      loadApplications(user.id),
+      loadSavedCount(user.id),
+      loadUnreadMessageCount(user.id),
+      loadConversations(user.id),
+      loadSuggestedJobs()
+    ]);
 
-  if (!dashboardProfile.id) return;
+    renderDashboard();
+  } catch (error) {
+    console.error("Candidate dashboard failed to load", error);
+    showToast("We could not load the dashboard. Please refresh and try again.");
+  } finally {
+    revealDashboard();
+  }
+}
 
-  renderDashboard();
+function bindStaticControls() {
+  document.getElementById("logoutBtn")?.addEventListener("click", handleLogout);
+  document.getElementById("accountMenuLogoutBtn")?.addEventListener("click", handleLogout);
+  bindAccountMenu();
+  bindMobileSidebar();
+  bindDashboardSearch();
 }
 
 async function loadProfile(user) {
@@ -69,12 +87,7 @@ async function loadApplications(userId) {
     .neq("status", "withdrawn")
     .order("created_at", { ascending: false });
 
-  if (error) {
-    applications = [];
-    return;
-  }
-
-  applications = data || [];
+  applications = error ? [] : data || [];
 }
 
 async function loadSavedCount(userId) {
@@ -83,12 +96,7 @@ async function loadSavedCount(userId) {
     .select("*", { count: "exact", head: true })
     .eq("candidate_id", userId);
 
-  if (error) {
-    setText("saved_jobs_count", "0");
-    return;
-  }
-
-  setText("saved_jobs_count", count || 0);
+  savedJobsCount = error ? 0 : count || 0;
 }
 
 async function loadUnreadMessageCount(userId) {
@@ -99,18 +107,7 @@ async function loadUnreadMessageCount(userId) {
     .eq("sender_type", "employer")
     .eq("read_by_candidate", false);
 
-  if (error) {
-    setText("candidateMessagesCount", "0");
-    setText("messages_subtext", "No unread messages");
-    return;
-  }
-
-  const unread = count || 0;
-  setText("candidateMessagesCount", unread);
-  setText(
-    "messages_subtext",
-    unread === 0 ? "No unread messages" : unread === 1 ? "1 unread message" : `${unread} unread messages`
-  );
+  unreadMessagesCount = error ? 0 : count || 0;
 }
 
 async function loadConversations(userId) {
@@ -119,7 +116,7 @@ async function loadConversations(userId) {
     .select("*")
     .eq("candidate_id", userId)
     .order("created_at", { ascending: false })
-    .limit(3);
+    .limit(4);
 
   if (error) {
     conversations = [];
@@ -134,7 +131,6 @@ async function loadConversations(userId) {
         ...conversation,
         employer_name:
           employer?.company_name ||
-          employer?.contact_name ||
           conversation.employer_name ||
           conversation.company_name ||
           "Employer"
@@ -152,155 +148,272 @@ async function getEmployerProfile(employerId) {
     .eq("id", employerId)
     .maybeSingle();
 
-  if (error) {
-    return null;
-  }
+  return error ? null : data;
+}
 
-  return data;
+async function loadSuggestedJobs() {
+  const { data, error } = await candidateSupabase
+    .from("jobs")
+    .select("*")
+    .eq("status", "active")
+    .order("created_at", { ascending: false })
+    .limit(4);
+
+  const jobsById = new Map();
+  (error ? [] : data || []).forEach((job) => {
+    if (job?.id && !jobsById.has(String(job.id))) {
+      jobsById.set(String(job.id), normalizeJob(job));
+    }
+  });
+
+  suggestedJobs = [...jobsById.values()];
 }
 
 function renderDashboard() {
-  const fullName = dashboardProfile.full_name || "Candidate";
-  const firstName = fullName.split(" ")[0];
-  const completion = calculateProfileCompletion(dashboardProfile);
-
-  setText("dashboard_first_name", firstName);
-  setText("profile_completion_count", `${completion}%`);
-  setText(
-    "profile_completion_text",
-    completion >= 100 ? "Profile Complete" : "Complete your profile"
-  );
-  setText("applications_count", applications.length);
-
-  renderApplications();
-  renderMessages();
-  renderProfilePreview();
-}
-
-function renderProfilePreview() {
-  const container = document.getElementById("dashboard_profile_preview");
-  if (!container) return;
-
   const profile = {
     ...dashboardProfile,
     email: dashboardProfile.email || currentUser?.email || ""
   };
-  const tags = window.CandidateProfilePreview?.getCandidateTags(profile, 4) || [];
-  const tagHTML = tags.length
-    ? tags.map((tag) => `<span>${escapeHTML(tag)}</span>`).join("")
-    : "<span>No skills added</span>";
+  const fullName = profile.full_name || "Candidate";
+  const firstName = fullName.split(" ")[0] || "Candidate";
+  const interviewCount = applications.filter((app) => normalizeApplicationStatus(app.status) === "interview").length;
+  const activeNotificationCount = applications.filter((app) =>
+    ["reviewing", "interview", "offer"].includes(normalizeApplicationStatus(app.status))
+  ).length;
 
-  container.innerHTML = `
-    <div class="dashboard-preview-card">
-      ${window.CandidateProfilePreview?.renderAvatar(profile, "dashboard-preview-photo") || ""}
-      <div class="dashboard-preview-info">
-        <h3>${escapeHTML(profile.full_name || "Candidate Name")}</h3>
-        <p>${escapeHTML(profile.trade || "Trade / Job Title")} &middot; ${escapeHTML(profile.location || "Location")}</p>
-        <div class="dashboard-preview-tags">${tagHTML}</div>
-      </div>
-      <button type="button" class="job-btn secondary" id="dashboardViewPreviewBtn">View Full Preview</button>
-    </div>
-  `;
+  setText("dashboardGreeting", getGreeting());
+  setText("dashboard_first_name", firstName);
+  setText("topCandidateName", firstName);
+  setText("accountMenuCandidateName", fullName);
+  setText("accountMenuEmail", profile.email || "No email on file");
+  setText("applications_count", applications.length);
+  setText("interviews_count", interviewCount);
+  setText("saved_jobs_count", savedJobsCount);
+  setText("candidateMessagesCount", unreadMessagesCount);
+  setText(
+    "messages_subtext",
+    unreadMessagesCount === 0
+      ? "No unread messages"
+      : unreadMessagesCount === 1
+        ? "1 unread message"
+        : `${unreadMessagesCount} unread messages`
+  );
 
-  document.getElementById("dashboardViewPreviewBtn")?.addEventListener("click", () => {
-    window.CandidateProfilePreview?.openModal(profile);
-  });
+  renderAvatar(profile);
+  renderUtilityBadges(unreadMessagesCount, activeNotificationCount);
+  renderApplicationsTable();
+  renderSuggestedJobs();
+  renderActivity();
 }
 
-function renderApplications() {
-  const container = document.getElementById("applications_list");
+function renderAvatar(profile) {
+  const avatar = document.getElementById("topCandidateAvatar");
+  if (!avatar) return;
+
+  const initials = getInitials(profile.full_name || profile.email || "Placely Talent");
+  const photoUrl = resolveCandidatePhotoUrl(profile);
+
+  avatar.textContent = initials;
+  avatar.innerHTML = photoUrl
+    ? `<img src="${escapeHTML(photoUrl)}" alt="" /><span class="avatar-fallback">${escapeHTML(initials)}</span>`
+    : escapeHTML(initials);
+}
+
+function renderUtilityBadges(messageCount, notificationCount) {
+  updateBadge("topUnreadBadge", messageCount);
+  updateBadge("topNotificationBadge", notificationCount);
+}
+
+function renderActivity() {
+  const container = document.getElementById("activityList");
   if (!container) return;
 
-  if (!applications.length) {
-    renderEmpty(
-      "applications_list",
-      "No applications yet",
-      "When you apply to jobs, your application status will show here.",
-      "Find Jobs",
-      ROUTES.jobs
-    );
+  const activity = [
+    ...applications.slice(0, 3).map((app) => ({
+      type: "Application",
+      title: app.job_title || "Untitled Job",
+      meta: `${app.company_name || "Company"} - ${getApplicationStatusLabel(normalizeApplicationStatus(app.status))}`,
+      date: app.created_at,
+      href: ROUTES.applications
+    })),
+    ...conversations.slice(0, 2).map((conversation) => ({
+      type: "Message",
+      title: conversation.employer_name || "Employer",
+      meta: conversation.job_title || conversation.candidate_role || "Application conversation",
+      date: conversation.updated_at || conversation.created_at,
+      href: `${ROUTES.messages}?conversation=${encodeURIComponent(conversation.id)}`
+    }))
+  ].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0)).slice(0, 5);
+
+  if (!activity.length) {
+    container.innerHTML = renderEmptyBlock("No recent activity", "Applications, messages, and interview updates will appear here.");
     return;
   }
 
-  container.innerHTML = applications.slice(0, 3).map((app) => {
+  container.innerHTML = activity.map((item) => `
+    <a class="activity-item" href="${escapeHTML(item.href)}">
+      <span class="activity-dot" aria-hidden="true"></span>
+      <span>
+        <strong>${escapeHTML(item.title)}</strong>
+        <small>${escapeHTML(item.type)} - ${escapeHTML(item.meta)} - ${escapeHTML(formatDate(item.date))}</small>
+      </span>
+    </a>
+  `).join("");
+}
+
+function renderApplicationsTable() {
+  const tbody = document.getElementById("applicationsTableBody");
+  if (!tbody) return;
+
+  if (!applications.length) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5">${renderEmptyBlock("No applications yet", "Find a role you like and your application will show here.")}</td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = applications.slice(0, 5).map((app) => {
     const status = normalizeApplicationStatus(app.status);
 
     return `
-      <article class="activity-card dashboard-application-card">
+      <tr>
+        <td><strong>${escapeHTML(app.job_title || "Untitled Job")}</strong></td>
+        <td>${escapeHTML(app.company_name || "Company")}</td>
+        <td>${escapeHTML(formatDate(app.created_at))}</td>
+        <td><span class="status-pill ${escapeHTML(status)}">${escapeHTML(getApplicationStatusLabel(status))}</span></td>
+        <td><a class="table-action" href="${ROUTES.applications}">View</a></td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function renderSuggestedJobs() {
+  const container = document.getElementById("suggestedJobs");
+  if (!container) return;
+
+  if (!suggestedJobs.length) {
+    container.innerHTML = renderEmptyBlock("No suggested jobs yet", "Check back soon or browse all available roles.");
+    return;
+  }
+
+  container.innerHTML = suggestedJobs.map((job) => {
+    const jobUrl = `${ROUTES.jobs}&job=${encodeURIComponent(job.id)}`;
+    const applyUrl = `../public/apply-job.html?job_id=${encodeURIComponent(job.id)}`;
+
+    return `
+      <article class="suggested-job-card">
         <div>
-          <h3>${escapeHTML(app.job_title || "Untitled Job")}</h3>
-          <p>${escapeHTML(app.company_name || "Company")} &middot; ${escapeHTML(getApplicationStatusLabel(status))} &middot; Applied ${escapeHTML(formatDate(app.created_at))}</p>
+          <h3>${escapeHTML(job.title)}</h3>
+          <p>${escapeHTML(job.company)} - ${escapeHTML(job.location)} - ${escapeHTML(job.type)}</p>
+          <strong>${escapeHTML(job.pay)}</strong>
         </div>
-        <a class="job-btn secondary" href="${ROUTES.applications}">View</a>
+        <div class="suggested-job-actions">
+          <a class="primary-btn compact" href="${applyUrl}">Quick Apply</a>
+          <a class="secondary-btn compact" href="${jobUrl}">Save</a>
+        </div>
       </article>
     `;
   }).join("");
 }
 
-function renderMessages() {
-  const container = document.getElementById("messages_list");
-  if (!container) return;
+function bindAccountMenu() {
+  const button = document.getElementById("candidateAccountButton");
+  const menu = document.getElementById("candidateAccountMenu");
+  if (!button || !menu) return;
 
-  if (!conversations.length) {
-    container.innerHTML = `
-      <div class="empty-state compact-empty">
-        <strong>No recent conversations.</strong>
-      </div>
-    `;
-    return;
-  }
+  const closeMenu = ({ restoreFocus = false } = {}) => {
+    menu.hidden = true;
+    button.setAttribute("aria-expanded", "false");
+    if (restoreFocus) button.focus();
+  };
 
-  container.innerHTML = conversations.slice(0, 3).map((conversation) => `
-    <a class="message-card" href="${ROUTES.messages}?conversation=${encodeURIComponent(conversation.id)}">
-      <h3>${escapeHTML(conversation.employer_name || "Employer")}</h3>
-      <p>${escapeHTML(conversation.job_title || conversation.candidate_role || "Application conversation")}</p>
-    </a>
-  `).join("");
+  const openMenu = () => {
+    menu.hidden = false;
+    button.setAttribute("aria-expanded", "true");
+    menu.querySelector("[role='menuitem']")?.focus();
+  };
+
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (menu.hidden) openMenu();
+    else closeMenu();
+  });
+
+  menu.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (event.target.closest("a")) closeMenu();
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!menu.hidden && !event.target.closest(".top-account-menu-wrap")) closeMenu();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !menu.hidden) closeMenu({ restoreFocus: true });
+  });
 }
 
-function renderEmpty(containerId, title, text, actionText, actionHref) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
+function bindMobileSidebar() {
+  const toggle = document.getElementById("sidebarToggle");
+  const backdrop = document.getElementById("sidebarBackdrop");
+  if (!toggle || !backdrop) return;
 
-  container.innerHTML = `
-    <div class="empty-state compact-empty">
-      <strong>${escapeHTML(title)}</strong>
-      <p>${escapeHTML(text)}</p>
-      ${actionText ? `<a href="${escapeHTML(actionHref)}" class="empty-action">${escapeHTML(actionText)}</a>` : ""}
-    </div>
-  `;
+  const setSidebarOpen = (isOpen) => {
+    document.body.classList.toggle("sidebar-open", isOpen);
+    toggle.setAttribute("aria-expanded", String(isOpen));
+    backdrop.hidden = !isOpen;
+  };
+
+  toggle.addEventListener("click", () => {
+    setSidebarOpen(!document.body.classList.contains("sidebar-open"));
+  });
+
+  backdrop.addEventListener("click", () => setSidebarOpen(false));
+
+  document.querySelectorAll(".candidate-nav-link").forEach((link) => {
+    link.addEventListener("click", () => setSidebarOpen(false));
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 980) setSidebarOpen(false);
+  });
 }
 
-function calculateProfileCompletion(profile) {
-  const fields = [
-    "full_name",
-    "trade",
-    "location",
-    "experience",
-    "availability",
-    "phone",
-    "email",
-    "resume",
-    "skills",
-    "certifications"
-  ];
+function bindDashboardSearch() {
+  const form = document.getElementById("dashboardSearchForm");
+  const input = document.getElementById("dashboardSearchInput");
+  if (!form || !input) return;
 
-  const completed = fields.filter((field) => {
-    if (field === "resume") return String(profile.resume_path || profile.resume_url || "").trim();
-    return String(profile[field] || "").trim();
-  }).length;
-  return Math.round((completed / fields.length) * 100);
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const query = input.value.trim();
+    const url = new URL(ROUTES.jobs, window.location.href);
+    if (query) url.searchParams.set("keyword", query);
+    window.location.href = url.toString();
+  });
+}
+
+function normalizeJob(job) {
+  return {
+    id: job.id,
+    title: job.job_title || "Untitled Job",
+    company: job.company_name || "Employer",
+    location: job.location || "Location not listed",
+    type: job.employment_type || "Employment type not listed",
+    pay: window.PlacelyAuth.formatCompensationFromRecord(job) || "Pay not listed"
+  };
 }
 
 function normalizeApplicationStatus(status) {
   const value = String(status || "submitted").toLowerCase().trim();
 
-  if (["new"].includes(value)) return "new";
-  if (["applied", "submitted"].includes(value)) return "submitted";
+  if (["applied", "submitted", "new"].includes(value)) return "submitted";
   if (["review", "reviewing", "viewed", "in review"].includes(value)) return "reviewing";
   if (["interview", "interviewing", "interview requested"].includes(value)) return "interview";
   if (["offer", "offered"].includes(value)) return "offer";
-  if (["hired"].includes(value)) return "hired";
+  if (value === "hired") return "hired";
   if (["rejected", "declined"].includes(value)) return "rejected";
 
   return "submitted";
@@ -308,23 +421,53 @@ function normalizeApplicationStatus(status) {
 
 function getApplicationStatusLabel(status) {
   const labels = {
-    new: "New",
-    submitted: "Submitted",
+    submitted: "Applied",
     reviewing: "Reviewing",
     interview: "Interview",
     offer: "Offer",
     hired: "Hired",
-    rejected: "Rejected"
+    rejected: "Not selected"
   };
 
-  return labels[status] || "Submitted";
+  return labels[status] || "Applied";
+}
+
+function resolveCandidatePhotoUrl(profile) {
+  const rawUrl =
+    profile.profile_photo_url ||
+    profile.profile_photo ||
+    profile.avatar_url ||
+    profile.photo_url ||
+    "";
+
+  if (!rawUrl) return "";
+  if (/^https?:\/\//i.test(rawUrl)) return rawUrl;
+
+  return window.PlacelyAuth.getPublicImageUrl(candidateSupabase, "candidate-photos", rawUrl);
+}
+
+function getInitials(value) {
+  const words = String(value || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (!words.length) return "PT";
+  return words.slice(0, 2).map((word) => word[0]).join("").toUpperCase();
+}
+
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
 }
 
 function formatDate(value) {
-  if (!value) return "recently";
+  if (!value) return "Recently";
 
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "recently";
+  if (Number.isNaN(date.getTime())) return "Recently";
 
   return date.toLocaleDateString([], {
     month: "short",
@@ -333,9 +476,40 @@ function formatDate(value) {
   });
 }
 
+function renderEmptyBlock(title, text) {
+  return `
+    <div class="empty-state compact-empty">
+      <strong>${escapeHTML(title)}</strong>
+      <p>${escapeHTML(text)}</p>
+    </div>
+  `;
+}
+
+function updateBadge(id, value) {
+  const badge = document.getElementById(id);
+  if (!badge) return;
+
+  const count = Number(value) || 0;
+  badge.hidden = count <= 0;
+  badge.textContent = count > 9 ? "9+" : String(count);
+}
+
 function setText(id, value) {
   const el = document.getElementById(id);
   if (el) el.textContent = value || "";
+}
+
+function showToast(message) {
+  const toast = document.getElementById("toast");
+  if (!toast) return;
+
+  toast.textContent = message;
+  toast.classList.add("show");
+  window.setTimeout(() => toast.classList.remove("show"), 2600);
+}
+
+function revealDashboard() {
+  document.documentElement.classList.remove("dashboard-booting");
 }
 
 async function handleLogout() {
@@ -349,7 +523,7 @@ async function handleLogout() {
 }
 
 function escapeHTML(value) {
-  return String(value || "")
+  return String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
