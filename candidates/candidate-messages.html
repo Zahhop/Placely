@@ -1,109 +1,202 @@
 <!DOCTYPE html>
-<html lang="en" class="auth-booting">
+<html lang="en" class="auth-booting messages-booting">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Messages | Placely Talent</title>
 
-  <link rel="stylesheet" href="../css/candidate-header.css" />
-  <link rel="stylesheet" href="../css/candidate-scale.css" />
+  <link rel="stylesheet" href="../css/candidate-dashboard.css" />
   <link rel="stylesheet" href="../css/candidate-messages.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
 <body>
-
-<header>
-  <div class="logo-wrapper">
-    <a href="candidate-dashboard.html" class="logo">PLACELY TALENT</a>
-    <div class="logo-subtitle">Talent Platform</div>
-  </div>
-
-  <nav>
-    <a href="candidate-dashboard.html">Dashboard</a>
-    <a href="../public/find-jobs.html?role=candidate">Find Jobs</a>
-    <a href="../public/saved-jobs.html">Saved Jobs</a>
-    <a href="candidate-applications.html">Applications</a>
-    <a href="candidate-messages.html" class="active">Messages</a>
-    <a href="candidate-profile.html">Profile</a>
-    <a href="candidate-settings.html">Settings</a>
-    <button id="logoutBtn" class="nav-btn" type="button">Logout</button>
-  </nav>
-</header>
-
-<main class="page-shell">
-
-  <section class="hero-card compact-hero">
-    <div>
-      <span class="eyebrow">CANDIDATE MESSAGES</span>
-      <h1>Employer conversations</h1>
-      <p>Manage employer conversations, interview follow-ups, job questions, and opportunity updates in one clean inbox.</p>
+<div class="candidate-dashboard-shell">
+  <aside class="candidate-sidebar" id="candidateSidebar" aria-label="Candidate navigation">
+    <div class="sidebar-brand">
+      <a href="candidate-dashboard.html" class="brand-mark" aria-label="Placely Talent candidate dashboard">P</a>
+      <div>
+        <a href="candidate-dashboard.html" class="brand-name">Placely Talent</a>
+        <span>Talent Platform</span>
+      </div>
     </div>
 
-    <div class="hero-actions">
-      <a href="candidate-dashboard.html" class="secondary-link">Dashboard</a>
-      <a href="../public/find-jobs.html?role=candidate" class="primary-link">Find Jobs</a>
-    </div>
-  </section>
-
-  <section class="messages-workspace" id="messagesLayout">
-    <aside class="conversations-panel" aria-label="Conversations">
-      <div class="panel-header">
-        <div>
-          <span class="small-label">Inbox</span>
-          <h2>Conversations</h2>
-        </div>
-        <span class="count-pill" id="conversationCount">0</span>
+    <nav class="sidebar-nav" aria-label="Candidate sections">
+      <div class="nav-group">
+        <span class="nav-label">Overview</span>
+        <a href="candidate-dashboard.html" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h7V4H4v9Zm9 7h7v-7h-7v7ZM4 20h7v-5H4v5Zm9-9h7V4h-7v7Z"/></svg>
+          <span>Dashboard</span>
+        </a>
       </div>
 
-      <label class="search-wrap" for="conversationSearch">
-        <span class="sr-only">Search conversations</span>
-        <input id="conversationSearch" class="conversation-search" type="search" placeholder="Search employers" autocomplete="off" />
-      </label>
+      <div class="nav-group">
+        <span class="nav-label">Jobs</span>
+        <a href="../public/find-jobs.html?role=candidate" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6V5a3 3 0 0 1 3-3h1a3 3 0 0 1 3 3v1h3a2 2 0 0 1 2 2v10.5A2.5 2.5 0 0 1 18.5 21h-13A2.5 2.5 0 0 1 3 18.5V8a2 2 0 0 1 2-2h4Zm2 0h3V5a1 1 0 0 0-1-1h-1a1 1 0 0 0-1 1v1Zm9 5H4v7.5c0 .28.22.5.5.5h15c.28 0 .5-.22.5-.5V11Z"/></svg>
+          <span>Find Jobs</span>
+        </a>
+        <a href="candidate-applications.html" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h10a2 2 0 0 1 2 2v18l-7-3-7 3V4a2 2 0 0 1 2-2Zm0 17 5-2.14L17 19V4H7v15Zm2-9h6v2H9v-2Zm0-4h6v2H9V6Z"/></svg>
+          <span>Applications</span>
+        </a>
+        <a href="../public/saved-jobs.html" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a2 2 0 0 1 2 2v16a1 1 0 0 1-1.55.83L12 17.53l-6.45 4.3A1 1 0 0 1 4 21V5a2 2 0 0 1 2-2Zm0 2v14.13l5.45-3.63a1 1 0 0 1 1.1 0L18 19.13V5H6Z"/></svg>
+          <span>Saved Jobs</span>
+        </a>
+        <a href="candidate-messages.html" class="candidate-nav-link nav-item active">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H9.8l-4.1 3.08A1.05 1.05 0 0 1 4 19.24V17a3 3 0 0 1-2-2.83V7a3 3 0 0 1 3-3Zm0 2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1v2.25L9.13 15H19a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5Z"/></svg>
+          <span>Messages</span>
+        </a>
+      </div>
 
-      <div class="conversation-list" id="conversationList"></div>
-    </aside>
+      <div class="nav-group">
+        <span class="nav-label">Profile</span>
+        <a href="candidate-profile.html" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.33 0-8 2.03-8 4.43V20a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1.57C20 16.03 16.33 14 12 14Z"/></svg>
+          <span>Profile</span>
+        </a>
+        <a href="candidate-profile.html#resume" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h9l5 5v15H6V2Zm8 2H8v16h10V8h-4V4Zm-3 8h4v2h-4v-2Zm0 4h4v2h-4v-2ZM9 8h2v2H9V8Z"/></svg>
+          <span>Resume</span>
+        </a>
+      </div>
+    </nav>
 
-    <section class="chat-panel" aria-label="Selected conversation">
-      <div class="chat-header">
-        <div class="chat-user">
-          <div class="avatar large" id="chatAvatar" aria-hidden="true"></div>
+    <div class="sidebar-footer">
+      <div class="nav-group utility-group">
+        <span class="nav-label">Company</span>
+        <a href="mailto:hello@placelytalent.com" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10v5a3 3 0 0 1-3 3h-2v-8h3a8 8 0 1 0-16 0h3v8H5a3 3 0 0 1-3-3v-5A10 10 0 0 1 12 2Zm-3 8h2v10H9V10Zm4 0h2v10h-2V10Z"/></svg>
+          <span>Support</span>
+        </a>
+        <a href="candidate-settings.html" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.43 12.98c.04-.32.07-.65.07-.98s-.02-.66-.07-.98l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.6-.22l-2.49 1a7.28 7.28 0 0 0-1.69-.98L14.5 2.42A.5.5 0 0 0 14 2h-4a.5.5 0 0 0-.5.42L9.12 5.07c-.61.24-1.18.56-1.69.98l-2.49-1a.5.5 0 0 0-.6.22l-2 3.46a.5.5 0 0 0 .12.64l2.11 1.65c-.04.32-.07.65-.07.98s.02.66.07.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46c.13.22.39.31.62.22l2.47-1c.51.4 1.07.73 1.69.98l.38 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.38-2.65c.61-.25 1.18-.58 1.69-.98l2.47 1c.23.09.49 0 .62-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z"/></svg>
+          <span>Settings</span>
+        </a>
+        <button type="button" id="logoutBtn" class="candidate-logout-btn">Logout</button>
+      </div>
+    </div>
+  </aside>
 
-          <div class="chat-title">
-            <span class="small-label" id="chatEyebrow">Select a conversation</span>
-            <h2 id="chatCompany">No conversation selected</h2>
-            <p id="chatRole">Select an employer conversation to view messages.</p>
+  <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+
+  <div class="candidate-workspace">
+    <header class="utility-bar">
+      <button type="button" class="mobile-menu-btn" id="sidebarToggle" aria-controls="candidateSidebar" aria-expanded="false">
+        <span class="sr-only">Open navigation</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v2H4V7Zm0 4h16v2H4v-2Zm0 4h16v2H4v-2Z"/></svg>
+      </button>
+
+      <form class="utility-search" id="messagesSearchForm" role="search">
+        <label class="sr-only" for="messagesSearchInput">Search jobs, companies, or messages</label>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.97 12.04l3.25 3.24a1 1 0 0 1-1.42 1.42l-3.24-3.25A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/></svg>
+        <input id="messagesSearchInput" type="search" placeholder="Search jobs, companies, or messages..." autocomplete="off" />
+        <span class="search-shortcut" aria-hidden="true">/</span>
+      </form>
+
+      <div class="utility-actions">
+        <a href="candidate-messages.html" class="utility-icon-link active" aria-label="Open messages">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H9.8l-4.1 3.08A1.05 1.05 0 0 1 4 19.24V17a3 3 0 0 1-2-2.83V7a3 3 0 0 1 3-3Zm0 2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1v2.25L9.13 15H19a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5Z"/></svg>
+          <span id="topUnreadBadge" class="utility-badge" hidden>0</span>
+        </a>
+        <a href="candidate-applications.html" class="utility-icon-link" aria-label="Open application notifications">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5-6.71V3a2 2 0 1 0-4 0v1.29A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg>
+          <span id="topNotificationBadge" class="utility-badge" hidden>0</span>
+        </a>
+        <div class="top-account-menu-wrap">
+          <button type="button" class="top-account" id="candidateAccountButton" aria-haspopup="menu" aria-expanded="false" aria-controls="candidateAccountMenu">
+            <span class="account-avatar small" id="topCandidateAvatar">PT</span>
+            <span id="topCandidateName">Candidate</span>
+          </button>
+          <div class="top-account-menu" id="candidateAccountMenu" role="menu" aria-label="Candidate account menu" hidden>
+            <div class="top-account-menu-header">
+              <strong id="accountMenuCandidateName">Candidate</strong>
+              <span id="accountMenuEmail">Account details loading</span>
+            </div>
+            <div class="top-account-menu-list">
+              <a href="candidate-profile.html" role="menuitem">Profile</a>
+              <a href="candidate-settings.html" role="menuitem">Settings</a>
+              <a href="mailto:hello@placelytalent.com" role="menuitem">Support</a>
+              <button type="button" role="menuitem" id="accountMenuLogoutBtn">Logout</button>
+            </div>
           </div>
         </div>
-
-        <div class="chat-actions" id="chatActions">
-          <button type="button" class="light-btn" id="replyHelpBtn">Reply Help</button>
-          <a href="candidate-applications.html" class="primary-mini-btn">Applications</a>
-        </div>
       </div>
+    </header>
 
-      <div class="chat-messages" id="chatMessages"></div>
-
-      <form class="composer" id="messageForm">
-        <label class="sr-only" for="messageInput">Message</label>
-        <textarea id="messageInput" rows="2" placeholder="Write a message..." autocomplete="off"></textarea>
-        <div class="composer-footer">
-          <span class="composer-status" id="composerStatus"></span>
-          <button class="primary-btn" id="sendMessageBtn" type="submit" disabled>Send</button>
+    <main class="candidate-shell messages-shell">
+      <section class="dashboard-briefing messages-briefing" aria-labelledby="messagesTitle">
+        <div class="briefing-copy">
+          <h1 id="messagesTitle">Messages</h1>
+          <p>Keep in touch with employers and manage conversations about your applications and opportunities.</p>
         </div>
-      </form>
-    </section>
-  </section>
+      </section>
 
-</main>
+      <section class="messages-workspace" id="messagesLayout">
+        <aside class="conversations-panel" aria-label="Conversations">
+          <div class="messages-panel-header">
+            <div>
+              <span class="eyebrow">Inbox</span>
+              <h2>Conversations</h2>
+            </div>
+            <span class="count-pill" id="conversationCount">0</span>
+          </div>
+
+          <label class="search-wrap" for="conversationSearch">
+            <span class="sr-only">Search conversations</span>
+            <input id="conversationSearch" class="conversation-search" type="search" placeholder="Search employers" autocomplete="off" />
+          </label>
+
+          <div class="conversation-list" id="conversationList"></div>
+        </aside>
+
+        <section class="chat-panel" aria-label="Selected conversation">
+          <div class="chat-header">
+            <button type="button" class="back-to-conversations" id="backToConversationsBtn">Back to Conversations</button>
+
+            <div class="chat-header-main">
+              <div class="chat-user">
+                <div class="avatar large" id="chatAvatar" aria-hidden="true"></div>
+
+                <div class="chat-title">
+                  <span class="eyebrow" id="chatEyebrow">Select a conversation</span>
+                  <h2 id="chatCompany">No conversation selected</h2>
+                  <p id="chatRole">Select an employer conversation to view messages.</p>
+                </div>
+              </div>
+
+              <div class="chat-actions" id="chatActions">
+                <a href="candidate-applications.html" class="primary-mini-btn" id="viewApplicationLink">View Application</a>
+                <a href="../public/find-jobs.html?role=candidate" class="light-btn" id="viewJobLink" hidden>View Job</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-messages" id="chatMessages"></div>
+
+          <form class="composer" id="messageForm">
+            <label class="sr-only" for="messageInput">Message</label>
+            <textarea id="messageInput" rows="2" placeholder="Write a message..." autocomplete="off"></textarea>
+            <div class="composer-footer">
+              <span class="composer-status" id="composerStatus"></span>
+              <button class="primary-btn" id="sendMessageBtn" type="submit" disabled>Send</button>
+            </div>
+          </form>
+        </section>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/config.js"></script>
 <script src="../js/auth-utils.js"></script>
 <script src="../js/auth-guards.js"></script>
 <script src="../js/candidate-messages.js"></script>
-<script src="../js/candidate-header.js"></script>
 
 </body>
 </html>
