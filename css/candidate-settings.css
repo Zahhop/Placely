@@ -1,7 +1,3 @@
-html.settings-booting body {
-  visibility: hidden;
-}
-
 .settings-shell {
   display: flex;
   justify-content: center;

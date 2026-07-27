@@ -8,7 +8,7 @@ const ROUTES = {
   saved: "../public/saved-jobs.html",
   applications: "candidate-applications.html",
   settings: "candidate-settings.html",
-  support: "mailto:hello@placelytalent.com"
+  support: "candidate-support.html"
 };
 
 let currentUser = null;
@@ -16,6 +16,7 @@ let dashboardProfile = {};
 let applications = [];
 let conversations = [];
 let suggestedJobs = [];
+let suggestedEmployerProfiles = {};
 let savedJobsCount = 0;
 let unreadMessagesCount = 0;
 
@@ -144,7 +145,7 @@ async function getEmployerProfile(employerId) {
 
   const { data, error } = await candidateSupabase
     .from("public_employer_profiles")
-    .select("company_name")
+    .select("id, company_name")
     .eq("id", employerId)
     .maybeSingle();
 
@@ -167,6 +168,24 @@ async function loadSuggestedJobs() {
   });
 
   suggestedJobs = [...jobsById.values()];
+  await loadSuggestedEmployerProfiles(suggestedJobs);
+}
+
+async function loadSuggestedEmployerProfiles(jobs) {
+  const employerIds = [...new Set(jobs.map((job) => job.employer_id).filter(Boolean))];
+  suggestedEmployerProfiles = {};
+  if (!employerIds.length) return;
+
+  const { data, error } = await candidateSupabase
+    .from("public_employer_profiles")
+    .select("id, company_name, company_logo_url")
+    .in("id", employerIds);
+
+  if (error) return;
+
+  (data || []).forEach((profile) => {
+    suggestedEmployerProfiles[String(profile.id)] = profile;
+  });
 }
 
 function renderDashboard() {
@@ -301,13 +320,18 @@ function renderSuggestedJobs() {
   container.innerHTML = suggestedJobs.map((job) => {
     const jobUrl = `${ROUTES.jobs}&job=${encodeURIComponent(job.id)}`;
     const applyUrl = `../public/apply-job.html?job_id=${encodeURIComponent(job.id)}`;
+    const employerProfile = suggestedEmployerProfiles[String(job.employer_id || "")] || {};
+    const company = employerProfile.company_name || job.company;
 
     return `
       <article class="suggested-job-card">
-        <div>
+        <div class="suggested-job-main">
+          ${renderCompanyAvatar(getCompanyLogoUrl(employerProfile), company)}
+          <div>
           <h3>${escapeHTML(job.title)}</h3>
-          <p>${escapeHTML(job.company)} - ${escapeHTML(job.location)} - ${escapeHTML(job.type)}</p>
+          <p>${escapeHTML(company)} - ${escapeHTML(job.location)} - ${escapeHTML(job.type)}</p>
           <strong>${escapeHTML(job.pay)}</strong>
+          </div>
         </div>
         <div class="suggested-job-actions">
           <a class="primary-btn compact" href="${applyUrl}">Quick Apply</a>
@@ -398,12 +422,34 @@ function bindDashboardSearch() {
 function normalizeJob(job) {
   return {
     id: job.id,
+    employer_id: job.employer_id,
     title: job.job_title || "Untitled Job",
     company: job.company_name || "Employer",
     location: job.location || "Location not listed",
     type: job.employment_type || "Employment type not listed",
     pay: window.PlacelyAuth.formatCompensationFromRecord(job) || "Pay not listed"
   };
+}
+
+function renderCompanyAvatar(logoUrl, companyName) {
+  const initials = getInitials(companyName);
+
+  if (logoUrl) {
+    return `
+      <div class="company-avatar">
+        <img src="${escapeAttribute(logoUrl)}" alt="${escapeAttribute(companyName)} logo" loading="lazy" onerror="this.parentElement.textContent='${escapeAttribute(initials)}'">
+      </div>
+    `;
+  }
+
+  return `<div class="company-avatar">${escapeHTML(initials)}</div>`;
+}
+
+function getCompanyLogoUrl(source) {
+  return window.PlacelyAuth?.resolveEmployerLogoUrl?.(
+    window.PlacelyAuth.getPublicEmployerLogoValue(source),
+    { supabase: candidateSupabase }
+  ) || "";
 }
 
 function normalizeApplicationStatus(status) {
@@ -529,4 +575,8 @@ function escapeHTML(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function escapeAttribute(value) {
+  return escapeHTML(value).replaceAll("`", "&#096;");
 }

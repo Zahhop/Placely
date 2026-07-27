@@ -514,7 +514,7 @@ function updateHeroSummary() {
     const secondary = document.getElementById("secondaryDashboardAction");
 
     if (primary) {
-      primary.href = "post-job.html";
+      primary.href = "manage-jobs.html?view=create";
       primary.textContent = "Post Job";
     }
 
@@ -559,7 +559,7 @@ function updateHeroSummary() {
   const secondary = document.getElementById("secondaryDashboardAction");
 
   if (primary) {
-    primary.href = reviewCount ? "employer-applicants.html" : activeJobs.length ? "manage-jobs.html" : "post-job.html";
+    primary.href = reviewCount ? "employer-applicants.html" : activeJobs.length ? "manage-jobs.html" : "manage-jobs.html?view=create";
     primary.textContent = hasCandidateNetworkAccess
       ? reviewCount ? "Review Applicants" : activeJobs.length ? "Manage Jobs" : "Post a Job"
       : reviewCount ? "REVIEW APPLICANTS" : activeJobs.length ? "MANAGE JOBS" : "POST A JOB";
@@ -657,7 +657,7 @@ function renderPipeline() {
       hasCandidateNetworkAccess
         ? activeJobs.length ? "Open Jobs" : "Post Job"
         : "Post Job",
-      hasCandidateNetworkAccess && activeJobs.length ? "manage-jobs.html" : "post-job.html"
+      hasCandidateNetworkAccess && activeJobs.length ? "manage-jobs.html" : "manage-jobs.html?view=create"
     );
     return;
   }
@@ -770,7 +770,7 @@ function renderActiveJobs() {
         ? "Post a role to begin receiving applications."
         : "Create your first job posting to begin receiving applicants.",
       "Post Job",
-      "post-job.html"
+      "manage-jobs.html?view=create"
     );
     return;
   }
@@ -876,7 +876,7 @@ function renderRecentActivity() {
         "No activity yet",
         "Your hiring activity will appear here.",
         "Post Job",
-        "post-job.html"
+        "manage-jobs.html?view=create"
       );
       return;
     }
@@ -885,7 +885,7 @@ function renderRecentActivity() {
       <div class="empty-state">
         <strong>${hasCandidateNetworkAccess ? "No recent activity yet" : "No activity yet"}</strong>
         <p>${hasCandidateNetworkAccess ? "Applications, messages, and job activity will appear here." : "Your hiring activity will appear here."}</p>
-        ${hasCandidateNetworkAccess && activeJobs.length ? "" : `<a href="post-job.html" class="empty-action">Post Job</a>`}
+        ${hasCandidateNetworkAccess && activeJobs.length ? "" : `<a href="manage-jobs.html?view=create" class="empty-action">Post Job</a>`}
       </div>
     `;
     return;

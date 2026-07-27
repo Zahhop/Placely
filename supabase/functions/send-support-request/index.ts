@@ -8,8 +8,12 @@ const allowedOrigins = new Set([
   "https://www.placelytalent.com"
 ]);
 
-const supportRecipient = "kieranw@placelytalent.com";
-const categories = new Set([
+const recipients = {
+  candidate: "austint@placelytalent.com",
+  employer: "kieranw@placelytalent.com"
+};
+
+const employerCategories = new Set([
   "Account or login",
   "Billing or Candidate Access",
   "Job posting",
@@ -22,40 +26,54 @@ const categories = new Set([
   "Other"
 ]);
 
+const candidateCategories = new Set([
+  "Account or login",
+  "Job search",
+  "Applications",
+  "Saved jobs",
+  "Messaging",
+  "Profile or resume",
+  "Employer contact",
+  "Technical issue",
+  "Feedback or feature request",
+  "Other"
+]);
+
 const recentSubmissions = new Map<string, number>();
 const cooldownMs = 60_000;
 
-type EmployerAuthResult = {
+type AccountType = "candidate" | "employer";
+
+type AuthResult = {
+  accountType: AccountType;
   userId: string;
   userEmail: string;
-  profile: {
-    id: string;
-    company_name?: string | null;
-    company_email?: string | null;
-    onboarding_completed?: boolean | null;
-    onboarding_complete?: boolean | null;
-    company_location?: string | null;
-    company_description?: string | null;
-    main_hiring_industry?: string | null;
-    employment_type?: string | null;
-    hiring_needs?: string | null;
-    hiring_roles?: unknown;
-    hiring_role_other?: string | null;
-    pay_range?: string | null;
-    compensation_type?: string | null;
-    compensation_min?: number | string | null;
-    compensation_max?: number | string | null;
-    hiring_timeline?: string | null;
-    candidate_qualities?: string | null;
-  };
+  profile: Record<string, unknown>;
   status: number;
   error?: "";
 } | {
+  accountType?: "";
   userId?: "";
   userEmail?: "";
   profile?: null;
   status: number;
   error: string;
+};
+
+type VerifiedAccount = {
+  accountType: AccountType;
+  userId: string;
+  userEmail: string;
+  profile: Record<string, unknown>;
+  status: number;
+};
+
+type SupportRequest = {
+  category: string;
+  subject: string;
+  description: string;
+  replyEmail: string;
+  sourcePage: string;
 };
 
 Deno.serve(async (req) => {
@@ -93,18 +111,16 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization") || "";
-    const authResult = await verifyEmployer(authHeader, supabaseUrl, anonKey);
+    const authResult = await verifyAccount(authHeader, supabaseUrl, anonKey);
 
-    if (authResult.error) {
-      return json({ error: authResult.error }, authResult.status || 401, corsHeaders);
+    if (!isVerifiedAccount(authResult)) {
+      return json({ error: authResult.error || "Could not verify account." }, authResult.status || 401, corsHeaders);
     }
 
-    console.info("support request: authentication validated");
-
-    const rateLimit = checkRateLimit(authResult.userId);
-    if (rateLimit) {
-      return json({ error: rateLimit }, 429, corsHeaders);
-    }
+    console.info("support request: authentication validated", {
+      userId: authResult.userId,
+      accountType: authResult.accountType
+    });
 
     let body: Record<string, unknown>;
     try {
@@ -114,23 +130,21 @@ Deno.serve(async (req) => {
       return json({ error: "Support request form data is invalid." }, 400, corsHeaders);
     }
 
-    const request = validateSupportRequest(body);
-    const submittedAt = new Date().toISOString();
-    const companyName = sanitize(authResult.profile?.company_name || authResult.profile?.company_email || "Employer", 160);
-    const subject = `[Placely Support] ${request.category} — ${request.subject}`;
-    const rows = [
-      ["Employer company name", companyName],
-      ["Authenticated user email", authResult.userEmail],
-      ["Reply email", request.replyEmail],
-      ["Support category", request.category],
-      ["Subject", request.subject],
-      ["Description", request.description],
-      ["Current/source page", request.sourcePage],
-      ["Employer user ID", authResult.userId],
-      ["Submission timestamp", submittedAt]
-    ];
+    const request = validateSupportRequest(body, authResult.accountType);
+    const rateLimit = checkRateLimit(`${authResult.accountType}:${authResult.userId}`);
+    if (rateLimit) {
+      return json({ error: rateLimit }, 429, corsHeaders);
+    }
 
-    console.info("support request: Resend invocation started");
+    const submittedAt = new Date().toISOString();
+    const recipient = recipients[authResult.accountType];
+    const subject = buildEmailSubject(authResult.accountType, request.category, request.subject);
+    const rows = buildEmailRows(authResult, request, submittedAt);
+
+    console.info("support request: Resend invocation started", {
+      userId: authResult.userId,
+      accountType: authResult.accountType
+    });
 
     const resendResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -140,7 +154,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         from: fromEmail,
-        to: [supportRecipient],
+        to: [recipient],
         subject,
         text: rowsToText(rows),
         html: rowsToHtml(rows),
@@ -155,7 +169,10 @@ Deno.serve(async (req) => {
       return json({ error: "Support request could not be sent." }, 500, corsHeaders);
     }
 
-    console.info("support request: success");
+    console.info("support request: success", {
+      userId: authResult.userId,
+      accountType: authResult.accountType
+    });
     return json({ success: true }, 200, corsHeaders);
   } catch (error) {
     console.error("support request: failure", error instanceof Error ? error.message : "Unknown error");
@@ -168,7 +185,7 @@ Deno.serve(async (req) => {
   }
 });
 
-async function verifyEmployer(authHeader: string, supabaseUrl: string, anonKey: string): Promise<EmployerAuthResult> {
+async function verifyAccount(authHeader: string, supabaseUrl: string, anonKey: string): Promise<AuthResult> {
   console.info("support request: authorization header present", Boolean(authHeader));
 
   if (!authHeader || !/^Bearer\s+\S+$/i.test(authHeader)) {
@@ -184,9 +201,13 @@ async function verifyEmployer(authHeader: string, supabaseUrl: string, anonKey: 
     error: userError
   } = await userClient.auth.getUser();
 
-  if (userError || !user || !(user.email_confirmed_at || user.confirmed_at)) {
+  if (userError || !user) {
     if (userError) logDbError("support request: authenticated user lookup failed", userError);
-    return { error: "We could not verify your employer account.", status: 401 };
+    return { error: "Your session has expired. Please log in again.", status: 401 };
+  }
+
+  if (!(user.email_confirmed_at || user.confirmed_at)) {
+    return { error: "Please verify your email before contacting support.", status: 403 };
   }
 
   console.info("support request: authenticated user resolved", { userId: user.id });
@@ -199,7 +220,7 @@ async function verifyEmployer(authHeader: string, supabaseUrl: string, anonKey: 
 
   if (accountProfileError) {
     logDbError("support request: role lookup query failed", accountProfileError);
-    return { error: "Could not verify employer account.", status: 500 };
+    return { error: "Could not verify account type.", status: 500 };
   }
 
   if (!accountProfile) {
@@ -207,15 +228,48 @@ async function verifyEmployer(authHeader: string, supabaseUrl: string, anonKey: 
     return { error: "Your account setup could not be verified. Please complete account setup or contact Placely.", status: 409 };
   }
 
-  if (accountProfile.role !== "employer") {
-    console.warn("support request: role value mismatch", { userId: user.id, role: accountProfile.role || "" });
-    return { error: "This support form is available to employer accounts.", status: 403 };
+  if (accountProfile.role === "candidate") {
+    return verifyCandidateProfile(userClient, user.id, user.email || "");
   }
 
+  if (accountProfile.role === "employer") {
+    return verifyEmployerProfile(userClient, user.id, user.email || "");
+  }
+
+  console.warn("support request: role value unsupported", { userId: user.id, role: accountProfile.role || "" });
+  return { error: "This support form is available to candidate and employer accounts.", status: 403 };
+}
+
+function isVerifiedAccount(result: AuthResult): result is VerifiedAccount {
+  return Boolean(result.accountType && result.userId && result.userEmail !== undefined && !result.error);
+}
+
+async function verifyCandidateProfile(userClient: any, userId: string, userEmail: string): Promise<AuthResult> {
+  const { data: profile, error: profileError } = await userClient
+    .from("candidate_profiles")
+    .select("id, full_name, email, trade, location, profile_visible")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (profileError) {
+    logDbError("support request: candidate profile query failed", profileError);
+    return { error: "Could not verify candidate account.", status: 500 };
+  }
+
+  if (!profile) {
+    console.warn("support request: candidate profile missing", { userId });
+    return { error: "Your candidate profile could not be found. Please complete account setup or contact Placely.", status: 409 };
+  }
+
+  console.info("support request: candidate profile resolved", { userId, profileId: profile.id });
+  return { accountType: "candidate", userId, userEmail, profile: profile as Record<string, unknown>, status: 200 };
+}
+
+async function verifyEmployerProfile(userClient: any, userId: string, userEmail: string): Promise<AuthResult> {
   const { data: profile, error: profileError } = await userClient
     .from("employer_profiles")
     .select("*")
-    .eq("id", user.id)
+    .eq("id", userId)
     .maybeSingle();
 
   if (profileError) {
@@ -224,18 +278,77 @@ async function verifyEmployer(authHeader: string, supabaseUrl: string, anonKey: 
   }
 
   if (!profile) {
-    console.warn("support request: employer profile missing", { userId: user.id });
+    console.warn("support request: employer profile missing", { userId });
     return { error: "Your employer profile could not be found. Please complete account setup or contact Placely.", status: 409 };
   }
 
   if (!isEmployerOnboardingComplete(profile as Record<string, unknown>)) {
-    console.warn("support request: employer profile incomplete", { userId: user.id });
+    console.warn("support request: employer profile incomplete", { userId });
     return { error: "Your employer profile could not be found. Please complete your profile and try again.", status: 409 };
   }
 
-  console.info("support request: employer profile resolved", { userId: user.id, profileId: profile.id });
+  console.info("support request: employer profile resolved", { userId, profileId: profile.id });
+  return { accountType: "employer", userId, userEmail, profile: profile as Record<string, unknown>, status: 200 };
+}
 
-  return { userId: user.id, userEmail: user.email || "", profile, status: 200 };
+function validateSupportRequest(body: Record<string, unknown>, accountType: AccountType): SupportRequest {
+  const category = sanitize(body?.category, 80);
+  const subject = sanitize(body?.subject, 120);
+  const description = sanitize(body?.description, 5000);
+  const replyEmail = sanitize(body?.reply_email, 254);
+  const sourcePage = sanitizeSourcePage(body?.source_page);
+  const categorySet = accountType === "candidate" ? candidateCategories : employerCategories;
+
+  if (!categorySet.has(category)) throw new Error("VALIDATION:Choose a support category.");
+  if (subject.length < 5 || subject.length > 120) throw new Error("VALIDATION:Subject must be 5 to 120 characters.");
+  if (description.length < 20 || description.length > 5000) throw new Error("VALIDATION:Description must be 20 to 5000 characters.");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyEmail)) throw new Error("VALIDATION:Enter a valid reply email.");
+
+  return { category, subject, description, replyEmail, sourcePage };
+}
+
+function buildEmailSubject(accountType: AccountType, category: string, subject: string) {
+  if (accountType === "candidate") {
+    return `[Placely Candidate Support] ${category} - ${subject}`;
+  }
+
+  return `[Placely Support] ${category} - ${subject}`;
+}
+
+function buildEmailRows(
+  authResult: VerifiedAccount,
+  request: SupportRequest,
+  submittedAt: string
+) {
+  if (authResult.accountType === "candidate") {
+    return [
+      ["Portal", "candidate"],
+      ["Candidate full name", sanitize(authResult.profile.full_name || "Candidate", 160)],
+      ["Authenticated account email", authResult.userEmail],
+      ["Reply email", request.replyEmail],
+      ["Support category", request.category],
+      ["Subject", request.subject],
+      ["Description", request.description],
+      ["Source page", request.sourcePage],
+      ["Candidate user ID", authResult.userId],
+      ["Submission timestamp", submittedAt]
+    ];
+  }
+
+  const companyName = sanitize(authResult.profile.company_name || authResult.profile.company_email || "Employer", 160);
+
+  return [
+    ["Portal", "employer"],
+    ["Employer company name", companyName],
+    ["Authenticated user email", authResult.userEmail],
+    ["Reply email", request.replyEmail],
+    ["Support category", request.category],
+    ["Subject", request.subject],
+    ["Description", request.description],
+    ["Current/source page", request.sourcePage],
+    ["Employer user ID", authResult.userId],
+    ["Submission timestamp", submittedAt]
+  ];
 }
 
 function logDbError(message: string, error: unknown) {
@@ -306,21 +419,6 @@ function hasValue(value: unknown) {
   return String(value || "").trim().length > 0;
 }
 
-function validateSupportRequest(body: Record<string, unknown>) {
-  const category = sanitize(body?.category, 80);
-  const subject = sanitize(body?.subject, 120);
-  const description = sanitize(body?.description, 5000);
-  const replyEmail = sanitize(body?.reply_email, 254);
-  const sourcePage = sanitizeSourcePage(body?.source_page);
-
-  if (!categories.has(category)) throw new Error("VALIDATION:Choose a support category.");
-  if (subject.length < 5 || subject.length > 120) throw new Error("VALIDATION:Subject must be 5 to 120 characters.");
-  if (description.length < 20 || description.length > 5000) throw new Error("VALIDATION:Description must be 20 to 5000 characters.");
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyEmail)) throw new Error("VALIDATION:Enter a valid reply email.");
-
-  return { category, subject, description, replyEmail, sourcePage };
-}
-
 function sanitize(value: unknown, maxLength: number) {
   return String(value ?? "")
     .replace(/[\u0000-\u001F\u007F]/g, "")
@@ -343,16 +441,15 @@ function sanitizeSourcePage(value: unknown) {
   }
 }
 
-function checkRateLimit(userId = "") {
+function checkRateLimit(key = "") {
   const now = Date.now();
-  const key = userId || "unknown";
-  const previous = recentSubmissions.get(key) || 0;
+  const previous = recentSubmissions.get(key || "unknown") || 0;
 
   if (now - previous < cooldownMs) {
     return "Please wait before sending another support request.";
   }
 
-  recentSubmissions.set(key, now);
+  recentSubmissions.set(key || "unknown", now);
   return "";
 }
 

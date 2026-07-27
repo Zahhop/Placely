@@ -1,0 +1,139 @@
+.support-shell {
+  display: flex;
+  justify-content: center;
+}
+
+.support-column {
+  width: min(100%, 900px);
+  display: grid;
+  gap: 24px;
+}
+
+.support-briefing {
+  margin-bottom: 0;
+}
+
+.support-panel {
+  width: 100%;
+}
+
+.support-form {
+  display: grid;
+  gap: 18px;
+}
+
+.support-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.support-field {
+  display: grid;
+  gap: 8px;
+}
+
+.support-field span {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.support-field small {
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.support-field input,
+.support-field select,
+.support-field textarea {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.45;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.support-field input,
+.support-field select {
+  min-height: 46px;
+  padding: 0 13px;
+}
+
+.support-field textarea {
+  min-height: 180px;
+  resize: vertical;
+  padding: 13px;
+}
+
+.support-field input:read-only {
+  background: #f8fbff;
+  color: var(--muted);
+}
+
+.support-field input:focus,
+.support-field select:focus,
+.support-field textarea:focus {
+  border-color: #bfdbfe;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.support-message {
+  min-height: 22px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.support-message.error {
+  color: var(--danger);
+}
+
+.support-message.success {
+  color: #047857;
+}
+
+.support-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.support-actions .primary-btn,
+.support-actions .secondary-btn {
+  min-height: 44px;
+}
+
+@media (max-width: 900px) {
+  .support-column {
+    width: 100%;
+  }
+}
+
+@media (max-width: 720px) {
+  .support-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .support-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .support-actions .primary-btn,
+  .support-actions .secondary-btn {
+    width: 100%;
+  }
+}

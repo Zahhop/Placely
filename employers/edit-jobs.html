@@ -1,151 +1,65 @@
 <!DOCTYPE html>
-<html lang="en" class="auth-booting">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>Edit Job | Placely Talent</title>
+  <style>
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      background: #f5f7fb;
+      color: #0f172a;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
 
-  <link rel="stylesheet" href="../css/edit-jobs.css" />
-  <link rel="stylesheet" href="../css/employer-consistency.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    main {
+      width: min(420px, calc(100% - 32px));
+      padding: 24px;
+      border: 1px solid #dfe7f1;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.045);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 22px;
+      line-height: 1.2;
+    }
+
+    p {
+      margin: 0 0 18px;
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    a {
+      min-height: 44px;
+      padding: 0 18px;
+      border-radius: 11px;
+      background: #2563eb;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 800;
+    }
+  </style>
 </head>
-
 <body>
+  <main>
+    <h1>Opening Edit Job</h1>
+    <p>Edit Job now opens inside the Jobs workspace.</p>
+    <a id="continueLink" href="manage-jobs.html">Continue to Jobs</a>
+  </main>
 
-<header>
-  <div class="logo-wrapper">
-    <a href="employer-dashboard.html" class="logo">PLACELY TALENT</a>
-    <div class="logo-subtitle">Employer Platform</div>
-  </div>
-
-  <nav data-employer-nav>
-    <a href="employer-dashboard.html" class="employer-nav-link">Dashboard</a>
-    <a href="manage-jobs.html" class="employer-nav-link">Jobs</a>
-    <a href="employer-applicants.html" class="employer-nav-link">Applicants</a>
-    <a href="find-candidates.html" id="employerCandidatesNav" class="employer-nav-link employer-candidates-nav" hidden>Candidates</a>
-    <a href="saved-talent.html" class="employer-nav-link">Saved Talent</a>
-    <a href="employer-messages.html" class="employer-nav-link">Messages</a>
-    <a href="employer-profile.html" class="employer-nav-link">Company</a>
-    <button type="button" id="logoutBtn" class="logout-btn">Logout</button>
-  </nav>
-</header>
-
-<main class="page-shell">
-
-  <section class="hero-card">
-    <div>
-      <span class="eyebrow">EDIT POSTING</span>
-      <h1>Edit job post</h1>
-      <p>Update the role details, pause the posting, review applicants, or remove the job.</p>
-    </div>
-
-    <div class="hero-actions">
-      <a href="manage-jobs.html" class="secondary-link">Back to Jobs</a>
-      <a href="employer-dashboard.html" class="secondary-link">Dashboard</a>
-    </div>
-  </section>
-
-  <section class="edit-layout">
-
-    <section class="edit-panel">
-      <div class="panel-heading">
-        <span class="eyebrow">JOB DETAILS</span>
-        <h2>Posting information</h2>
-        <p>These details are shown to candidates when they view and apply to your role.</p>
-      </div>
-
-      <form id="editJobForm">
-        <div class="form-grid">
-
-          <div class="form-group">
-            <label for="jobTitle">Job title</label>
-            <input id="jobTitle" type="text" placeholder="Electrician Apprentice" />
-          </div>
-
-          <div class="form-group">
-            <label for="jobLocation">Location</label>
-            <input id="jobLocation" type="text" placeholder="Calgary, AB" />
-          </div>
-
-          <div class="form-group">
-            <label for="jobCompensationType">Compensation type</label>
-            <select id="jobCompensationType">
-              <option value="hourly">Hourly</option>
-              <option value="annual">Annual salary</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="jobCompensationMin">Minimum Pay</label>
-            <input id="jobCompensationMin" type="number" min="1" step="0.01" inputmode="decimal" placeholder="25" />
-          </div>
-
-          <div class="form-group">
-            <label for="jobCompensationMax">Maximum Pay</label>
-            <input id="jobCompensationMax" type="number" min="1" step="0.01" inputmode="decimal" placeholder="40" />
-            <small id="jobCompensationUnit" class="field-hint">per hour</small>
-            <small id="jobCompensationError" class="field-error"></small>
-            <small id="jobCompensationPreview" class="field-hint"></small>
-          </div>
-
-          <div class="form-group">
-            <label for="jobType">Employment type</label>
-            <select id="jobType">
-              <option>Full-time</option>
-              <option>Part-time</option>
-              <option>Contract</option>
-              <option>Rotation</option>
-            </select>
-          </div>
-
-          <div class="form-group full">
-            <label for="jobDescription">Job description</label>
-            <textarea id="jobDescription" placeholder="Describe the work, schedule, responsibilities, and what the candidate should expect."></textarea>
-          </div>
-
-          <div class="form-group full">
-            <label for="jobRequirements">Requirements</label>
-            <textarea id="jobRequirements" placeholder="List required skills, certifications, experience, tools, or transportation needs."></textarea>
-          </div>
-
-        </div>
-
-        <div class="form-actions">
-          <button type="submit" class="primary-btn">Save Changes</button>
-          <button type="button" id="applicantsBtn" class="secondary-btn">Applicants</button>
-          <button type="button" id="statusBtn"></button>
-          <button type="button" id="removeBtn" class="remove-btn">Remove Job</button>
-        </div>
-      </form>
-    </section>
-
-    <aside class="sidebar">
-      <div class="sidebar-card">
-        <span class="eyebrow">POST STATUS</span>
-        <h3 id="jobStatusTitle">Active posting</h3>
-        <p>This role is visible to candidates unless it is paused or removed.</p>
-        <span id="statusBadge" class="status active">Active</span>
-      </div>
-
-      <div class="sidebar-card">
-        <span class="eyebrow">SHORTCUTS</span>
-        <a href="manage-jobs.html">Back to all jobs</a>
-        <a href="employer-messages.html">Open messages</a>
-        <a href="post-job.html">Create another job</a>
-      </div>
-    </aside>
-
-  </section>
-
-</main>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/config.js"></script>
-<script src="../js/auth-utils.js"></script>
-<script src="../js/auth-guards.js"></script>
-<script src="../emp-js/employer-navbar.js"></script>
-<script src="../emp-js/edit-jobs.js"></script>
-
+  <script src="../emp-js/edit-jobs.js"></script>
 </body>
 </html>

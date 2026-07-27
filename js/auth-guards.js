@@ -151,6 +151,11 @@
       return null;
     }
 
+    if (accountType === "candidate") {
+      window.PlacelyAuth.primeCandidateIdentityCache?.(user, state.profile);
+      window.PlacelyAuth.applyCachedCandidateHeader?.();
+    }
+
     revealProtectedPage();
     return {
       user,

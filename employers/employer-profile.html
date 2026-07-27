@@ -1,282 +1,327 @@
 <!DOCTYPE html>
-<html lang="en" class="auth-booting">
+<html lang="en" class="auth-booting profile-booting">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Company Profile | Placely Talent</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/employer-dashboard.css" />
   <link rel="stylesheet" href="../css/employer-profile.css" />
-  <link rel="stylesheet" href="../css/employer-consistency.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
-<body>
-
-<header>
-  <div class="logo-wrapper">
-    <a href="employer-dashboard.html" class="logo">PLACELY TALENT</a>
-    <div class="logo-subtitle">Employer Platform</div>
-  </div>
-
-  <nav data-employer-nav>
-    <a href="employer-dashboard.html" class="employer-nav-link">Dashboard</a>
-    <a href="manage-jobs.html" class="employer-nav-link">Jobs</a>
-    <a href="employer-applicants.html" class="employer-nav-link">Applicants</a>
-    <a href="find-candidates.html" id="employerCandidatesNav" class="employer-nav-link employer-candidates-nav" hidden>Candidates</a>
-    <a href="saved-talent.html" class="employer-nav-link">Saved Talent</a>
-    <a href="employer-messages.html" class="employer-nav-link">Messages</a>
-    <a href="employer-profile.html" class="employer-nav-link">Company</a>
-    <button type="button" id="logoutBtn" class="logout-btn">Logout</button>
-  </nav>
-</header>
-
-<form id="employerProfileForm" class="page-shell">
-  <section class="page-hero">
-    <div>
-      <span class="eyebrow">Company Profile</span>
-      <h1>Build an employer profile candidates trust.</h1>
-      <p>Manage your company details, logo, hiring preferences, and candidate-facing information in one polished employer profile.</p>
+<body data-plan="loading">
+<div class="dashboard-shell employer-profile-page">
+  <aside class="dashboard-sidebar" id="dashboardSidebar" aria-label="Employer navigation">
+    <div class="sidebar-brand">
+      <a href="employer-dashboard.html" class="brand-mark" aria-label="Placely Talent dashboard">P</a>
+      <div>
+        <a href="employer-dashboard.html" class="brand-name">PLACELY TALENT</a>
+        <span>Employer Platform</span>
+      </div>
     </div>
 
-    <div class="hero-actions">
-      <a href="employer-dashboard.html" class="secondary-btn">Back to Dashboard</a>
-      <button type="submit" class="primary-btn">Save Changes</button>
+    <nav class="sidebar-nav" data-employer-nav aria-label="Employer sections"></nav>
+    <div class="sidebar-footer">
+      <section class="sidebar-plan-card" id="sidebarPlanCard" aria-live="polite"></section>
     </div>
-  </section>
+  </aside>
 
-  <section class="content-layout">
-    <aside class="sidebar-card" role="tablist" aria-label="Company profile sections">
-      <button type="button" class="active" data-section-target="overview" role="tab" aria-selected="true">Overview</button>
-      <button type="button" data-section-target="company-info" role="tab" aria-selected="false">Company Info</button>
-      <button type="button" data-section-target="hiring-section" role="tab" aria-selected="false">Hiring Preferences</button>
-      <button type="button" data-section-target="candidate-section" role="tab" aria-selected="false">Candidate Fit</button>
-      <button type="button" data-section-target="contact-section" role="tab" aria-selected="false">Contact</button>
-    </aside>
+  <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
 
-    <section class="profile-content">
-      <section class="panel profile-section active" id="overview" role="tabpanel">
-        <div class="panel-header">
-          <div>
-            <span class="small-label">Overview</span>
-            <h2>Profile snapshot</h2>
-            <p class="panel-text">Review your candidate-facing profile strength and jump to the section that needs attention.</p>
+  <div class="dashboard-workspace">
+    <header class="utility-bar">
+      <button type="button" class="mobile-menu-btn" id="sidebarToggle" aria-controls="dashboardSidebar" aria-expanded="false">
+        <span class="sr-only">Open navigation</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v2H4V7Zm0 4h16v2H4v-2Zm0 4h16v2H4v-2Z"/></svg>
+      </button>
+
+      <form class="utility-search" id="profileSearchForm" role="search">
+        <label class="sr-only" for="profileSearchInput">Search candidates, jobs, or messages</label>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.97 12.04l3.25 3.24a1 1 0 0 1-1.42 1.42l-3.24-3.25A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/></svg>
+        <input id="profileSearchInput" type="search" placeholder="Search candidates, jobs, or messages..." autocomplete="off" />
+        <span class="search-shortcut" aria-hidden="true">/</span>
+      </form>
+
+      <div class="utility-actions">
+        <a href="employer-messages.html" class="utility-icon-link" aria-label="Open messages">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H9.8l-4.1 3.08A1.05 1.05 0 0 1 4 19.24V17a3 3 0 0 1-2-2.83V7a3 3 0 0 1 3-3Zm0 2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1v2.25L9.13 15H19a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5Z"/></svg>
+          <span id="topUnreadBadge" class="utility-badge" hidden>0</span>
+        </a>
+        <a href="employer-applicants.html?stage=new" class="utility-icon-link pro-notification-link" aria-label="Open new applicant notifications">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5-6.71V3a2 2 0 1 0-4 0v1.29A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg>
+          <span id="topNotificationBadge" class="utility-badge" hidden>0</span>
+        </a>
+        <a href="employer-profile.html" class="top-account">
+          <span class="account-avatar small" id="topCompanyAvatar">PT</span>
+          <span id="topCompanyName">Employer</span>
+        </a>
+      </div>
+    </header>
+
+    <main class="employer-shell profile-shell">
+      <form id="employerProfileForm" novalidate>
+        <section class="dashboard-briefing" aria-labelledby="profileTitle">
+          <div class="briefing-copy">
+            <h1 id="profileTitle">Company Profile</h1>
+            <p>Manage the company information candidates see and keep your private hiring settings up to date.</p>
           </div>
-        </div>
 
-        <div class="overview-grid">
-          <div class="preview-card">
-            <div class="preview-avatar">
-              <img id="previewLogoImg" src="https://placehold.co/120x120?text=PT" alt="Company logo preview" />
-              <span id="previewLogo">PT</span>
-            </div>
-
-            <div class="preview-info">
-              <span class="small-label">Public Company Preview</span>
-              <h3 id="previewCompanyName">Company Name</h3>
-              <p id="previewCompanyMeta">Industry - Location</p>
-
-              <div class="preview-tags">
-                <span id="previewEmployment">Employment Type</span>
-                <span id="previewPay">Pay Range</span>
-                <span id="previewTimeline">Hiring Timeline</span>
-              </div>
-            </div>
-          </div>
-
-          <aside class="strength-card">
-            <span class="small-label">Profile Strength</span>
-            <strong id="profileStrength">0%</strong>
-
-            <div class="score-track">
-              <div id="strengthBar"></div>
-            </div>
-
-            <p>Complete your logo, company description, hiring roles, compensation, and candidate qualities to improve trust with candidates.</p>
-
-            <div class="score-list" id="scoreList"></div>
-          </aside>
-        </div>
-
-        <div class="overview-actions">
-          <button type="button" class="secondary-btn" data-section-target="company-info">Edit Company Info</button>
-          <button type="button" class="secondary-btn" data-section-target="hiring-section">Edit Hiring Preferences</button>
-        </div>
-      </section>
-
-      <section class="panel profile-section hidden" id="company-info" role="tabpanel">
-        <div class="panel-header">
-          <div>
-            <span class="small-label">Company Details</span>
-            <h2>Company information</h2>
-            <p class="panel-text">Manage the public company information candidates use to evaluate your workplace.</p>
-          </div>
-        </div>
-
-        <section class="company-info-layout">
-          <aside class="logo-panel">
-            <div class="logo-frame">
-              <img id="company_logo_preview" src="https://placehold.co/220x220?text=PT" alt="Company logo" />
-              <div class="logo-initials" id="companyLogo">PT</div>
-            </div>
-
-            <input id="company_logo_file" type="file" accept="image/jpeg,image/png,image/webp" hidden />
-
-            <button id="uploadLogoBtn" type="button" class="primary-wide">Upload Logo</button>
-            <button id="removeLogoBtn" type="button" class="secondary-wide">Remove Logo</button>
-            <span class="visibility-chip">Visible to Candidates</span>
-          </aside>
-
-          <div class="company-main-fields">
-            <label>Company Name</label>
-            <input id="company_name" type="text" placeholder="Company Name" class="company-name-input" />
-
-            <div class="field-grid">
-              <div>
-                <label>Industry / Trade Focus</label>
-                <input id="industry" type="text" placeholder="Industry / Trade Focus" />
-              </div>
-
-              <div>
-                <label>Company Location</label>
-                <input id="company_location" type="text" placeholder="Company Location" />
-              </div>
-            </div>
-
-            <label>Company Description</label>
-            <textarea id="company_description" placeholder="Write a clear company description candidates will see when reviewing your company profile..."></textarea>
+          <div class="briefing-actions">
+            <button type="submit" class="primary-btn" id="saveProfileBtn">Save Changes</button>
+            <a href="#" class="secondary-btn" id="viewPublicProfileBtn">View Public Profile</a>
           </div>
         </section>
-      </section>
 
-      <section class="panel profile-section hidden" id="hiring-section" role="tabpanel">
-        <div class="panel-header">
-          <div>
-            <span class="small-label">Hiring Setup</span>
-            <h2>Hiring preferences</h2>
-            <p class="panel-text">Describe the roles, timelines, and compensation candidates can expect.</p>
-          </div>
-          <span class="mini-pill">Candidate Search Info</span>
-        </div>
+        <nav class="profile-section-nav" aria-label="Company profile sections">
+          <a href="#publicProfile">Public Profile</a>
+          <a href="#publicPreview">Preview</a>
+          <a href="#activeJobs">Active Jobs</a>
+          <a href="#privateHiring">Hiring Settings</a>
+          <a href="#privateAccount">Account Details</a>
+        </nav>
 
-        <div class="form-grid">
-          <div>
-            <label>Main Hiring Industry</label>
-            <select id="main_hiring_industry">
-              <option value="">Select industry</option>
-              <option>Electrical</option>
-              <option>Construction</option>
-              <option>HVAC</option>
-              <option>Plumbing</option>
-              <option>Welding</option>
-              <option>Oil & Gas</option>
-              <option>General Labour</option>
-            </select>
+        <section class="workspace-panel profile-editor-panel" id="publicProfile" aria-labelledby="publicProfileTitle">
+          <div class="section-heading">
+            <div>
+              <div class="panel-eyebrow">PUBLIC COMPANY PROFILE</div>
+              <h2 id="publicProfileTitle">Company information candidates can see</h2>
+              <p>This information appears on your public Placely company profile and is visible to candidates.</p>
+            </div>
+            <span class="visibility-pill public">Visible to candidates</span>
           </div>
 
-          <div>
-            <label>Employment Type</label>
-            <select id="employment_type">
-              <option value="">Select type</option>
-              <option>Full-Time</option>
-              <option>Part-Time</option>
-              <option>Contract</option>
-              <option>Rotation</option>
-              <option>Temporary</option>
-            </select>
+          <div class="public-profile-editor">
+            <aside class="logo-editor">
+              <div class="company-logo-frame">
+                <img id="company_logo_preview" alt="Company logo" loading="lazy" />
+                <span id="companyLogo">PT</span>
+              </div>
+
+              <input id="company_logo_file" type="file" accept="image/jpeg,image/png,image/webp" hidden />
+              <button id="uploadLogoBtn" type="button" class="primary-btn">Upload Logo</button>
+              <button id="removeLogoBtn" type="button" class="secondary-btn">Remove Logo</button>
+              <p>JPG, PNG, or WebP. SVG files are not accepted.</p>
+            </aside>
+
+            <div class="profile-field-stack">
+              <div class="form-grid two">
+                <label>
+                  <span>Company Name</span>
+                  <small>Visible to candidates</small>
+                  <input id="company_name" type="text" autocomplete="organization" required />
+                </label>
+                <label>
+                  <span>Industry</span>
+                  <small>Visible to candidates</small>
+                  <input id="industry" type="text" />
+                </label>
+                <label>
+                  <span>Main Hiring Industry</span>
+                  <small>Visible to candidates</small>
+                  <select id="main_hiring_industry">
+                    <option value="">Select industry</option>
+                    <option>Electrical</option>
+                    <option>Construction</option>
+                    <option>HVAC</option>
+                    <option>Plumbing</option>
+                    <option>Welding</option>
+                    <option>Oil & Gas</option>
+                    <option>General Labour</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Public Company Location</span>
+                  <small>Visible to candidates</small>
+                  <input id="company_location" type="text" autocomplete="address-level2" />
+                </label>
+                <label class="wide">
+                  <span>Company Website</span>
+                  <small>Visible to candidates</small>
+                  <input id="company_website" type="url" placeholder="https://yourcompany.com" />
+                </label>
+              </div>
+
+              <label>
+                <span>Company Description</span>
+                <small>Visible to candidates</small>
+                <textarea id="company_description" placeholder="Describe your company, work environment, and the type of team candidates would join."></textarea>
+              </label>
+
+              <div class="form-grid two">
+                <label class="wide">
+                  <span>Selected Hiring Roles</span>
+                  <small>Visible to candidates</small>
+                  <div class="role-chip-grid" id="hiring_roles_group" aria-label="Hiring roles"></div>
+                  <input id="hiring_role_other" class="other-role-input" type="text" placeholder="Custom role" hidden />
+                </label>
+                <label>
+                  <span>Employment Type</span>
+                  <small>Visible to candidates</small>
+                  <select id="employment_type">
+                    <option value="">Select type</option>
+                    <option>Full-Time</option>
+                    <option>Part-Time</option>
+                    <option>Contract</option>
+                    <option>Rotation</option>
+                    <option>Temporary</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Compensation Type</span>
+                  <small>Visible to candidates when filled</small>
+                  <select id="compensation_type">
+                    <option value="">Select compensation</option>
+                    <option value="hourly">Hourly</option>
+                    <option value="annual">Annual salary</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Minimum Compensation</span>
+                  <small>Visible to candidates when filled</small>
+                  <input id="compensation_min" type="number" min="1" step="1" inputmode="numeric" placeholder="20" />
+                </label>
+                <label>
+                  <span>Maximum Compensation</span>
+                  <small>Visible to candidates when filled</small>
+                  <input id="compensation_max" type="number" min="1" step="1" inputmode="numeric" placeholder="40" />
+                </label>
+              </div>
+
+              <div class="profile-completion">
+                <div>
+                  <strong id="profileStrength">0%</strong>
+                  <span>Profile completion</span>
+                </div>
+                <div class="score-track"><div id="strengthBar"></div></div>
+                <div class="score-list" id="scoreList"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="workspace-panel profile-preview-panel" id="publicPreview" aria-labelledby="publicPreviewTitle">
+          <div class="section-heading">
+            <div>
+              <div class="panel-eyebrow">PUBLIC PROFILE PREVIEW</div>
+              <h2 id="publicPreviewTitle">How candidates see your company</h2>
+            </div>
+            <div class="profile-link-actions">
+              <a href="#" class="panel-link" id="previewPublicProfileBtn">View Public Profile</a>
+              <button type="button" class="secondary-btn compact" id="copyPublicLinkBtn">Copy Public Link</button>
+            </div>
           </div>
 
-          <div>
-            <label>Compensation Type</label>
-            <select id="compensation_type">
-              <option value="">Select compensation</option>
-              <option value="hourly">Hourly</option>
-              <option value="annual">Annual salary</option>
-            </select>
+          <article class="company-preview-card">
+            <div class="preview-company-logo">
+              <img id="previewLogoImg" alt="Company logo preview" loading="lazy" />
+              <span id="previewLogo">PT</span>
+            </div>
+            <div class="preview-company-copy">
+              <h3 id="previewCompanyName">Company Name</h3>
+              <p id="previewCompanyMeta">Industry - Location</p>
+              <a href="#" id="previewWebsite" target="_blank" rel="noopener noreferrer" hidden>Company website</a>
+              <p id="previewDescription">Company description will appear here once added.</p>
+              <div class="preview-tags" id="previewTags"></div>
+            </div>
+            <div class="preview-job-count">
+              <strong id="previewActiveJobCount">0</strong>
+              <span>active jobs</span>
+            </div>
+          </article>
+
+          <div class="public-link-box">
+            <span>Public profile link</span>
+            <code id="publicProfileUrlText">Loading public profile URL...</code>
+          </div>
+        </section>
+
+        <section class="workspace-panel profile-active-jobs-panel" id="activeJobs" aria-labelledby="activeJobsTitle">
+          <div class="section-heading">
+            <div>
+              <h2 id="activeJobsTitle">Active Jobs</h2>
+              <p>Only active public jobs are represented on your public company profile.</p>
+            </div>
+            <a href="manage-jobs.html?view=create" class="panel-link">Post Job</a>
           </div>
 
-          <div>
-            <label>Minimum Compensation</label>
-            <input id="compensation_min" type="number" min="1" step="1" inputmode="numeric" placeholder="20" />
+          <div id="activeJobsList" class="profile-jobs-list" aria-live="polite">
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row"></div>
+          </div>
+        </section>
+
+        <section class="workspace-panel profile-editor-panel private-panel" id="privateHiring" aria-labelledby="privateHiringTitle">
+          <div class="section-heading">
+            <div>
+              <div class="panel-eyebrow">PRIVATE HIRING SETTINGS</div>
+              <h2 id="privateHiringTitle">Hiring workflow preferences</h2>
+              <p>These settings help Placely personalize your hiring workflow and are not shown to candidates unless explicitly marked public.</p>
+            </div>
+            <span class="visibility-pill private">Private to your company</span>
           </div>
 
-          <div>
-            <label>Maximum Compensation</label>
-            <input id="compensation_max" type="number" min="1" step="1" inputmode="numeric" placeholder="40" />
+          <div class="form-grid two">
+            <label>
+              <span>Hiring Timeline</span>
+              <small>Private to your company</small>
+              <select id="hiring_timeline">
+                <option value="">Select timeline</option>
+                <option value="immediately">Immediately</option>
+                <option value="within_2_weeks">Within 2 weeks</option>
+                <option value="within_1_month">Within 1 month</option>
+                <option value="within_3_months">Within 3 months</option>
+                <option value="always_hiring">Always hiring</option>
+              </select>
+            </label>
+            <label class="wide">
+              <span>Candidate Qualities</span>
+              <small>Private to your company</small>
+              <textarea id="candidate_qualities" placeholder="Example: reliable, safety-focused, own transportation, certifications, commercial experience..."></textarea>
+            </label>
+          </div>
+        </section>
+
+        <section class="workspace-panel profile-editor-panel private-panel" id="privateAccount" aria-labelledby="privateAccountTitle">
+          <div class="section-heading">
+            <div>
+              <div class="panel-eyebrow">PRIVATE ACCOUNT DETAILS</div>
+              <h2 id="privateAccountTitle">Contact and account details</h2>
+              <p>Only your company and Placely support can view this information.</p>
+            </div>
+            <span class="visibility-pill private">Private to your company</span>
           </div>
 
-          <div>
-            <label>Hiring Timeline</label>
-            <select id="hiring_timeline">
-              <option value="">Select timeline</option>
-              <option value="immediately">Immediately</option>
-              <option value="within_2_weeks">Within 2 weeks</option>
-              <option value="within_1_month">Within 1 month</option>
-              <option value="within_3_months">Within 3 months</option>
-              <option value="always_hiring">Always hiring</option>
-            </select>
+          <div class="form-grid two">
+            <label>
+              <span>Account Email</span>
+              <small>Private to your company</small>
+              <input id="account_email" type="email" readonly />
+            </label>
+            <label>
+              <span>Company Contact Email</span>
+              <small>Private to your company</small>
+              <input id="company_email" type="email" placeholder="you@company.com" />
+            </label>
+            <label>
+              <span>Contact Name</span>
+              <small>Private to your company</small>
+              <input id="contact_name" type="text" placeholder="Main contact name" />
+            </label>
+            <label>
+              <span>Phone</span>
+              <small>Private to your company</small>
+              <input id="phone" type="text" placeholder="(250) 000-0000" />
+            </label>
           </div>
-        </div>
-
-        <label>Hiring Roles</label>
-        <div class="role-chip-grid" id="hiring_roles_group" aria-label="Hiring roles"></div>
-        <input id="hiring_role_other" class="other-role-input" type="text" placeholder="Custom role" hidden />
-      </section>
-
-      <section class="panel profile-section hidden" id="candidate-section" role="tabpanel">
-        <div class="panel-header">
-          <div>
-            <span class="small-label">Candidate Fit</span>
-            <h2>Preferred candidate qualities</h2>
-            <p class="panel-text">Clarify the traits and qualifications that make someone a strong fit.</p>
-          </div>
-        </div>
-
-        <textarea id="candidate_qualities" placeholder="Example: reliable, safety-focused, own transportation, CSTS/WHMIS, commercial experience, strong communication..."></textarea>
-
-        <div class="tag-row">
-          <span>Reliable</span>
-          <span>Safety-focused</span>
-          <span>Certified</span>
-          <span>Experienced</span>
-          <span>Ready to work</span>
-        </div>
-      </section>
-
-      <section class="panel profile-section hidden" id="contact-section" role="tabpanel">
-        <div class="panel-header">
-          <div>
-            <span class="small-label">Contact</span>
-            <h2>Employer contact details</h2>
-            <p class="panel-text">Keep the business contact information candidates and Placely can use current.</p>
-          </div>
-        </div>
-
-        <div class="form-grid">
-          <div>
-            <label>Company Email</label>
-            <input id="company_email" type="email" placeholder="you@company.com" />
-          </div>
-
-          <div>
-            <label>Phone Number</label>
-            <input id="phone" type="text" placeholder="(250) 000-0000" />
-          </div>
-
-          <div>
-            <label>Contact Name</label>
-            <input id="contact_name" type="text" placeholder="Main contact name" />
-          </div>
-
-          <div>
-            <label>Company Website</label>
-            <input id="company_website" type="text" placeholder="https://yourcompany.com" />
-          </div>
-        </div>
-      </section>
-    </section>
-  </section>
-</form>
+        </section>
+      </form>
+    </main>
+  </div>
+</div>
 
 <div id="toast" class="toast"></div>
 
@@ -285,7 +330,7 @@
 <script src="../js/auth-utils.js"></script>
 <script src="../js/auth-guards.js"></script>
 <script src="../emp-js/employer-navbar.js"></script>
-<script src="../emp-js/employer-profile.js?v=10000"></script>
+<script src="../emp-js/employer-profile.js?v=10001"></script>
 
 </body>
 </html>

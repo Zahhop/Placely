@@ -33,9 +33,8 @@ async function initApplications() {
   currentUser = user;
 
   setupEvents();
-  await loadCandidateProfile(user);
+  loadCandidateProfile(user);
   await loadApplications();
-  hydrateHeader();
   document.documentElement.classList.remove("applications-booting");
 }
 
@@ -73,36 +72,21 @@ function setupEvents() {
   });
 }
 
-async function loadCandidateProfile(user) {
-  const { data } = await applicationsSupabase
-    .from("candidate_profiles")
-    .select("id, full_name, email, profile_photo_url, profile_photo, avatar_url, photo_url")
-    .eq("id", user.id)
-    .maybeSingle();
+function loadCandidateProfile(user) {
+  const identity = window.PlacelyAuth.getCachedCandidateIdentity?.() || {
+    fullName: user?.email?.split("@")[0] || "Candidate",
+    firstName: user?.email?.split("@")[0] || "Candidate",
+    email: user?.email || "",
+    initials: "PT",
+    photoUrl: ""
+  };
 
   currentProfile = {
-    ...(data || {}),
-    email: data?.email || user.email || ""
+    full_name: identity.fullName,
+    email: identity.email || user.email || "",
+    profile_photo_url: identity.photoUrl || ""
   };
-}
-
-function hydrateHeader() {
-  const fullName = currentProfile.full_name || "Candidate";
-  const firstName = fullName.split(" ")[0] || "Candidate";
-  const email = currentProfile.email || currentUser?.email || "No email on file";
-
-  setText("topCandidateName", firstName);
-  setText("accountMenuCandidateName", fullName);
-  setText("accountMenuEmail", email);
-
-  const avatar = document.getElementById("topCandidateAvatar");
-  if (!avatar) return;
-
-  const initials = getInitials(fullName || email);
-  const photoUrl = resolveCandidatePhotoUrl(currentProfile);
-  avatar.innerHTML = photoUrl
-    ? `<img src="${escapeHTML(photoUrl)}" alt="" loading="lazy" /><span class="avatar-fallback">${escapeHTML(initials)}</span>`
-    : escapeHTML(initials);
+  window.PlacelyAuth.updateCandidateHeader?.(identity);
 }
 
 function setupDashboardShell() {
@@ -226,7 +210,7 @@ async function hydrateApplications(applications) {
   if (employerIds.length) {
     const { data: employerProfiles, error: employerError } = await applicationsSupabase
       .from("public_employer_profiles")
-      .select("*")
+      .select("id, company_name, company_location, company_logo_url")
       .in("id", employerIds);
 
     if (!employerError) {
@@ -246,11 +230,10 @@ async function hydrateApplications(applications) {
       employer_id: employerId || app.employer_id,
       job_title: app.job_title || job.job_title || "Untitled Job",
       company_name: app.company_name || job.company_name || employerProfile.company_name || "Company",
-      location: app.location || job.location || employerProfile.location || "Location not listed",
+      location: app.location || job.location || employerProfile.company_location || "Location not listed",
       employment_type: app.employment_type || job.employment_type || "Job type not listed",
       pay_range: window.PlacelyAuth.formatCompensationFromRecord(app, "") || window.PlacelyAuth.formatCompensationFromRecord(job),
-      company_logo_url: app.company_logo_url || getCompanyLogoUrl(employerProfile),
-      company_photo_url: app.company_photo_url || employerProfile.company_photo_url || ""
+      company_logo_url: app.company_logo_url || getCompanyLogoUrl(employerProfile)
     };
   });
 }
@@ -328,7 +311,7 @@ function renderApplicationCard(app) {
         <div class="company-avatar">
           ${
             companyLogoUrl
-              ? `<img src="${escapeHTML(companyLogoUrl)}" alt="${escapeHTML(companyName)} logo">`
+              ? `<img src="${escapeAttribute(companyLogoUrl)}" alt="${escapeAttribute(companyName)} logo" onerror="this.parentElement.textContent='${escapeAttribute(initials)}'">`
               : escapeHTML(initials)
           }
         </div>
@@ -621,17 +604,10 @@ function getStatusLabel(status) {
 function getCompanyLogoUrl(source) {
   if (!source) return "";
 
-  const value = (
-    source.company_logo_url ||
-    source.company_photo_url ||
-    source.profile_photo_url ||
-    source.logo_url ||
-    source.company_logo ||
-    source.company_logo_preview ||
-    ""
-  );
-
-  return window.PlacelyAuth?.getPublicImageUrl?.(applicationsSupabase, "employer-logos", value) || value;
+  return window.PlacelyAuth?.resolveEmployerLogoUrl?.(
+    window.PlacelyAuth.getPublicEmployerLogoValue(source),
+    { supabase: applicationsSupabase }
+  ) || "";
 }
 
 function parseSnapshot(snapshot) {
@@ -824,6 +800,10 @@ function escapeHTML(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function escapeAttribute(value) {
+  return escapeHTML(value).replaceAll("`", "&#096;");
 }
 
 window.handleFollowUp = handleFollowUp;

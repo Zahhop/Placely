@@ -7,6 +7,9 @@ let isDeletingResume = false;
 let isUploadingResume = false;
 let isDeletingPhoto = false;
 
+const profileSearchForm = getEl("profileSearchForm");
+const profileSearchInput = getEl("profileSearchInput");
+
 const PHOTO_BUCKET = "candidate_photos";
 const RESUME_BUCKET = "candidate_resumes";
 const MAX_RESUME_SIZE_BYTES = 10 * 1024 * 1024;
@@ -62,9 +65,11 @@ function updateStrength() {
 
   const number = getEl("profile_strength_number");
   const bar = document.querySelector(".score-track div");
+  const hint = getEl("profileStrengthHint");
 
   if (number) number.textContent = `${score}%`;
   if (bar) bar.style.width = `${score}%`;
+  if (hint) hint.textContent = getStrengthHint(score);
 }
 
 function updatePreview() {
@@ -96,6 +101,26 @@ function updatePreview() {
   }
 
   updateStrength();
+  updateVisibilityLabels();
+}
+
+function getStrengthHint(score) {
+  if (score >= 90) return "Your profile is in strong shape for employer review.";
+  if (score >= 70) return "Add a resume, certifications, or more detail to make the profile stronger.";
+  if (score >= 45) return "Complete your experience, skills, and contact preferences to improve employer visibility.";
+  return "Start with your role, location, summary, and availability so employers can understand your fit.";
+}
+
+function updateVisibilityLabels() {
+  const isVisible = getEl("profile_visible")?.checked !== false;
+  const visibilityChip = getEl("visibilityChip");
+  const previewPill = getEl("previewVisibilityPill");
+
+  [visibilityChip, previewPill].forEach((item) => {
+    if (!item) return;
+    item.textContent = isVisible ? "Visible to Employers" : "Hidden from Employers";
+    item.classList.toggle("hidden", !isVisible);
+  });
 }
 
 function getPreviewProfileFromForm() {
@@ -180,6 +205,8 @@ async function loadCandidateProfile() {
   getEl("profile_visible").checked = currentProfile.profile_visible ?? true;
 
   updatePreview();
+  hydrateHeader();
+  await loadHeaderCounts(user.id);
 }
 
 function getCandidatePhotoUrl(value, cacheBust = "") {
@@ -564,7 +591,7 @@ async function saveCandidateProfile() {
   } finally {
     saveButtons.forEach(btn => {
       btn.disabled = false;
-      btn.textContent = "Save Profile";
+      btn.textContent = "Save Changes";
     });
   }
 }
@@ -613,6 +640,12 @@ function getFriendlyProfileError(error, fallback) {
 }
 
 function setupEvents() {
+  getEl("logoutBtn")?.addEventListener("click", handleLogout);
+  getEl("accountMenuLogoutBtn")?.addEventListener("click", handleLogout);
+  bindAccountMenu();
+  bindMobileSidebar();
+  bindHeaderSearch();
+
   const uploadPhotoBtn = getEl("uploadPhotoBtn");
   const removePhotoBtn = getEl("removePhotoBtn");
   const photoInput = getEl("profile_photo_file");
@@ -678,6 +711,10 @@ function setupEvents() {
   });
 
   getEl("viewPreviewBtn")?.addEventListener("click", () => {
+    window.CandidateProfilePreview?.openModal(getPreviewProfileFromForm());
+  });
+
+  getEl("headerPreviewBtn")?.addEventListener("click", () => {
     window.CandidateProfilePreview?.openModal(getPreviewProfileFromForm());
   });
 
@@ -762,7 +799,161 @@ async function removeCurrentPhoto() {
   }
 }
 
+async function loadHeaderCounts(userId) {
+  const [{ count: unreadCount }, { count: notificationCount }] = await Promise.all([
+    candidateSupabase
+      .from("messages")
+      .select("*", { count: "exact", head: true })
+      .eq("candidate_id", userId)
+      .eq("sender_type", "employer")
+      .eq("read_by_candidate", false),
+    candidateSupabase
+      .from("applications")
+      .select("*", { count: "exact", head: true })
+      .eq("candidate_id", userId)
+      .in("status", ["reviewing", "interview", "offer"])
+  ]);
+
+  updateBadge("topUnreadBadge", unreadCount || 0);
+  updateBadge("topNotificationBadge", notificationCount || 0);
+}
+
+function hydrateHeader() {
+  const fullName = currentProfile.full_name || "Candidate";
+  const firstName = fullName.split(" ")[0] || "Candidate";
+  const email = currentProfile.email || currentUser?.email || "No email on file";
+
+  setText("topCandidateName", firstName);
+  setText("accountMenuCandidateName", fullName);
+  setText("accountMenuEmail", email);
+
+  const avatar = getEl("topCandidateAvatar");
+  if (!avatar) return;
+
+  const initials = getInitials(fullName || email);
+  const photoUrl = selectedPhotoPreviewUrl || getCandidatePhotoUrl(currentProfile.profile_photo_url || currentProfile.avatar_url) || "";
+  avatar.innerHTML = photoUrl
+    ? `<img src="${escapeAttribute(photoUrl)}" alt="" loading="lazy" /><span class="avatar-fallback">${escapeHTML(initials)}</span>`
+    : escapeHTML(initials);
+}
+
+function bindAccountMenu() {
+  const button = getEl("candidateAccountButton");
+  const menu = getEl("candidateAccountMenu");
+  if (!button || !menu) return;
+
+  const closeMenu = ({ restoreFocus = false } = {}) => {
+    menu.hidden = true;
+    button.setAttribute("aria-expanded", "false");
+    if (restoreFocus) button.focus();
+  };
+
+  const openMenu = () => {
+    menu.hidden = false;
+    button.setAttribute("aria-expanded", "true");
+    menu.querySelector("[role='menuitem']")?.focus();
+  };
+
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (menu.hidden) openMenu();
+    else closeMenu();
+  });
+
+  menu.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (event.target.closest("a")) closeMenu();
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!menu.hidden && !event.target.closest(".top-account-menu-wrap")) closeMenu();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !menu.hidden) closeMenu({ restoreFocus: true });
+  });
+}
+
+function bindMobileSidebar() {
+  const toggle = getEl("sidebarToggle");
+  const backdrop = getEl("sidebarBackdrop");
+  if (!toggle || !backdrop) return;
+
+  const setSidebarOpen = (isOpen) => {
+    document.body.classList.toggle("sidebar-open", isOpen);
+    toggle.setAttribute("aria-expanded", String(isOpen));
+    backdrop.hidden = !isOpen;
+  };
+
+  toggle.addEventListener("click", () => setSidebarOpen(!document.body.classList.contains("sidebar-open")));
+  backdrop.addEventListener("click", () => setSidebarOpen(false));
+
+  document.querySelectorAll(".candidate-nav-link").forEach((link) => {
+    link.addEventListener("click", () => setSidebarOpen(false));
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 980) setSidebarOpen(false);
+  });
+}
+
+function bindHeaderSearch() {
+  if (!profileSearchForm || !profileSearchInput) return;
+
+  profileSearchForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const query = profileSearchInput.value.trim();
+    const url = new URL("../public/find-jobs.html?role=candidate", window.location.href);
+    if (query) url.searchParams.set("keyword", query);
+    window.location.href = url.toString();
+  });
+}
+
+function updateBadge(id, value) {
+  const badge = getEl(id);
+  if (!badge) return;
+
+  const count = Number(value) || 0;
+  badge.hidden = count <= 0;
+  badge.textContent = count > 9 ? "9+" : String(count);
+}
+
+function setText(id, text) {
+  const element = getEl(id);
+  if (element) element.textContent = text || "";
+}
+
+function getInitials(value) {
+  const words = String(value || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (!words.length) return "PT";
+  return words.slice(0, 2).map((word) => word[0]).join("").toUpperCase();
+}
+
+async function handleLogout() {
+  try {
+    await window.PlacelyAuth.clearAuthState();
+  } catch {
+    sessionStorage.removeItem("placelyAuthGuardRedirecting");
+  }
+
+  window.location.replace("candidate-login.html");
+}
+
+function revealProfile() {
+  document.documentElement.classList.remove("profile-booting");
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   setupEvents();
-  await loadCandidateProfile();
+  try {
+    await loadCandidateProfile();
+  } catch (error) {
+    showToast(getFriendlyProfileError(error, "Could not load profile."));
+  } finally {
+    revealProfile();
+  }
 });
