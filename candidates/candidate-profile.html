@@ -1,300 +1,396 @@
 <!DOCTYPE html>
-<html lang="en" class="auth-booting">
+<html lang="en" class="auth-booting profile-booting">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Edit Profile | Placely Talent</title>
+  <link rel="dns-prefetch" href="https://ornxlspufzmvapdrwexc.supabase.co">
+  <link rel="preconnect" href="https://ornxlspufzmvapdrwexc.supabase.co" crossorigin>
 
+  <title>Profile | Placely Talent</title>
+
+  <link rel="stylesheet" href="../css/candidate-dashboard.css" />
   <link rel="stylesheet" href="../css/candidate-profile.css" />
-  <link rel="stylesheet" href="../css/candidate-header.css" />
   <link rel="stylesheet" href="../css/candidate-preview.css" />
-  <link rel="stylesheet" href="../css/candidate-scale.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
 <body>
-
-<header>
-  <div class="logo-wrapper">
-    <a href="candidate-dashboard.html" class="logo">PLACELY TALENT</a>
-    <div class="logo-subtitle">Talent Platform</div>
-  </div>
-
-  <nav>
-    <a href="candidate-dashboard.html">Dashboard</a>
-    <a href="../public/find-jobs.html?role=candidate">Find Jobs</a>
-    <a href="../public/saved-jobs.html">Saved Jobs</a>
-    <a href="candidate-applications.html">Applications</a>
-    <a href="candidate-messages.html">Messages</a>
-    <a href="candidate-profile.html" class="active">Profile</a>
-    <a href="candidate-settings.html">Settings</a>
-    <button id="logoutBtn" class="nav-btn" type="button">Logout</button>
-  </nav>
-</header>
-
-<main class="page-shell">
-
-  <section class="page-hero">
-    <div>
-      <span class="eyebrow">Profile Management</span>
-      <h1>Build a profile employers trust.</h1>
-      <p>Keep your trade, experience, resume, skills, and contact details updated so employers can quickly understand where you fit.</p>
+<div class="candidate-dashboard-shell">
+  <aside class="candidate-sidebar" id="candidateSidebar" aria-label="Candidate navigation">
+    <div class="sidebar-brand">
+      <a href="candidate-dashboard.html" class="brand-mark" aria-label="Placely Talent candidate dashboard">P</a>
+      <div>
+        <a href="candidate-dashboard.html" class="brand-name">Placely Talent</a>
+        <span>Talent Platform</span>
+      </div>
     </div>
 
-    <div class="hero-actions">
-      <a href="candidate-dashboard.html" class="secondary-btn">Back to Dashboard</a>
-      <button type="button" class="primary-btn save-profile-btn">Save Changes</button>
+    <nav class="sidebar-nav" aria-label="Candidate sections">
+      <div class="nav-group">
+        <span class="nav-label">Overview</span>
+        <a href="candidate-dashboard.html" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h7V4H4v9Zm9 7h7v-7h-7v7ZM4 20h7v-5H4v5Zm9-9h7V4h-7v7Z"/></svg>
+          <span>Dashboard</span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <span class="nav-label">Jobs</span>
+        <a href="../public/find-jobs.html?role=candidate" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6V5a3 3 0 0 1 3-3h1a3 3 0 0 1 3 3v1h3a2 2 0 0 1 2 2v10.5A2.5 2.5 0 0 1 18.5 21h-13A2.5 2.5 0 0 1 3 18.5V8a2 2 0 0 1 2-2h4Zm2 0h3V5a1 1 0 0 0-1-1h-1a1 1 0 0 0-1 1v1Zm9 5H4v7.5c0 .28.22.5.5.5h15c.28 0 .5-.22.5-.5V11Z"/></svg>
+          <span>Find Jobs</span>
+        </a>
+        <a href="companies.html" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V7l6-4 6 4v3h6v11h-7v-5H10v5H3Zm2-2h3v-5h8v5h3v-7h-6V8.07L9 5.4 5 8.07V19Zm2-8h2v2H7v-2Zm0-3h2v2H7V8Zm4 0h2v2h-2V8Zm0 3h2v2h-2v-2Z"/></svg>
+          <span>Companies</span>
+        </a>
+        <a href="candidate-applications.html" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h10a2 2 0 0 1 2 2v18l-7-3-7 3V4a2 2 0 0 1 2-2Zm0 17 5-2.14L17 19V4H7v15Zm2-9h6v2H9v-2Zm0-4h6v2H9V6Z"/></svg>
+          <span>Applications</span>
+        </a>
+        <a href="../public/saved-jobs.html" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a2 2 0 0 1 2 2v16a1 1 0 0 1-1.55.83L12 17.53l-6.45 4.3A1 1 0 0 1 4 21V5a2 2 0 0 1 2-2Zm0 2v14.13l5.45-3.63a1 1 0 0 1 1.1 0L18 19.13V5H6Z"/></svg>
+          <span>Saved Jobs</span>
+        </a>
+        <a href="candidate-messages.html" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H9.8l-4.1 3.08A1.05 1.05 0 0 1 4 19.24V17a3 3 0 0 1-2-2.83V7a3 3 0 0 1 3-3Zm0 2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1v2.25L9.13 15H19a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5Z"/></svg>
+          <span>Messages</span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <span class="nav-label">Profile</span>
+        <a href="candidate-profile.html" class="candidate-nav-link nav-item active">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.33 0-8 2.03-8 4.43V20a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1.57C20 16.03 16.33 14 12 14Z"/></svg>
+          <span>Profile</span>
+        </a>
+        <a href="#documents-section" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h9l5 5v15H6V2Zm8 2H8v16h10V8h-4V4Zm-3 8h4v2h-4v-2Zm0 4h4v2h-4v-2ZM9 8h2v2H9V8Z"/></svg>
+          <span>Resume</span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="nav-group utility-group">
+        <span class="nav-label">Company</span>
+        <a href="candidate-support.html" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10v5a3 3 0 0 1-3 3h-2v-8h3a8 8 0 1 0-16 0h3v8H5a3 3 0 0 1-3-3v-5A10 10 0 0 1 12 2Zm-3 8h2v10H9V10Zm4 0h2v10h-2V10Z"/></svg>
+          <span>Support</span>
+        </a>
+        <a href="candidate-settings.html" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.43 12.98c.04-.32.07-.65.07-.98s-.02-.66-.07-.98l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.6-.22l-2.49 1a7.28 7.28 0 0 0-1.69-.98L14.5 2.42A.5.5 0 0 0 14 2h-4a.5.5 0 0 0-.5.42L9.12 5.07c-.61.24-1.18.56-1.69.98l-2.49-1a.5.5 0 0 0-.6.22l-2 3.46a.5.5 0 0 0 .12.64l2.11 1.65c-.04.32-.07.65-.07.98s.02.66.07.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46c.13.22.39.31.62.22l2.47-1c.51.4 1.07.73 1.69.98l.38 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.38-2.65c.61-.25 1.18-.58 1.69-.98l2.47 1c.23.09.49 0 .62-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z"/></svg>
+          <span>Settings</span>
+        </a>
+        <button type="button" id="logoutBtn" class="candidate-logout-btn">Logout</button>
+      </div>
     </div>
-  </section>
+  </aside>
 
-  <section class="profile-top-card company-top-card">
+  <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
 
-    <aside class="photo-panel logo-panel">
-      <div class="photo-ring logo-frame">
-        <img id="profile_photo_preview" src="https://placehold.co/180x180" alt="Profile Photo" class="profile-photo" />
-      </div>
+  <div class="candidate-workspace">
+    <header class="utility-bar">
+      <button type="button" class="mobile-menu-btn" id="sidebarToggle" aria-controls="candidateSidebar" aria-expanded="false">
+        <span class="sr-only">Open navigation</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v2H4V7Zm0 4h16v2H4v-2Zm0 4h16v2H4v-2Z"/></svg>
+      </button>
 
-      <input id="profile_photo_file" type="file" accept="image/jpeg,image/png,image/webp" hidden>
-      <button type="button" id="uploadPhotoBtn" class="primary-wide">Upload Photo</button>
-      <button type="button" id="removePhotoBtn" class="secondary-wide">Remove Photo</button>
+      <form class="utility-search" id="profileSearchForm" role="search">
+        <label class="sr-only" for="profileSearchInput">Search jobs, companies, or messages</label>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.97 12.04l3.25 3.24a1 1 0 0 1-1.42 1.42l-3.24-3.25A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/></svg>
+        <input id="profileSearchInput" type="search" placeholder="Search jobs, companies, or messages..." autocomplete="off" />
+        <span class="search-shortcut" aria-hidden="true">/</span>
+      </form>
 
-      <div class="visibility-chip">Visible to Employers</div>
-    </aside>
-
-    <section class="profile-main-fields company-main-fields">
-      <div class="field-row top-row">
-        <input id="full_name" type="text" placeholder="Full Name" class="name-input company-name-input" />
-      </div>
-
-      <div class="field-grid">
-        <input id="trade" type="text" placeholder="Trade / Job Title ex. Electrician Apprentice" />
-        <input id="location" type="text" placeholder="Location ex. Penticton, BC" />
-      </div>
-
-      <textarea id="bio" placeholder="Write a short professional summary about your experience, strengths, certifications, and the kind of work you're looking for..."></textarea>
-    </section>
-
-    <aside class="score-card strength-card">
-      <span class="small-label">Profile Strength</span>
-      <strong id="profile_strength_number">82%</strong>
-
-      <div class="score-track">
-        <div></div>
-      </div>
-
-      <p>Complete your work history, skills, resume, and contact preferences to improve employer visibility.</p>
-
-      <div class="score-list">
-        <div><span>✓</span> Basic profile added</div>
-        <div><span>✓</span> Contact info ready</div>
-        <div><span>•</span> Add stronger work history</div>
-      </div>
-    </aside>
-
-  </section>
-
-  <section class="content-layout">
-
-    <aside class="sidebar-card">
-      <a href="#overview" class="active">Overview</a>
-      <a href="#experience-section">Experience</a>
-      <a href="#skills-section">Skills</a>
-      <a href="#documents-section">Documents</a>
-      <a href="#contact-section">Contact</a>
-      <a href="#visibility-section">Visibility</a>
-    </aside>
-
-    <section class="profile-content">
-
-      <section class="panel" id="overview">
-        <div class="panel-header">
-          <div>
-            <span class="small-label">Public Profile Preview</span>
-            <h2>How employers will see you</h2>
-          </div>
-          <span class="mini-pill">Live Preview</span>
-        </div>
-
-        <div class="preview-card">
-          <div class="preview-avatar">KW</div>
-
-          <div class="preview-info">
-            <h3 id="preview_name">Candidate Name</h3>
-            <p id="preview_meta">Trade / Job Title · Location</p>
-
-            <div class="preview-tags">
-              <span>Reliable</span>
-              <span>Certified</span>
-              <span>Available</span>
+      <div class="utility-actions">
+        <a href="candidate-messages.html" class="utility-icon-link" aria-label="Open messages">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H9.8l-4.1 3.08A1.05 1.05 0 0 1 4 19.24V17a3 3 0 0 1-2-2.83V7a3 3 0 0 1 3-3Zm0 2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1v2.25L9.13 15H19a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5Z"/></svg>
+          <span id="topUnreadBadge" class="utility-badge" hidden>0</span>
+        </a>
+        <a href="candidate-applications.html" class="utility-icon-link" aria-label="Open application notifications">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5-6.71V3a2 2 0 1 0-4 0v1.29A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg>
+          <span id="topNotificationBadge" class="utility-badge" hidden>0</span>
+        </a>
+        <div class="top-account-menu-wrap">
+          <button type="button" class="top-account" id="candidateAccountButton" aria-haspopup="menu" aria-expanded="false" aria-controls="candidateAccountMenu">
+            <span class="account-avatar small" id="topCandidateAvatar">PT</span>
+            <span id="topCandidateName">Candidate</span>
+          </button>
+          <div class="top-account-menu" id="candidateAccountMenu" role="menu" aria-label="Candidate account menu" hidden>
+            <div class="top-account-menu-header">
+              <strong id="accountMenuCandidateName">Candidate</strong>
+              <span id="accountMenuEmail">Account details loading</span>
+            </div>
+            <div class="top-account-menu-list">
+              <a href="candidate-profile.html" role="menuitem">Profile</a>
+              <a href="candidate-settings.html" role="menuitem">Settings</a>
+              <a href="candidate-support.html" role="menuitem">Support</a>
+              <button type="button" role="menuitem" id="accountMenuLogoutBtn">Logout</button>
             </div>
           </div>
+        </div>
+      </div>
+    </header>
 
-          <button type="button" class="secondary-btn" id="viewPreviewBtn">View Preview</button>
+    <main class="candidate-shell profile-shell">
+      <section class="dashboard-briefing profile-briefing" aria-labelledby="profileTitle">
+        <div class="briefing-copy">
+          <h1 id="profileTitle">Profile</h1>
+          <p>Keep your experience, skills, availability, and contact details up to date for employers.</p>
+        </div>
+
+        <div class="briefing-actions">
+          <button type="button" class="primary-btn save-profile-btn">Save Changes</button>
+          <button type="button" class="secondary-btn" id="headerPreviewBtn">View Profile Preview</button>
         </div>
       </section>
 
-      <section class="panel" id="experience-section">
-        <div class="panel-header">
-          <div>
-            <span class="small-label">Work History</span>
-            <h2>Experience</h2>
-          </div>
-          <button type="button" class="small-outline-btn">+ Add Experience</button>
-        </div>
-
-        <div class="form-grid">
-          <div>
-            <label>Years of Experience</label>
-            <input id="experience" type="text" placeholder="ex. 2 years" />
+      <section class="panel profile-summary-card">
+        <aside class="photo-panel">
+          <div class="photo-ring">
+            <img id="profile_photo_preview" src="https://placehold.co/180x180" alt="Profile Photo" class="profile-photo" />
           </div>
 
-          <div>
-            <label>Availability</label>
-            <select id="availability">
-              <option value="">Select availability</option>
-              <option>Available immediately</option>
-              <option>Available within 1 week</option>
-              <option>Available within 2 weeks</option>
-              <option>Available within 1 month</option>
-              <option>Currently employed but open to offers</option>
+          <input id="profile_photo_file" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+          <button type="button" id="uploadPhotoBtn" class="primary-wide">Upload Photo</button>
+          <button type="button" id="removePhotoBtn" class="secondary-wide">Remove Photo</button>
+
+          <div class="visibility-chip" id="visibilityChip">Visible to Employers</div>
+        </aside>
+
+        <section class="profile-main-fields">
+          <div class="field-row top-row">
+            <label class="sr-only" for="full_name">Full Name</label>
+            <input id="full_name" type="text" placeholder="Full Name" class="name-input" />
+          </div>
+
+          <div class="field-grid">
+            <div>
+              <label class="sr-only" for="trade">Trade or job title</label>
+              <input id="trade" type="text" placeholder="Trade / Job Title ex. Electrician Apprentice" />
+            </div>
+            <div>
+              <label class="sr-only" for="location">Location</label>
+              <input id="location" type="text" placeholder="Location ex. Penticton, BC" />
+            </div>
+          </div>
+
+          <label class="sr-only" for="bio">Profile summary</label>
+          <textarea id="bio" placeholder="Write a short professional summary about your experience, strengths, certifications, and the kind of work you're looking for..."></textarea>
+
+          <div class="compact-strength">
+            <div>
+              <span class="eyebrow">Profile Completion</span>
+              <strong id="profile_strength_number">82%</strong>
+            </div>
+            <div class="score-track">
+              <div></div>
+            </div>
+            <p id="profileStrengthHint">Complete your work history, skills, resume, and contact preferences to improve employer visibility.</p>
+          </div>
+        </section>
+      </section>
+
+      <section class="content-layout">
+        <aside class="sidebar-card" aria-label="Profile sections">
+          <a href="#overview" class="active">Overview</a>
+          <a href="#experience-section">Experience</a>
+          <a href="#skills-section">Skills</a>
+          <a href="#documents-section">Documents</a>
+          <a href="#contact-section">Contact</a>
+          <a href="#visibility-section">Visibility</a>
+        </aside>
+
+        <section class="profile-content">
+          <section class="panel" id="overview">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">Public Profile Preview</span>
+                <h2>How Employers Will See You</h2>
+              </div>
+              <span class="mini-pill" id="previewVisibilityPill">Live Preview</span>
+            </div>
+
+            <div class="preview-card">
+              <div class="preview-avatar">PT</div>
+
+              <div class="preview-info">
+                <h3 id="preview_name">Candidate Name</h3>
+                <p id="preview_meta">Trade / Job Title - Location</p>
+
+                <div class="preview-tags">
+                  <span>Reliable</span>
+                  <span>Certified</span>
+                  <span>Available</span>
+                </div>
+              </div>
+
+              <button type="button" class="secondary-btn" id="viewPreviewBtn">View Preview</button>
+            </div>
+          </section>
+
+          <section class="panel" id="experience-section">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">Work History</span>
+                <h2>Experience</h2>
+              </div>
+              <button type="button" class="small-outline-btn">Add Experience</button>
+            </div>
+
+            <div class="form-grid">
+              <div>
+                <label for="experience">Years of Experience</label>
+                <input id="experience" type="text" placeholder="ex. 2 years" />
+              </div>
+
+              <div>
+                <label for="availability">Availability</label>
+                <select id="availability">
+                  <option value="">Select availability</option>
+                  <option>Available immediately</option>
+                  <option>Available within 1 week</option>
+                  <option>Available within 2 weeks</option>
+                  <option>Available within 1 month</option>
+                  <option>Currently employed but open to offers</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="work-list">
+              <article>
+                <div>
+                  <strong>Most Recent Position</strong>
+                  <p>Add your latest company, title, dates, and main responsibilities.</p>
+                </div>
+                <button type="button">Edit</button>
+              </article>
+
+              <article>
+                <div>
+                  <strong>Add another role</strong>
+                  <p>Build a stronger profile by showing previous jobs and trade experience.</p>
+                </div>
+                <button type="button">Add</button>
+              </article>
+            </div>
+          </section>
+
+          <section class="panel" id="skills-section">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">Searchable Strengths</span>
+                <h2>Skills and Certifications</h2>
+              </div>
+              <span class="mini-pill">Employer Search Info</span>
+            </div>
+
+            <label for="skills">Skills</label>
+            <input id="skills" type="text" placeholder="ex. Welding, conduit, blueprint reading" />
+
+            <div class="tag-row">
+              <span>Welding</span>
+              <span>Pipefitting</span>
+              <span>Blueprint Reading</span>
+              <span>Fabrication</span>
+              <span>Equipment Operation</span>
+            </div>
+
+            <label for="certifications">Certifications</label>
+            <input id="certifications" type="text" placeholder="ex. CSTS, WHMIS, Fall Protection" />
+
+            <div class="tag-row">
+              <span>CSTS</span>
+              <span>WHMIS</span>
+              <span>Fall Protection</span>
+              <span>First Aid</span>
+            </div>
+          </section>
+
+          <section class="panel" id="documents-section">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">Documents</span>
+                <h2>Resume and Documents</h2>
+              </div>
+            </div>
+
+            <p class="panel-text">Upload your resume so employers can review your experience before contacting you. Resume files remain private and are opened through the existing secure access flow.</p>
+
+            <div class="resume-drop" id="resumeDrop">
+              <div class="upload-icon">↑</div>
+              <strong>Drop resume here</strong>
+              <span>or click to upload PDF/DOCX</span>
+              <input id="resume_file" type="file" accept=".pdf,.doc,.docx" hidden />
+            </div>
+
+            <div id="resume_preview" class="resume-preview" style="display:none;">
+              <div class="file-icon">DOC</div>
+              <div>
+                <strong id="resume_file_name">Resume uploaded</strong>
+                <p>Ready for employers to review</p>
+              </div>
+              <button id="download_resume_btn" type="button">Download</button>
+              <button id="remove_resume_btn" type="button">Remove</button>
+            </div>
+          </section>
+
+          <section class="panel" id="contact-section">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">Employer Communication</span>
+                <h2>Contact Information</h2>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div>
+                <label for="email">Email</label>
+                <input id="email" type="email" placeholder="you@example.com" />
+              </div>
+
+              <div>
+                <label for="phone">Phone</label>
+                <input id="phone" type="text" placeholder="(403) 000-0000" />
+              </div>
+            </div>
+
+            <label for="contact_method">Preferred Contact Method</label>
+            <select id="contact_method">
+              <option>Email</option>
+              <option>Phone</option>
+              <option>Text</option>
             </select>
-          </div>
-        </div>
 
-        <div class="work-list">
-          <article>
+            <label for="shown_contact_method">Contact Info Shown To Employers</label>
+            <select id="shown_contact_method">
+              <option value="email">Email</option>
+              <option value="phone">Phone</option>
+              <option value="both">Both</option>
+            </select>
+          </section>
+
+          <section class="panel visibility-panel" id="visibility-section">
             <div>
-              <strong>Most Recent Position</strong>
-              <p>Add your latest company, title, dates, and main responsibilities.</p>
+              <span class="eyebrow">Privacy</span>
+              <h2>Visibility and Employer Access</h2>
+              <p class="panel-text">Control whether employers can discover your profile in candidate searches.</p>
+
+              <label class="toggle-row">
+                <input id="profile_visible" type="checkbox" checked />
+                <span>Visible to Employers</span>
+              </label>
             </div>
-            <button type="button">Edit</button>
-          </article>
 
-          <article>
-            <div>
-              <strong>Add another role</strong>
-              <p>Build a stronger profile by showing previous jobs and trade experience.</p>
-            </div>
-            <button type="button">Add</button>
-          </article>
-        </div>
+            <button class="primary-btn save-profile-btn" type="button">Save Changes</button>
+          </section>
+        </section>
       </section>
-
-      <section class="panel" id="skills-section">
-        <div class="panel-header">
-          <div>
-            <span class="small-label">Searchable Strengths</span>
-            <h2>Skills & Certifications</h2>
-          </div>
-          <span class="mini-pill">Employer Search Info</span>
-        </div>
-
-        <label>Skills</label>
-        <input id="skills" type="text" placeholder="ex. Welding, conduit, blueprint reading" />
-
-        <div class="tag-row">
-          <span>Welding</span>
-          <span>Pipefitting</span>
-          <span>Blueprint Reading</span>
-          <span>Fabrication</span>
-          <span>Equipment Operation</span>
-        </div>
-
-        <label>Certifications</label>
-        <input id="certifications" type="text" placeholder="ex. CSTS, WHMIS, Fall Protection" />
-
-        <div class="tag-row">
-          <span>CSTS</span>
-          <span>WHMIS</span>
-          <span>Fall Protection</span>
-          <span>First Aid</span>
-        </div>
-      </section>
-
-      <section class="panel" id="documents-section">
-        <div class="panel-header">
-          <div>
-            <span class="small-label">Documents</span>
-            <h2>Resume Manager</h2>
-          </div>
-        </div>
-
-        <p class="panel-text">Upload your resume so employers can review your experience before contacting you.</p>
-
-        <div class="resume-drop" id="resumeDrop">
-          <div class="upload-icon">↑</div>
-          <strong>Drop resume here</strong>
-          <span>or click to upload PDF/DOCX</span>
-          <input id="resume_file" type="file" accept=".pdf,.doc,.docx" hidden />
-        </div>
-
-        <div id="resume_preview" class="resume-preview" style="display:none;">
-          <div class="file-icon">📄</div>
-          <div>
-            <strong id="resume_file_name">Resume uploaded</strong>
-            <p>Ready for employers to review</p>
-          </div>
-          <button id="download_resume_btn" type="button">Download</button>
-          <button id="remove_resume_btn" type="button">Remove</button>
-        </div>
-      </section>
-
-      <section class="panel" id="contact-section">
-        <div class="panel-header">
-          <div>
-            <span class="small-label">Employer Communication</span>
-            <h2>Contact Info</h2>
-          </div>
-        </div>
-
-        <div class="form-grid">
-          <div>
-            <label>Email</label>
-            <input id="email" type="email" placeholder="you@example.com" />
-          </div>
-
-          <div>
-            <label>Phone</label>
-            <input id="phone" type="text" placeholder="(403) 000-0000" />
-          </div>
-        </div>
-
-        <label>Preferred Contact Method</label>
-        <select id="contact_method">
-          <option>Email</option>
-          <option>Phone</option>
-          <option>Text</option>
-        </select>
-
-        <label>Contact Info Shown To Employers</label>
-        <select id="shown_contact_method">
-          <option value="email">Email</option>
-          <option value="phone">Phone</option>
-          <option value="both">Both</option>
-        </select>
-      </section>
-
-      <section class="panel visibility-panel" id="visibility-section">
-        <div>
-          <span class="small-label">Privacy</span>
-          <h2>Profile Visibility</h2>
-          <p class="panel-text">Control whether employers can discover your profile in candidate searches.</p>
-
-          <label class="toggle-row">
-            <input id="profile_visible" type="checkbox" checked />
-            <span>Visible to Employers</span>
-          </label>
-        </div>
-
-        <button class="primary-btn save-profile-btn" type="button">Save Profile</button>
-      </section>
-
-    </section>
-
-  </section>
-
-</main>
+    </main>
+  </div>
+</div>
 
 <div id="toast" class="toast"></div>
 
@@ -302,9 +398,11 @@
 <script src="../js/config.js"></script>
 <script src="../js/auth-utils.js"></script>
 <script src="../js/auth-guards.js"></script>
+<script src="../js/job-url-utils.js"></script>
+<script src="../js/public-company-utils.js"></script>
+<script src="../js/candidate-global-search.js"></script>
 <script src="../js/candidate-preview.js"></script>
 <script src="../js/candidate-profile.js"></script>
-<script src="../js/candidate-header.js"></script>
 
 </body>
 </html>

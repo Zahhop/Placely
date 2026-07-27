@@ -2042,6 +2042,146 @@ body[data-plan="pro"] .manage-shell {
   flex: 0 1 auto;
 }
 
+.manage-notice {
+  margin: -10px 0 24px;
+  padding: 14px 16px;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  background: #f0fdf4;
+  color: var(--success);
+  font-size: 13.5px;
+  font-weight: 800;
+}
+
+.jobs-create-view .dashboard-briefing {
+  margin-bottom: 24px;
+}
+
+.job-form-card {
+  display: grid;
+  gap: 0;
+}
+
+.form-section {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.form-section:first-child {
+  padding-top: 0;
+}
+
+.publishing-section {
+  border-bottom: 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.form-group {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.form-group.full {
+  grid-column: 1 / -1;
+}
+
+.job-form-card label {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.job-form-card input,
+.job-form-card select,
+.job-form-card textarea {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+  outline: none;
+  padding: 14px 15px;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.job-form-card textarea {
+  min-height: 132px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.job-form-card input:focus,
+.job-form-card select:focus,
+.job-form-card textarea:focus {
+  border-color: #bfdbfe;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.field-hint,
+.field-error {
+  min-height: 17px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.field-hint {
+  color: var(--muted);
+}
+
+.field-error,
+.form-message {
+  color: #b91c1c;
+}
+
+.form-message {
+  min-height: 22px;
+  padding-top: 16px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.form-message.success {
+  color: var(--success);
+}
+
+.submit-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  margin: 8px calc(var(--pro-panel-padding) * -1) calc(var(--pro-panel-padding) * -1);
+  padding: 18px var(--pro-panel-padding);
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 var(--pro-panel-radius) var(--pro-panel-radius);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.submit-btn:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+
+.danger-btn {
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.submit-bar button:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+
 .hidden {
   display: none !important;
 }
@@ -2071,6 +2211,10 @@ body[data-plan="pro"] .manage-shell {
     align-items: start;
   }
 
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
   .job-detail-grid {
     grid-template-columns: 1fr;
   }
@@ -2091,8 +2235,23 @@ body[data-plan="pro"] .manage-shell {
     padding: 24px;
   }
 
+  .job-form-card {
+    padding: 22px;
+  }
+
   .job-card {
     padding: 20px;
+  }
+
+  .submit-bar {
+    margin: 8px -22px -22px;
+    padding: 16px 22px;
+    flex-direction: column-reverse;
+  }
+
+  .submit-bar .primary-btn,
+  .submit-bar .secondary-btn {
+    width: 100%;
   }
 
   .job-actions a,

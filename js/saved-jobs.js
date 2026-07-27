@@ -65,7 +65,6 @@ async function initSavedJobs() {
       loadActiveBoosts()
     ]);
 
-    hydrateHeader();
     renderSavedJobs();
   } catch (error) {
     console.error("Saved Jobs failed to load", {
@@ -96,26 +95,24 @@ function setupEvents() {
   });
 }
 
-async function loadCandidateProfile(user) {
-  const { data } = await savedSupabase
-    .from("candidate_profiles")
-    .select("id, full_name, email, profile_photo_url, profile_photo, avatar_url, photo_url")
-    .eq("id", user.id)
-    .maybeSingle();
+function loadCandidateProfile(user) {
+  const identity = window.PlacelyAuth.getCachedCandidateIdentity?.() || {
+    fullName: user?.email?.split("@")[0] || "Candidate",
+    firstName: user?.email?.split("@")[0] || "Candidate",
+    email: user?.email || "",
+    initials: "PT",
+    photoUrl: ""
+  };
 
   currentProfile = {
-    ...(data || {}),
-    email: data?.email || user.email || ""
+    full_name: identity.fullName,
+    email: identity.email || user.email || "",
+    profile_photo_url: identity.photoUrl || ""
   };
+  window.PlacelyAuth.updateCandidateHeader?.(identity);
 }
 
 async function loadSavedJobs() {
-  console.info("Saved Jobs query started", {
-    table: "saved_jobs",
-    ownerColumn: "candidate_id",
-    select: SAVED_JOBS_SELECT
-  });
-
   const { data, error } = await savedSupabase
     .from("saved_jobs")
     .select(SAVED_JOBS_SELECT)
@@ -135,7 +132,6 @@ async function loadSavedJobs() {
   }
 
   savedRows = data || [];
-  console.info("Saved Jobs query completed", { count: savedRows.length });
 }
 
 async function loadAppliedJobIds(userId) {
@@ -157,7 +153,7 @@ async function loadEmployerProfiles() {
 
   const { data, error } = await savedSupabase
     .from("public_employer_profiles")
-    .select("id, company_name, company_logo_url, company_photo_url, logo_url, company_logo, company_logo_preview")
+    .select("id, company_name, company_logo_url")
     .in("id", employerIds);
 
   if (error) return;
@@ -371,25 +367,6 @@ function renderErrorState() {
   `;
 }
 
-function hydrateHeader() {
-  const fullName = currentProfile.full_name || "Candidate";
-  const firstName = fullName.split(" ")[0] || "Candidate";
-  const email = currentProfile.email || currentUser?.email || "No email on file";
-
-  setText("topCandidateName", firstName);
-  setText("accountMenuCandidateName", fullName);
-  setText("accountMenuEmail", email);
-
-  const avatar = document.getElementById("topCandidateAvatar");
-  if (!avatar) return;
-
-  const initials = getInitials(fullName || email);
-  const photoUrl = resolveCandidatePhotoUrl(currentProfile);
-  avatar.innerHTML = photoUrl
-    ? `<img src="${escapeHTML(photoUrl)}" alt="" loading="lazy" /><span class="avatar-fallback">${escapeHTML(initials)}</span>`
-    : escapeHTML(initials);
-}
-
 function bindAccountMenu() {
   const button = document.getElementById("candidateAccountButton");
   const menu = document.getElementById("candidateAccountMenu");
@@ -448,9 +425,10 @@ function bindMobileSidebar() {
 
 function renderCompanyAvatar(job) {
   if (job.logoUrl) {
+    const initials = getInitials(job.company);
     return `
       <div class="company-avatar">
-        <img src="${escapeHTML(job.logoUrl)}" alt="${escapeHTML(job.company)} logo" loading="lazy">
+        <img src="${escapeAttribute(job.logoUrl)}" alt="${escapeAttribute(job.company)} logo" loading="lazy" onerror="this.parentElement.textContent='${escapeAttribute(initials)}'">
       </div>
     `;
   }
@@ -461,17 +439,10 @@ function renderCompanyAvatar(job) {
 function getCompanyLogoUrl(source) {
   if (!source) return "";
 
-  const value =
-    source.company_logo_url ||
-    source.company_photo_url ||
-    source.logo_url ||
-    source.company_logo ||
-    source.company_logo_preview ||
-    "";
-
-  if (!value) return "";
-  if (/^https?:\/\//i.test(String(value))) return value;
-  return window.PlacelyAuth?.getPublicImageUrl?.(savedSupabase, "employer-logos", value) || String(value || "");
+  return window.PlacelyAuth?.resolveEmployerLogoUrl?.(
+    window.PlacelyAuth.getPublicEmployerLogoValue(source),
+    { supabase: savedSupabase }
+  ) || "";
 }
 
 function resolveCandidatePhotoUrl(profile) {
@@ -547,6 +518,10 @@ function escapeHTML(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function escapeAttribute(value) {
+  return escapeHTML(value).replaceAll("`", "&#096;");
 }
 
 window.removeSavedJob = removeSavedJob;

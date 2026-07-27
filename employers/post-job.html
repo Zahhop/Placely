@@ -1,195 +1,69 @@
 <!DOCTYPE html>
-<html lang="en" class="auth-booting">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+  <meta http-equiv="refresh" content="0; url=manage-jobs.html?view=create" />
   <title>Post a Job | Placely Talent</title>
+  <link rel="canonical" href="manage-jobs.html?view=create" />
+  <style>
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      background: #f5f7fb;
+      color: #0f172a;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
 
-  <link rel="stylesheet" href="../css/post-job.css" />
-  <link rel="stylesheet" href="../css/employer-consistency.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    main {
+      width: min(420px, calc(100% - 32px));
+      padding: 24px;
+      border: 1px solid #dfe7f1;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.045);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 22px;
+      line-height: 1.2;
+    }
+
+    p {
+      margin: 0 0 18px;
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    a {
+      min-height: 44px;
+      padding: 0 18px;
+      border-radius: 11px;
+      background: #2563eb;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 800;
+    }
+  </style>
 </head>
-
 <body>
+  <main>
+    <h1>Opening Post Job</h1>
+    <p>The Post Job form now opens inside the Jobs workspace.</p>
+    <a href="manage-jobs.html?view=create">Continue to Post Job</a>
+  </main>
 
-<header>
-  <div class="logo-wrapper">
-    <a href="employer-dashboard.html" class="logo">PLACELY TALENT</a>
-    <div class="logo-subtitle">Employer Platform</div>
-  </div>
-
-  <nav data-employer-nav>
-    <a href="employer-dashboard.html" class="employer-nav-link">Dashboard</a>
-    <a href="manage-jobs.html" class="employer-nav-link">Jobs</a>
-    <a href="employer-applicants.html" class="employer-nav-link">Applicants</a>
-    <a href="find-candidates.html" id="employerCandidatesNav" class="employer-nav-link employer-candidates-nav" hidden>Candidates</a>
-    <a href="saved-talent.html" class="employer-nav-link">Saved Talent</a>
-    <a href="employer-messages.html" class="employer-nav-link">Messages</a>
-    <a href="employer-profile.html" class="employer-nav-link">Company</a>
-    <button type="button" id="logoutBtn" class="logout-btn">Logout</button>
-  </nav>
-</header>
-
-<main class="page-shell">
-
-  <section class="hero-card">
-    <div>
-      <span class="eyebrow">CREATE JOB POST</span>
-      <h1>Post a role candidates can act on.</h1>
-      <p>Write a clear job post with the role, location, pay, requirements, and publishing status candidates need before applying.</p>
-    </div>
-
-    <div class="hero-actions">
-      <a href="manage-jobs.html" class="secondary-link">Manage Jobs</a>
-      <a href="employer-dashboard.html" class="secondary-link">Dashboard</a>
-    </div>
-  </section>
-
-  <form class="job-form-card" id="jobForm">
-
-    <section class="form-section">
-      <div class="section-heading">
-        <span class="eyebrow">JOB BASICS</span>
-        <h2>Role details</h2>
-      </div>
-
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="jobTitle">Job title</label>
-          <input id="jobTitle" type="text" placeholder="Electrical Apprentice" required />
-        </div>
-
-        <div class="form-group">
-          <label for="companyName">Company name</label>
-          <input id="companyName" type="text" placeholder="Your company name" />
-        </div>
-
-        <div class="form-group">
-          <label for="location">Location</label>
-          <input id="location" type="text" placeholder="Calgary, AB" required />
-        </div>
-
-        <div class="form-group">
-          <label for="employmentType">Employment type</label>
-          <select id="employmentType">
-            <option>Full-time</option>
-            <option>Part-time</option>
-            <option>Contract</option>
-            <option>Temporary</option>
-            <option>Rotation</option>
-            <option>Apprenticeship</option>
-          </select>
-        </div>
-      </div>
-    </section>
-
-    <section class="form-section">
-      <div class="section-heading">
-        <span class="eyebrow">COMPENSATION AND EXPERIENCE</span>
-        <h2>Pay and fit</h2>
-      </div>
-
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="compensationType">Compensation type</label>
-          <select id="compensationType" required>
-            <option value="hourly">Hourly</option>
-            <option value="annual">Annual salary</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="compensationMin">Minimum Pay</label>
-          <input id="compensationMin" type="number" min="1" step="0.01" inputmode="decimal" placeholder="25" required />
-        </div>
-
-        <div class="form-group">
-          <label for="compensationMax">Maximum Pay</label>
-          <input id="compensationMax" type="number" min="1" step="0.01" inputmode="decimal" placeholder="40" required />
-          <small id="compensationUnit" class="field-hint">per hour</small>
-          <small id="compensationError" class="field-error"></small>
-          <small id="compensationPreview" class="field-hint"></small>
-        </div>
-
-        <div class="form-group">
-          <label for="experienceLevel">Experience level</label>
-          <select id="experienceLevel">
-            <option>Entry Level</option>
-            <option>Apprentice</option>
-            <option>Journeyman</option>
-            <option>Supervisor / Lead Hand</option>
-          </select>
-        </div>
-      </div>
-    </section>
-
-    <section class="form-section">
-      <div class="section-heading">
-        <span class="eyebrow">DESCRIPTION</span>
-        <h2>Work summary</h2>
-        <p>Describe the work, schedule, job site, and responsibilities clearly.</p>
-      </div>
-
-      <div class="form-group full">
-        <label for="jobDescription">Job description</label>
-        <textarea id="jobDescription" placeholder="Describe the role, responsibilities, schedule, job site, and what the candidate will be doing." required></textarea>
-      </div>
-    </section>
-
-    <section class="form-section">
-      <div class="section-heading">
-        <span class="eyebrow">SKILLS AND BENEFITS</span>
-        <h2>Requirements and perks</h2>
-      </div>
-
-      <div class="form-grid">
-        <div class="form-group full">
-          <label for="requiredSkills">Required skills / certifications</label>
-          <textarea id="requiredSkills" placeholder="CSTS, WHMIS, Fall Protection, tools, license, reliable transportation, etc."></textarea>
-        </div>
-
-        <div class="form-group full">
-          <label for="benefits">Benefits / perks</label>
-          <textarea id="benefits" placeholder="Overtime, benefits, growth opportunities, paid training, company vehicle, etc."></textarea>
-        </div>
-      </div>
-    </section>
-
-    <section class="form-section publishing-section">
-      <div class="section-heading">
-        <span class="eyebrow">PUBLISHING</span>
-        <h2>Post status</h2>
-      </div>
-
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="jobStatus">Status</label>
-          <select id="jobStatus">
-            <option value="active">Active</option>
-            <option value="paused">Paused</option>
-          </select>
-        </div>
-      </div>
-    </section>
-
-    <div id="formMessage" class="form-message"></div>
-
-    <div class="submit-bar">
-      <a href="manage-jobs.html" class="secondary-link">Cancel</a>
-      <button type="submit" class="submit-btn">Post Job</button>
-    </div>
-
-  </form>
-
-</main>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/config.js"></script>
-<script src="../js/auth-utils.js"></script>
-<script src="../js/auth-guards.js"></script>
-<script src="../emp-js/employer-navbar.js"></script>
-<script src="../emp-js/post-job.js"></script>
-
+  <script>
+    window.location.replace("manage-jobs.html?view=create");
+  </script>
 </body>
 </html>

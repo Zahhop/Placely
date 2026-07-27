@@ -32,10 +32,10 @@ async function initPublicJobDetail() {
     .from("jobs")
     .select(PUBLIC_JOB_COLUMNS)
     .eq("id", jobId)
-    .eq("status", "active")
+    .in("status", window.PlacelyCompanies?.ACTIVE_JOB_STATUSES || ["active"])
     .maybeSingle();
 
-  if (error || !job) {
+  if (error || !job || !isActiveJob(job)) {
     renderUnavailable("Job unavailable", "This job may be closed, paused, deleted, expired, or no longer accepting applications.");
     return;
   }
@@ -48,22 +48,20 @@ async function initPublicJobDetail() {
 async function loadEmployerProfile(employerId) {
   if (!employerId) return {};
 
-  const { data, error } = await publicJobSupabase
-    .from("public_employer_profiles")
-    .select("id, company_name, company_description, description, about, company_logo_url, company_photo_url, logo_url, company_logo, company_logo_preview")
-    .eq("id", employerId)
-    .maybeSingle();
+  const { data, error } = window.PlacelyCompanies?.runPublicCompanySingleQuery
+    ? await window.PlacelyCompanies.runPublicCompanySingleQuery(
+        publicJobSupabase,
+        (query) => query.eq("id", employerId),
+        { columns: "id, company_name, company_description, company_location, company_logo_url" }
+      )
+    : { data: null, error: null };
 
   return error ? {} : data || {};
 }
 
 function renderPublicJob(job, employerProfile) {
   const normalized = normalizeJob(job);
-  const companyInfo =
-    employerProfile.company_description ||
-    employerProfile.description ||
-    employerProfile.about ||
-    "Company information has not been added yet.";
+  const companyInfo = employerProfile.company_description || "Company information has not been added yet.";
   const applyUrl = `../candidates/apply-job.html?job_id=${encodeURIComponent(job.id)}`;
   const loginUrl = `../candidates/candidate-login.html?redirect=${encodeURIComponent(applyUrl)}`;
 
@@ -74,7 +72,7 @@ function renderPublicJob(job, employerProfile) {
         <div>
           <span class="eyebrow">Open Role</span>
           <h1>${escapeHTML(normalized.title)}</h1>
-          <p>${escapeHTML(normalized.company)} - ${escapeHTML(normalized.location)}</p>
+          <p>${renderCompanyProfileAnchor(normalized, employerProfile)} - ${escapeHTML(normalized.location)}</p>
         </div>
       </div>
 
@@ -168,24 +166,19 @@ function normalizeJob(job) {
 }
 
 function renderCompanyAvatar(job, employerProfile) {
-  const rawLogo =
-    employerProfile.company_logo_url ||
-    employerProfile.company_photo_url ||
-    employerProfile.logo_url ||
-    employerProfile.company_logo ||
-    employerProfile.company_logo_preview ||
-    "";
-  const logoUrl = getEmployerLogoUrl(rawLogo);
+  const logoUrl = getEmployerLogoUrl(window.PlacelyAuth.getPublicEmployerLogoValue(employerProfile));
+  const companyUrl = getCompanyProfileUrl(job, employerProfile);
 
   if (logoUrl) {
+    const initials = getInitials(job.company);
     return `
-      <div class="company-avatar large">
-        <img src="${escapeHTML(logoUrl)}" alt="${escapeHTML(job.company)} logo" loading="lazy">
-      </div>
+      <a class="company-avatar large" href="${escapeAttribute(companyUrl)}" aria-label="View ${escapeAttribute(job.company)} company profile">
+        <img src="${escapeAttribute(logoUrl)}" alt="${escapeAttribute(job.company)} logo" loading="lazy" onerror="this.parentElement.textContent='${escapeAttribute(initials)}'">
+      </a>
     `;
   }
 
-  return `<div class="company-avatar large">${escapeHTML(getInitials(job.company))}</div>`;
+  return `<a class="company-avatar large" href="${escapeAttribute(companyUrl)}" aria-label="View ${escapeAttribute(job.company)} company profile">${escapeHTML(getInitials(job.company))}</a>`;
 }
 
 function renderDetailItem(label, value) {
@@ -207,9 +200,36 @@ function renderDetailSection(label, value) {
 }
 
 function getEmployerLogoUrl(value) {
-  if (!value) return "";
-  if (/^https?:\/\//i.test(String(value))) return value;
-  return window.PlacelyAuth?.getPublicImageUrl?.(publicJobSupabase, "employer-logos", value) || String(value || "");
+  return window.PlacelyAuth?.resolveEmployerLogoUrl?.(value, { supabase: publicJobSupabase }) || "";
+}
+
+function renderCompanyProfileAnchor(job, employerProfile) {
+  return `<a class="company-profile-inline-link" href="${escapeAttribute(getCompanyProfileUrl(job, employerProfile))}">${escapeHTML(job.company)}</a>`;
+}
+
+function getCompanyProfileUrl(job, employerProfile = {}) {
+  const profile = {
+    ...employerProfile,
+    id: employerProfile.id || job.employer_id,
+    company_name: employerProfile.company_name || job.company
+  };
+
+  return window.PlacelyCompanies?.buildCompanyProfileUrl?.(profile, {
+    basePath: "company.html",
+    source: "public-job",
+    selectedJobId: job.id,
+    returnTo: getPublicJobReturnPath(job)
+  }) || `company.html?id=${encodeURIComponent(job.employer_id || "")}`;
+}
+
+function getPublicJobReturnPath(job) {
+  const url = new URL("public/job.html", window.location.origin);
+  if (job?.id) url.searchParams.set("id", job.id);
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
+function isActiveJob(job) {
+  return window.PlacelyCompanies?.isPublicActiveJob?.(job) || String(job?.status || "").toLowerCase() === "active";
 }
 
 function formatDate(value) {
@@ -242,4 +262,8 @@ function escapeHTML(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function escapeAttribute(value) {
+  return escapeHTML(value).replaceAll("`", "&#096;");
 }

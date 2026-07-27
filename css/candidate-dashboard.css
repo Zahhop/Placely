@@ -1,8 +1,3 @@
-html.auth-booting body,
-html.dashboard-booting body {
-  visibility: hidden;
-}
-
 * {
   box-sizing: border-box;
 }
@@ -386,6 +381,10 @@ body > header nav a.active,
   padding: 0 15px;
 }
 
+.utility-search.has-global-results {
+  position: relative;
+}
+
 .utility-search input {
   min-width: 0;
   width: 100%;
@@ -395,6 +394,99 @@ body > header nav a.active,
   color: var(--ink);
   font-size: 14px;
   font-weight: 600;
+}
+
+.global-search-results {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  right: 0;
+  z-index: 140;
+  max-height: min(520px, calc(100vh - 110px));
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 24px 54px rgba(15, 23, 42, 0.16);
+  overflow-y: auto;
+}
+
+.global-search-state {
+  padding: 16px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.global-search-group {
+  padding: 8px;
+  display: grid;
+  gap: 4px;
+}
+
+.global-search-group + .global-search-group {
+  border-top: 1px solid var(--line);
+}
+
+.global-search-group > span {
+  padding: 7px 8px 4px;
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.global-search-group a {
+  min-width: 0;
+  min-height: 54px;
+  padding: 9px 10px;
+  border-radius: 9px;
+  color: inherit;
+  text-decoration: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.global-search-group a:hover,
+.global-search-group a:focus-visible {
+  background: #f8fbff;
+}
+
+.global-search-group a strong {
+  display: block;
+  min-width: 0;
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.global-search-group a small {
+  display: block;
+  min-width: 0;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.global-search-group a em {
+  font-style: normal;
+  color: var(--blue);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.global-company-result {
+  grid-template-columns: 42px minmax(0, 1fr) auto !important;
 }
 
 .search-shortcut {
@@ -932,6 +1024,36 @@ body > header nav a.active,
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 18px;
+}
+
+.suggested-job-main {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 11px;
+  align-items: center;
+}
+
+.company-avatar {
+  width: 42px;
+  height: 42px;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  background: #dbeafe;
+  color: var(--blue);
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.company-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .suggested-job-card h3 {

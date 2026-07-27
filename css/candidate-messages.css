@@ -1,7 +1,3 @@
-html.messages-booting body {
-  visibility: hidden;
-}
-
 .messages-shell {
   display: grid;
   gap: 24px;

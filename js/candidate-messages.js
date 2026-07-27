@@ -52,7 +52,6 @@ async function initMessages() {
       loadHeaderCounts(user.id)
     ]);
 
-    hydrateHeader();
     renderConversationList(getFilteredConversations());
 
     if (activeConversationId) {
@@ -98,12 +97,8 @@ async function loadConversations() {
         "Employer";
 
       const logoUrl = getEmployerLogoUrl(
-        employerProfile?.company_logo_url ||
-        employerProfile?.logo_url ||
-        employerProfile?.company_logo ||
-        employerProfile?.company_logo_preview ||
+        window.PlacelyAuth.getPublicEmployerLogoValue(employerProfile) ||
         conversation.company_logo_url ||
-        conversation.logo_url ||
         ""
       );
 
@@ -140,7 +135,7 @@ async function getEmployerProfile(employerId) {
 
   const { data, error } = await candidateMessagesSupabase
     .from("public_employer_profiles")
-    .select("*")
+    .select("id, company_name, company_logo_url")
     .eq("id", employerId)
     .maybeSingle();
 
@@ -151,17 +146,21 @@ async function getEmployerProfile(employerId) {
   return data;
 }
 
-async function loadCandidateProfile(user) {
-  const { data } = await candidateMessagesSupabase
-    .from("candidate_profiles")
-    .select("id, full_name, email, profile_photo_url, profile_photo, avatar_url, photo_url")
-    .eq("id", user.id)
-    .maybeSingle();
+function loadCandidateProfile(user) {
+  const identity = window.PlacelyAuth.getCachedCandidateIdentity?.() || {
+    fullName: user?.email?.split("@")[0] || "Candidate",
+    firstName: user?.email?.split("@")[0] || "Candidate",
+    email: user?.email || "",
+    initials: "PT",
+    photoUrl: ""
+  };
 
   currentProfile = {
-    ...(data || {}),
-    email: data?.email || user.email || ""
+    full_name: identity.fullName,
+    email: identity.email || user.email || "",
+    profile_photo_url: identity.photoUrl || ""
   };
+  window.PlacelyAuth.updateCandidateHeader?.(identity);
 }
 
 async function loadHeaderCounts(userId) {
@@ -695,37 +694,18 @@ async function getUnreadCount(conversationId) {
 
 function renderAvatar(url, initials, altText) {
   if (url) {
-    return `<img src="${escapeAttribute(url)}" class="message-avatar-img" alt="${escapeAttribute(altText || "Avatar")}">`;
+    return `<img src="${escapeAttribute(url)}" class="message-avatar-img" alt="${escapeAttribute(altText || "Avatar")}" onerror="this.parentElement.textContent='${escapeAttribute(initials || "PT")}'">`;
   }
 
   return `<span>${escapeHTML(initials || "PT")}</span>`;
 }
 
 function getEmployerLogoUrl(value) {
-  return window.PlacelyAuth?.getPublicImageUrl?.(candidateMessagesSupabase, "employer-logos", value) || String(value || "");
+  return window.PlacelyAuth?.resolveEmployerLogoUrl?.(value, { supabase: candidateMessagesSupabase }) || "";
 }
 
 function getActiveConversation() {
   return conversationsData.find((item) => String(item.id) === String(activeConversationId));
-}
-
-function hydrateHeader() {
-  const fullName = currentProfile.full_name || "Candidate";
-  const firstName = fullName.split(" ")[0] || "Candidate";
-  const email = currentProfile.email || currentUser?.email || "No email on file";
-
-  setText("topCandidateName", firstName);
-  setText("accountMenuCandidateName", fullName);
-  setText("accountMenuEmail", email);
-
-  const avatar = document.getElementById("topCandidateAvatar");
-  if (!avatar) return;
-
-  const initials = getInitials(fullName || email);
-  const photoUrl = resolveCandidatePhotoUrl(currentProfile);
-  avatar.innerHTML = photoUrl
-    ? `<img src="${escapeHTML(photoUrl)}" alt="" loading="lazy" /><span class="avatar-fallback">${escapeHTML(initials)}</span>`
-    : escapeHTML(initials);
 }
 
 function bindAccountMenu() {

@@ -1,7 +1,3 @@
-html.saved-jobs-booting body {
-  visibility: hidden;
-}
-
 .saved-jobs-shell {
   display: grid;
   gap: 24px;

@@ -1,7 +1,3 @@
-html.jobs-booting body {
-  visibility: hidden;
-}
-
 .find-jobs-shell {
   display: grid;
   gap: 24px;
@@ -209,6 +205,23 @@ html.jobs-booting body {
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.company-avatar[role="link"],
+.company-profile-inline-link {
+  cursor: pointer;
+}
+
+.company-profile-inline-link {
+  color: var(--blue);
+  text-decoration: none;
+  font-weight: 900;
+}
+
+.company-profile-inline-link:hover,
+.company-profile-inline-link:focus-visible {
+  color: var(--blue-dark);
+  text-decoration: underline;
 }
 
 .job-card h3,
