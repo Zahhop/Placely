@@ -57,10 +57,14 @@
   <main>
     <h1>Opening Application</h1>
     <p>The application form now opens inside Find Jobs.</p>
-    <a id="continueLink" href="../public/find-jobs.html?role=candidate">Continue to Find Jobs</a>
+    <a id="continueLink" href="find-jobs.html?role=candidate">Continue to Find Jobs</a>
   </main>
 
   <script src="../js/candidate-application-flow.js"></script>
-  <script src="../js/apply-job.js"></script>
+  <script>
+    window.PlacelyCandidateApplications.redirectLegacyApplyPage({
+      findJobsPath: "find-jobs.html"
+    });
+  </script>
 </body>
 </html>

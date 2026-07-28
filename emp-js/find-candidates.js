@@ -52,9 +52,25 @@ let lastFocusedElement = null;
 let employerProfile = {};
 let activeJobs = [];
 let savedRefreshWarningShown = false;
+let candidateProfileWorkspace = null;
+let candidateSearchScrollTop = 0;
 
 const PAGE_SIZE = 50;
 const NOT_LISTED = "Not listed";
+const CANDIDATE_LIST_COLUMNS = [
+  "id",
+  "full_name",
+  "profile_photo_url",
+  "trade",
+  "location",
+  "experience",
+  "availability",
+  "skills",
+  "certifications",
+  "created_at",
+  "profile_visible",
+  "verification_status"
+].join(",");
 
 document.addEventListener("DOMContentLoaded", initFindCandidates);
 
@@ -91,6 +107,8 @@ async function initFindCandidates() {
 
   await loadSavedCandidates();
   applyFilters();
+  setupCandidateProfileWorkspace();
+  await restoreCandidateProfileRoute();
 }
 
 function setupEvents() {
@@ -169,13 +187,10 @@ async function loadCandidates() {
   resultsText.textContent = "Loading candidates...";
   renderLoadingRows();
 
-  const paidColumns = "*";
-  const previewColumns = "id, trade, location, experience, availability, skills, certifications, created_at, profile_visible";
-
   try {
     const { data: candidates, error } = await employerSupabase
       .from("candidate_profiles")
-      .select(hasCandidateAccess ? paidColumns : previewColumns)
+      .select(CANDIDATE_LIST_COLUMNS)
       .eq("profile_visible", true)
       .order("created_at", { ascending: false });
 
@@ -409,7 +424,7 @@ function createCandidateRow(candidate, index) {
       return;
     }
 
-    openCandidatePanel();
+    openCandidateWorkspace(id);
   });
 
   row.addEventListener("keydown", (event) => {
@@ -417,7 +432,7 @@ function createCandidateRow(candidate, index) {
     event.preventDefault();
     selectedCandidateId = id;
     renderCandidates();
-    openCandidatePanel();
+    openCandidateWorkspace(id);
   });
 
   return row;
@@ -457,6 +472,7 @@ function renderCandidateDetail(candidate) {
   const visibleContact = window.PlacelyAuth.getVisibleCandidateContact(candidate);
   const hasResume = Boolean(normalizeText(candidate.resume_path || candidate.resume_url));
   const createdAt = formatDate(candidate.created_at);
+  const verifiedBadge = renderVerifiedBadge(candidate);
 
   candidateDetailContent.innerHTML = `
     <div class="profile-drawer">
@@ -472,6 +488,7 @@ function renderCandidateDetail(candidate) {
 
           <div>
             <h2 class="detail-name">${escapeHTML(name)}</h2>
+            ${verifiedBadge}
             <div class="detail-trade">${escapeHTML(trade)}</div>
             <p class="drawer-location">${escapeHTML(location)}</p>
           </div>
@@ -581,7 +598,7 @@ function renderLockedDetail() {
     <div class="locked-detail-card">
       <div class="empty-icon">PT</div>
       <h3>Unlock Candidate Network</h3>
-      <p>Search verified trades candidates, view full profiles, save talent, and message candidates.</p>
+      <p>Search trades candidates, view full profiles, save talent, and message candidates.</p>
       <div class="detail-actions">
         <button type="button" class="row-action primary" id="detailUpgradeBtn">Upgrade Access</button>
       </div>
@@ -605,8 +622,52 @@ function renderDetailEmpty() {
   `;
 }
 
+function setupCandidateProfileWorkspace() {
+  if (candidateProfileWorkspace || !window.PlacelyEmployerCandidateProfile) return;
+
+  candidateProfileWorkspace = window.PlacelyEmployerCandidateProfile.createEmployerCandidateProfileWorkspace({
+    supabase: employerSupabase,
+    shellSelector: "#findPage",
+    source: "candidates",
+    backLabel: "Back to Candidates",
+    getEmployerId: () => currentUser?.id || "",
+    isSaved: (candidateId) => isCandidateSaved(candidateId),
+    onSaveToggle: async (candidate) => {
+      await toggleSaveCandidate({ ...candidate, id: candidate.id });
+    },
+    onMessage: (candidate) => startMessageWithCandidate(candidate),
+    onBack: () => {
+      selectedCandidateId = "";
+      renderCandidates();
+      window.setTimeout(() => window.scrollTo({ top: candidateSearchScrollTop || 0, behavior: "smooth" }), 0);
+    }
+  });
+}
+
+async function restoreCandidateProfileRoute() {
+  const params = new URLSearchParams(window.location.search);
+  const candidateId = params.get("candidate") || params.get("candidate_id") || "";
+  if (!candidateId) return;
+  setupCandidateProfileWorkspace();
+  selectedCandidateId = candidateId;
+  renderCandidates();
+  await candidateProfileWorkspace?.open(candidateId, { replaceHistory: true });
+}
+
+function openCandidateWorkspace(candidateId = selectedCandidateId) {
+  if (!hasCandidateAccess) {
+    renderLockedDetail();
+    return;
+  }
+
+  candidateSearchScrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+  selectedCandidateId = String(candidateId || "");
+  setupCandidateProfileWorkspace();
+  candidateProfileWorkspace?.open(selectedCandidateId);
+}
+
 function openCandidatePanel() {
-  renderSelectedCandidateDetail();
+  openCandidateWorkspace();
 }
 
 function closeCandidatePanel() {

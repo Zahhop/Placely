@@ -37,10 +37,29 @@ let filteredSavedCandidates = [];
 let hasCandidateAccess = false;
 let candidateAccessState = { state: "denied", status: "missing", active: false, pending: false };
 let savedTalentRowsByCandidateId = new Map();
+<<<<<<< HEAD
 let currentPage = 1;
 let pageSize = 10;
 let openMenuCandidateId = null;
 let confirmRemoveCandidateId = null;
+=======
+let savedCandidateProfileWorkspace = null;
+let savedTalentScrollTop = 0;
+const SAVED_TALENT_CANDIDATE_COLUMNS = [
+  "id",
+  "full_name",
+  "profile_photo_url",
+  "trade",
+  "location",
+  "experience",
+  "availability",
+  "skills",
+  "certifications",
+  "created_at",
+  "profile_visible",
+  "verification_status"
+].join(",");
+>>>>>>> e60667c9b5836edbe76cb33628ad92f2f55a9a5a
 
 document.addEventListener("DOMContentLoaded", initSavedTalent);
 
@@ -73,6 +92,8 @@ async function initSavedTalent() {
     return;
   }
   await loadSavedTalent();
+  setupSavedCandidateProfileWorkspace();
+  await restoreSavedCandidateProfileRoute();
 }
 
 function setupEvents() {
@@ -184,7 +205,7 @@ async function loadSavedTalent() {
 
   const { data, error } = await savedSupabase
     .from("candidate_profiles")
-    .select("*")
+    .select(SAVED_TALENT_CANDIDATE_COLUMNS)
     .in("id", candidateIds)
     .eq("profile_visible", true);
 
@@ -409,6 +430,7 @@ function createTalentRow(candidate) {
   const location = candidate.location || "Location not listed";
   const experience = candidate.experience || "Experience not listed";
   const availability = candidate.availability || "Availability not listed";
+<<<<<<< HEAD
   const tags = getCandidateTags(candidate, 99);
   const visibleTags = tags.slice(0, 3);
   const remainingTags = Math.max(0, tags.length - visibleTags.length);
@@ -416,6 +438,10 @@ function createTalentRow(candidate) {
   const availabilityCategory = getAvailabilityCategory(candidate.availability);
   const isMenuOpen = openMenuCandidateId === id;
   const isConfirmOpen = confirmRemoveCandidateId === id;
+=======
+  const tags = getCandidateTags(candidate);
+  const verifiedBadge = renderVerifiedBadge(candidate, { short: true });
+>>>>>>> e60667c9b5836edbe76cb33628ad92f2f55a9a5a
 
   row.innerHTML = `
     <td><input type="checkbox" class="saved-select-checkbox" aria-label="Select ${escapeAttribute(name)}"></td>
@@ -430,6 +456,7 @@ function createTalentRow(candidate) {
           <button type="button" class="saved-profile-link" data-action="view" data-id="${escapeAttribute(id)}">View profile</button>
         </span>
       </div>
+<<<<<<< HEAD
     </td>
     <td>
       <span class="table-stack">
@@ -446,6 +473,12 @@ function createTalentRow(candidate) {
       <div class="tag-row">
         ${visibleTags.length ? visibleTags.map((tag) => `<span>${escapeHTML(tag)}</span>`).join("") : `<span class="skills-empty">Skills not listed</span>`}
         ${remainingTags ? `<span>+${remainingTags}</span>` : ""}
+=======
+
+      <div>
+        <h3>${escapeHTML(name)} ${verifiedBadge}</h3>
+        <p>${escapeHTML(trade)}</p>
+>>>>>>> e60667c9b5836edbe76cb33628ad92f2f55a9a5a
       </div>
     </td>
     <td>
@@ -509,7 +542,7 @@ function createTalentRow(candidate) {
 
     if (action === "view") {
       event.stopPropagation();
-      openCandidatePanel(candidate);
+      openSavedCandidateProfile(candidate.id);
       return;
     }
   });
@@ -537,15 +570,57 @@ function renderRemoveConfirm(candidateId) {
   `;
 }
 
+function setupSavedCandidateProfileWorkspace() {
+  if (savedCandidateProfileWorkspace || !window.PlacelyEmployerCandidateProfile) return;
+
+  savedCandidateProfileWorkspace = window.PlacelyEmployerCandidateProfile.createEmployerCandidateProfileWorkspace({
+    supabase: savedSupabase,
+    shellSelector: ".page-shell",
+    source: "saved-talent",
+    backLabel: "Back to Saved Talent",
+    getEmployerId: () => currentUser?.id || "",
+    isSaved: (candidateId) => savedTalentRowsByCandidateId.has(String(candidateId || "")),
+    onSaveToggle: async (candidate) => {
+      if (savedTalentRowsByCandidateId.has(String(candidate.id))) {
+        await removeSavedCandidate(candidate.id);
+      }
+    },
+    onMessage: (candidate) => startMessageWithCandidate(candidate),
+    onBack: () => {
+      window.setTimeout(() => window.scrollTo({ top: savedTalentScrollTop || 0, behavior: "smooth" }), 0);
+    }
+  });
+}
+
+async function restoreSavedCandidateProfileRoute() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("view") !== "profile") return;
+  const candidateId = params.get("candidate") || params.get("candidate_id") || "";
+  if (!candidateId) return;
+  setupSavedCandidateProfileWorkspace();
+  await savedCandidateProfileWorkspace?.open(candidateId, { replaceHistory: true });
+}
+
+function openSavedCandidateProfile(candidateId) {
+  savedTalentScrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+  setupSavedCandidateProfileWorkspace();
+  savedCandidateProfileWorkspace?.open(candidateId);
+}
+
 function openCandidatePanel(candidate) {
+  openSavedCandidateProfile(candidate?.id);
+  return;
+
   const tags = getCandidateTags(candidate);
   const contactLocked = !hasCandidateAccess;
   const visibleContact = window.PlacelyAuth.getVisibleCandidateContact(candidate);
+  const verifiedBadge = renderVerifiedBadge(candidate);
 
   candidateDetailContent.innerHTML = `
     <img src="${escapeAttribute(getCandidatePhotoUrl(candidate.profile_photo_url) || "https://placehold.co/160x160?text=PT")}" class="detail-photo" alt="Candidate photo" />
 
     <h2 class="detail-name">${escapeHTML(candidate.full_name || "Candidate")}</h2>
+    ${verifiedBadge}
     <div class="detail-trade">${escapeHTML(candidate.trade || "Trade not listed")}</div>
 
     <p class="detail-bio">${escapeHTML(candidate.bio || "No bio added yet.")}</p>
@@ -945,4 +1020,8 @@ function escapeAttribute(value) {
 
 function getCandidatePhotoUrl(value) {
   return window.PlacelyAuth?.getPublicImageUrl?.(savedSupabase, "candidate_photos", value) || String(value || "");
+}
+
+function renderVerifiedBadge(candidate, options = {}) {
+  return window.PlacelyVerifiedBadge?.render(candidate, options) || "";
 }

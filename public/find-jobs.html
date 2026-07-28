@@ -132,14 +132,14 @@
     </header>
 
     <main class="candidate-shell find-jobs-shell">
-      <section class="dashboard-briefing jobs-briefing" aria-labelledby="findJobsTitle">
+      <section class="dashboard-briefing jobs-briefing find-jobs-browse-section" aria-labelledby="findJobsTitle">
         <div class="briefing-copy">
           <h1 id="findJobsTitle">Find Jobs</h1>
           <p>Discover roles that match your skills, experience, and goals.</p>
         </div>
       </section>
 
-      <section class="jobs-filter-panel" aria-label="Search and filter jobs">
+      <section class="jobs-filter-panel find-jobs-browse-section" aria-label="Search and filter jobs">
         <div class="jobs-filter-primary">
           <label>
             <span class="sr-only">Keyword search</span>
@@ -181,7 +181,7 @@
         </div>
       </section>
 
-      <section class="jobs-browser" aria-label="Job search results">
+      <section class="jobs-browser find-jobs-browse-section" aria-label="Job search results">
         <aside class="jobs-list-panel">
           <div class="panel-header">
             <div>
@@ -203,6 +203,8 @@
           </div>
         </section>
       </section>
+
+      <section id="applicationWorkspace" class="application-workspace" aria-live="polite" hidden></section>
     </main>
   </div>
 </div>
@@ -216,7 +218,9 @@
 <script src="../js/job-url-utils.js"></script>
 <script src="../js/job-seo-utils.js"></script>
 <script src="../js/public-company-utils.js"></script>
+<script src="../js/candidate-sidebar.js"></script>
 <script src="../js/candidate-global-search.js"></script>
+<script src="../js/candidate-application-flow.js"></script>
 <script src="../js/find-jobs.js"></script>
 
 </body>

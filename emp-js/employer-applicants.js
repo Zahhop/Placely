@@ -63,6 +63,8 @@ let explicitInitialJob = false;
 const updatingApplications = new Set();
 const statusHistoryCache = new Map();
 const noteDrafts = new Map();
+let applicantProfileWorkspace = null;
+let applicantsScrollTop = 0;
 
 document.addEventListener("DOMContentLoaded", initApplicants);
 
@@ -86,6 +88,8 @@ async function initApplicants() {
 
     await loadEmployerShellProfile();
     await loadApplicants();
+    setupApplicantProfileWorkspace();
+    await restoreApplicantProfileRoute();
   } catch {
     renderLoadError("Could not load Applicants", "Refresh the page and try again.");
   } finally {
@@ -361,6 +365,7 @@ async function hydrateApplications(applications) {
       candidate_certifications: snapshot.certifications || candidate.certifications || "",
       candidate_bio: snapshot.bio || snapshot.biography || candidate.bio || candidate.biography || "",
       candidate_photo: snapshot.profile_photo_url || candidate.profile_photo_url || "",
+      candidate_verification_status: snapshot.verification_status || candidate.verification_status || "unverified",
       resume_path: snapshot.resume_path || app.resume_path || candidate.resume_path || getResumePathFromLegacyUrl(snapshot.resume_url || app.resume_url || candidate.resume_url || ""),
       resume_url: "",
       employer_notes: app.employer_notes || "",
@@ -638,6 +643,7 @@ function renderApplicantCard(app) {
   const status = getPipelineStage(app.normalized_status);
   const compactMeta = getCompactMeta(app)[0] || "";
   const isUpdating = updatingApplications.has(String(app.id));
+  const verifiedBadge = renderVerifiedBadge(app, { short: true });
 
   return `
     <article class="applicant-card compact ${isUpdating ? "updating" : ""}" data-id="${escapeHTML(app.id)}" draggable="${isUpdating ? "false" : "true"}" tabindex="0" aria-label="Open details for ${escapeHTML(app.candidate_name)}">
@@ -649,7 +655,7 @@ function renderApplicantCard(app) {
         }
       </div>
       <div class="card-name">
-        <h3>${escapeHTML(app.candidate_name)}</h3>
+        <h3>${escapeHTML(app.candidate_name)} ${verifiedBadge}</h3>
         <p>${escapeHTML(app.candidate_trade)} &middot; ${escapeHTML(shortLocation(app.candidate_location))}</p>
         ${compactMeta ? `<span class="card-signal">${escapeHTML(compactMeta)}</span>` : ""}
       </div>
@@ -1178,6 +1184,7 @@ function renderDetail() {
 
   const status = app.normalized_status;
   const canAct = status !== "candidate_deleted";
+  const verifiedBadge = renderVerifiedBadge(app);
 
   applicantDetail.innerHTML = `
     <div class="detail-head applicant-detail-head">
@@ -1191,6 +1198,7 @@ function renderDetail() {
 
       <div>
         <h2>${escapeHTML(app.candidate_name)}</h2>
+        ${verifiedBadge}
         <p class="detail-text">${escapeHTML(app.candidate_trade)} &middot; ${escapeHTML(app.candidate_location)}</p>
         <div class="drawer-stage-row">
           <span class="status-pill ${escapeHTML(status)}">${escapeHTML(getStatusLabel(status))}</span>
@@ -1202,7 +1210,8 @@ function renderDetail() {
     <div class="drawer-primary-actions">
       ${
         canAct
-          ? `<button type="button" class="drawer-action primary" data-message-id="${escapeHTML(app.id)}">Message</button>
+          ? `<button type="button" class="drawer-action" data-profile-application-id="${escapeHTML(app.id)}">View Candidate Profile</button>
+             <button type="button" class="drawer-action primary" data-message-id="${escapeHTML(app.id)}">Message</button>
              <select id="drawerStageSelect" aria-label="Move applicant stage">
                ${MOVE_OPTIONS.map((option) => `<option value="${escapeHTML(option)}" ${option === status ? "selected" : ""}>${escapeHTML(getStatusLabel(option))}</option>`).join("")}
              </select>`
@@ -1230,6 +1239,7 @@ function renderDetail() {
     </div>
 
     <div class="drawer-sticky-actions">
+      <button type="button" class="drawer-action" data-profile-application-id="${escapeHTML(app.id)}" ${canAct ? "" : "disabled"}>View Profile</button>
       <button type="button" class="drawer-action primary" data-message-id="${escapeHTML(app.id)}" ${canAct ? "" : "disabled"}>Message</button>
       ${
         hasResume(app)
@@ -1366,6 +1376,10 @@ function bindDrawerActions(app) {
 
   applicantDetail.querySelectorAll("[data-message-id]").forEach((button) => {
     button.addEventListener("click", () => messageCandidate(app.id));
+  });
+
+  applicantDetail.querySelectorAll("[data-profile-application-id]").forEach((button) => {
+    button.addEventListener("click", () => openApplicantProfile(button.dataset.profileApplicationId));
   });
 
   applicantDetail.querySelectorAll("[data-resume-candidate-id]").forEach((button) => {
@@ -1825,4 +1839,61 @@ function getEmployerLogoUrl(value) {
 
 function getCandidatePhotoUrl(value) {
   return window.PlacelyAuth?.getPublicImageUrl?.(applicantsSupabase, "candidate_photos", value) || String(value || "");
+}
+
+function setupApplicantProfileWorkspace() {
+  if (applicantProfileWorkspace || !window.PlacelyEmployerCandidateProfile) return;
+
+  applicantProfileWorkspace = window.PlacelyEmployerCandidateProfile.createEmployerCandidateProfileWorkspace({
+    supabase: applicantsSupabase,
+    shellSelector: ".applicants-shell",
+    source: "applicants",
+    backLabel: "Back to Applicants",
+    getEmployerId: () => currentUser?.id || "",
+    onMessage: (candidate) => {
+      const app = allApplications.find((item) => String(item.candidate_id) === String(candidate.id));
+      if (app) messageCandidate(app.id);
+      else window.location.href = `employer-messages.html?candidate_id=${encodeURIComponent(candidate.id)}`;
+    },
+    onBack: () => {
+      renderApplicants();
+      window.setTimeout(() => window.scrollTo({ top: applicantsScrollTop || 0, behavior: "smooth" }), 0);
+    }
+  });
+}
+
+async function restoreApplicantProfileRoute() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("view") !== "profile") return;
+  const candidateId = params.get("candidate") || params.get("candidate_id") || "";
+  if (!candidateId) return;
+  setupApplicantProfileWorkspace();
+  await applicantProfileWorkspace?.open(candidateId, {
+    replaceHistory: true,
+    applicationId: params.get("application") || params.get("application_id") || "",
+    jobId: params.get("job") || params.get("job_id") || selectedJobId || ""
+  });
+}
+
+function openApplicantProfile(applicationId) {
+  const app = allApplications.find((item) => String(item.id) === String(applicationId));
+  if (!app?.candidate_id) {
+    showToast("Candidate profile unavailable.", "error");
+    return;
+  }
+
+  applicantsScrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+  closeApplicantDrawer();
+  setupApplicantProfileWorkspace();
+  applicantProfileWorkspace?.open(app.candidate_id, {
+    applicationId: app.id,
+    jobId: app.job_id
+  });
+}
+
+function renderVerifiedBadge(app, options = {}) {
+  return window.PlacelyVerifiedBadge?.render(
+    { verification_status: app?.candidate_verification_status || app?.verification_status },
+    options
+  ) || "";
 }

@@ -29,6 +29,9 @@ let employerProfiles = {};
 let activeBoostsByJob = {};
 let suppressHistoryUpdate = false;
 let structuredCompensationSupported = false;
+let currentJobsView = "details";
+let applicationFlow = null;
+let savedJobsListScrollTop = 0;
 
 const JOB_BOOSTS_ENABLED = window.PLACELY_FEATURES?.jobBoosts === true;
 
@@ -44,6 +47,8 @@ const minimumCompensationInput = document.getElementById("minimumCompensationInp
 const datePostedFilter = document.getElementById("datePostedFilter");
 const searchBtn = document.getElementById("searchBtn");
 const backToResultsBtn = document.getElementById("backToResultsBtn");
+const browseSections = document.querySelectorAll(".find-jobs-browse-section");
+const applicationWorkspace = document.getElementById("applicationWorkspace");
 
 document.addEventListener("DOMContentLoaded", initFindJobs);
 
@@ -93,9 +98,12 @@ function bindStaticControls() {
 
   window.addEventListener("popstate", () => {
     const jobId = window.PlacelyJobUrls.getJobIdFromLocation();
+    const view = getJobsViewFromLocation();
     suppressHistoryUpdate = true;
-    if (jobId) selectJob(jobId, { revealOnMobile: false });
-    else if (filteredJobs.length) selectJob(filteredJobs[0].id, { revealOnMobile: false });
+    if (jobId) selectJob(jobId, { revealOnMobile: false, renderDetails: view !== "apply" });
+    else if (filteredJobs.length) selectJob(filteredJobs[0].id, { revealOnMobile: false, renderDetails: view !== "apply" });
+    if (view === "apply") openApplyView({ pushHistory: false, revealOnMobile: false });
+    else showBrowseView({ renderDetails: true, restoreScroll: true });
     suppressHistoryUpdate = false;
   });
 }
@@ -375,6 +383,7 @@ function renderJobCard(job) {
 
 function selectInitialJob() {
   const jobIdFromUrl = window.PlacelyJobUrls.getJobIdFromLocation();
+  const view = getJobsViewFromLocation();
   const matchingJob = jobIdFromUrl
     ? allJobs.find((job) => String(job.id) === String(jobIdFromUrl))
     : null;
@@ -391,7 +400,10 @@ function selectInitialJob() {
   }
 
   const firstJob = matchingJob || filteredJobs[0];
-  if (firstJob) selectJob(firstJob.id, { pushHistory: false, revealOnMobile: false });
+  if (firstJob) {
+    selectJob(firstJob.id, { pushHistory: false, revealOnMobile: false, renderDetails: view !== "apply" });
+    if (view === "apply") openApplyView({ pushHistory: false, revealOnMobile: false });
+  }
   else renderEmptyDetails("No active jobs", "There are no open jobs to show right now.");
 }
 
@@ -406,15 +418,18 @@ function selectJob(jobId, options = {}) {
   }
 
   selectedJob = job;
+  if (currentJobsView === "apply" && options.renderDetails !== false) {
+    currentJobsView = "details";
+  }
   updateSelectedCard();
-  renderJobDetails();
+  if (options.renderDetails !== false) renderJobDetails();
 
   if (options.revealOnMobile !== false && window.innerWidth <= 900) {
     document.body.classList.add("show-job-detail");
   }
 
   if (options.pushHistory !== false && !suppressHistoryUpdate) {
-    window.history.pushState({ jobId: job.id }, "", window.PlacelyJobUrls.buildFindJobsUrl(job));
+    window.history.pushState({ jobId: job.id, jobsView: "details" }, "", window.PlacelyJobUrls.buildFindJobsUrl(job));
   }
 }
 
@@ -571,6 +586,7 @@ function applyToSelectedJob() {
 
   if (isApplied(selectedJob.id)) {
     showToast("You already applied to this job.");
+    openApplyView({ pushHistory: true, revealOnMobile: true });
     return;
   }
 
@@ -579,7 +595,117 @@ function applyToSelectedJob() {
     return;
   }
 
-  window.location.href = `../candidates/apply-job.html?job_id=${encodeURIComponent(selectedJob.id)}`;
+  openApplyView({ pushHistory: true, revealOnMobile: true });
+}
+
+function openApplyView({ pushHistory = false, revealOnMobile = true } = {}) {
+  if (!selectedJob || !currentUser) return;
+
+  if (!isActiveJob(selectedJob)) {
+    renderEmptyDetails("Job unavailable", "This job is no longer accepting applications.");
+    return;
+  }
+
+  currentJobsView = "apply";
+  savedJobsListScrollTop = jobsList?.scrollTop || savedJobsListScrollTop || 0;
+  showApplicationWorkspace();
+
+  if (!applicationFlow) {
+    applicationFlow = window.PlacelyCandidateApplications.createFindJobsApplicationFlow({
+      supabase: jobsSupabase,
+      container: applicationWorkspace,
+      user: currentUser,
+      paths: {
+        applications: "../candidates/candidate-applications.html",
+        profile: "../candidates/candidate-profile.html",
+        login: "../candidates/candidate-login.html"
+      },
+      onBack: handleApplicationBack,
+      onSubmitted: handleApplicationSubmitted
+    });
+  }
+
+  applicationFlow.mount(
+    {
+      ...selectedJob.raw,
+      id: selectedJob.id,
+      employer_id: selectedJob.employer_id,
+      company_name: selectedJob.company,
+      company_logo_url: employerProfiles[String(selectedJob.employer_id)]?.company_logo_url || "",
+      status: selectedJob.status
+    },
+    selectedJob
+  );
+
+  if (revealOnMobile && window.innerWidth <= 900) document.body.classList.remove("show-job-detail");
+
+  if (pushHistory && !suppressHistoryUpdate) {
+    window.history.pushState(
+      { jobId: selectedJob.id, jobsView: "apply" },
+      "",
+      buildFindJobsApplyUrl(selectedJob)
+    );
+  }
+}
+
+function handleApplicationBack() {
+  if (!selectedJob) return;
+  showBrowseView({ renderDetails: true, restoreScroll: true });
+  updateRouteToJobDetails({ replace: true });
+}
+
+function handleApplicationSubmitted({ jobId, application }) {
+  if (jobId && !appliedJobIds.includes(String(jobId))) {
+    appliedJobIds.push(String(jobId));
+  }
+  renderJobs();
+  updateSelectedCard();
+}
+
+function showApplicationWorkspace() {
+  browseSections.forEach((section) => {
+    section.hidden = true;
+  });
+
+  if (applicationWorkspace) applicationWorkspace.hidden = false;
+  document.title = "Apply for Job | Placely Talent";
+  window.scrollTo({ top: 0, behavior: "auto" });
+}
+
+function showBrowseView({ renderDetails = false, restoreScroll = false } = {}) {
+  currentJobsView = "details";
+  browseSections.forEach((section) => {
+    section.hidden = false;
+  });
+
+  if (applicationWorkspace) {
+    applicationWorkspace.hidden = true;
+    applicationWorkspace.innerHTML = "";
+  }
+
+  document.title = "Find Jobs | Placely Talent";
+  if (renderDetails) renderJobDetails();
+  updateSelectedCard();
+  if (restoreScroll && jobsList) jobsList.scrollTop = savedJobsListScrollTop || 0;
+}
+
+function buildFindJobsApplyUrl(job) {
+  const url = new URL(window.PlacelyJobUrls.buildFindJobsUrl(job), window.location.href);
+  url.searchParams.set("view", "apply");
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
+function updateRouteToJobDetails({ replace = false } = {}) {
+  if (!selectedJob || suppressHistoryUpdate) return;
+  const path = window.PlacelyJobUrls.buildFindJobsUrl(selectedJob);
+  const state = { jobId: selectedJob.id, jobsView: "details" };
+  if (replace) window.history.replaceState(state, "", path);
+  else window.history.pushState(state, "", path);
+}
+
+function getJobsViewFromLocation() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("view") === "apply" ? "apply" : "details";
 }
 
 function bindSearchControls() {
