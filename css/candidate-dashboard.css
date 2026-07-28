@@ -309,6 +309,20 @@ body > header nav a.active,
   flex: 1 1 auto;
 }
 
+.candidate-nav-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+  background: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.16);
+}
+
+.candidate-nav-status-dot.verified {
+  background: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.16);
+}
+
 .sidebar-footer {
   padding-top: 8px;
   border-top: 1px solid var(--sidebar-line);

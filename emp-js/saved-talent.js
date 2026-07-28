@@ -26,6 +26,22 @@ let filteredSavedCandidates = [];
 let hasCandidateAccess = false;
 let candidateAccessState = { state: "denied", status: "missing", active: false, pending: false };
 let savedTalentRowsByCandidateId = new Map();
+let savedCandidateProfileWorkspace = null;
+let savedTalentScrollTop = 0;
+const SAVED_TALENT_CANDIDATE_COLUMNS = [
+  "id",
+  "full_name",
+  "profile_photo_url",
+  "trade",
+  "location",
+  "experience",
+  "availability",
+  "skills",
+  "certifications",
+  "created_at",
+  "profile_visible",
+  "verification_status"
+].join(",");
 
 document.addEventListener("DOMContentLoaded", initSavedTalent);
 
@@ -58,6 +74,8 @@ async function initSavedTalent() {
     return;
   }
   await loadSavedTalent();
+  setupSavedCandidateProfileWorkspace();
+  await restoreSavedCandidateProfileRoute();
 }
 
 function setupEvents() {
@@ -144,7 +162,7 @@ async function loadSavedTalent() {
 
   const { data, error } = await savedSupabase
     .from("candidate_profiles")
-    .select("*")
+    .select(SAVED_TALENT_CANDIDATE_COLUMNS)
     .in("id", candidateIds)
     .eq("profile_visible", true);
 
@@ -262,6 +280,7 @@ function createTalentCard(candidate) {
   const experience = candidate.experience || "Experience not listed";
   const availability = candidate.availability || "Availability not listed";
   const tags = getCandidateTags(candidate);
+  const verifiedBadge = renderVerifiedBadge(candidate, { short: true });
 
   card.innerHTML = `
     <div class="talent-top">
@@ -274,7 +293,7 @@ function createTalentCard(candidate) {
       </div>
 
       <div>
-        <h3>${escapeHTML(name)}</h3>
+        <h3>${escapeHTML(name)} ${verifiedBadge}</h3>
         <p>${escapeHTML(trade)}</p>
       </div>
     </div>
@@ -314,7 +333,7 @@ function createTalentCard(candidate) {
 
     if (action === "view") {
       event.stopPropagation();
-      openCandidatePanel(candidate);
+      openSavedCandidateProfile(candidate.id);
       return;
     }
   });
@@ -322,15 +341,57 @@ function createTalentCard(candidate) {
   return card;
 }
 
+function setupSavedCandidateProfileWorkspace() {
+  if (savedCandidateProfileWorkspace || !window.PlacelyEmployerCandidateProfile) return;
+
+  savedCandidateProfileWorkspace = window.PlacelyEmployerCandidateProfile.createEmployerCandidateProfileWorkspace({
+    supabase: savedSupabase,
+    shellSelector: ".page-shell",
+    source: "saved-talent",
+    backLabel: "Back to Saved Talent",
+    getEmployerId: () => currentUser?.id || "",
+    isSaved: (candidateId) => savedTalentRowsByCandidateId.has(String(candidateId || "")),
+    onSaveToggle: async (candidate) => {
+      if (savedTalentRowsByCandidateId.has(String(candidate.id))) {
+        await removeSavedCandidate(candidate.id);
+      }
+    },
+    onMessage: (candidate) => startMessageWithCandidate(candidate),
+    onBack: () => {
+      window.setTimeout(() => window.scrollTo({ top: savedTalentScrollTop || 0, behavior: "smooth" }), 0);
+    }
+  });
+}
+
+async function restoreSavedCandidateProfileRoute() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("view") !== "profile") return;
+  const candidateId = params.get("candidate") || params.get("candidate_id") || "";
+  if (!candidateId) return;
+  setupSavedCandidateProfileWorkspace();
+  await savedCandidateProfileWorkspace?.open(candidateId, { replaceHistory: true });
+}
+
+function openSavedCandidateProfile(candidateId) {
+  savedTalentScrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+  setupSavedCandidateProfileWorkspace();
+  savedCandidateProfileWorkspace?.open(candidateId);
+}
+
 function openCandidatePanel(candidate) {
+  openSavedCandidateProfile(candidate?.id);
+  return;
+
   const tags = getCandidateTags(candidate);
   const contactLocked = !hasCandidateAccess;
   const visibleContact = window.PlacelyAuth.getVisibleCandidateContact(candidate);
+  const verifiedBadge = renderVerifiedBadge(candidate);
 
   candidateDetailContent.innerHTML = `
     <img src="${escapeAttribute(getCandidatePhotoUrl(candidate.profile_photo_url) || "https://placehold.co/160x160?text=PT")}" class="detail-photo" alt="Candidate photo" />
 
     <h2 class="detail-name">${escapeHTML(candidate.full_name || "Candidate")}</h2>
+    ${verifiedBadge}
     <div class="detail-trade">${escapeHTML(candidate.trade || "Trade not listed")}</div>
 
     <p class="detail-bio">${escapeHTML(candidate.bio || "No bio added yet.")}</p>
@@ -619,4 +680,8 @@ function escapeAttribute(value) {
 
 function getCandidatePhotoUrl(value) {
   return window.PlacelyAuth?.getPublicImageUrl?.(savedSupabase, "candidate_photos", value) || String(value || "");
+}
+
+function renderVerifiedBadge(candidate, options = {}) {
+  return window.PlacelyVerifiedBadge?.render(candidate, options) || "";
 }

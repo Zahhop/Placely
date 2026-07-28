@@ -35,6 +35,8 @@ let isSendingMessage = false;
 let savedTalentRowsByCandidateId = new Map();
 let saveMutationIds = new Set();
 let hasCandidateAccess = false;
+let messageProfileWorkspace = null;
+let messagesScrollTop = 0;
 
 document.addEventListener("DOMContentLoaded", initMessages);
 
@@ -82,6 +84,9 @@ async function initMessages() {
   } else {
     showNoConversationState();
   }
+
+  setupMessageProfileWorkspace();
+  await restoreMessageProfileRoute();
 }
 
 function setupEvents() {
@@ -101,7 +106,7 @@ function setupEvents() {
   viewProfileBtn?.addEventListener("click", () => {
     const conversation = getActiveConversation();
     if (!conversation?.candidateId) return;
-    window.location.href = `find-candidates.html?candidate=${encodeURIComponent(conversation.candidateId)}`;
+    openMessageCandidateProfile(conversation);
   });
 
   viewApplicationBtn?.addEventListener("click", () => {
@@ -648,7 +653,7 @@ function renderContext(conversation) {
 
   candidateContextContent.querySelector("[data-drawer-action='profile']")?.addEventListener("click", () => {
     if (!conversation.candidateId) return;
-    window.location.href = `find-candidates.html?candidate=${encodeURIComponent(conversation.candidateId)}`;
+    openMessageCandidateProfile(conversation);
   });
 
   candidateContextContent.querySelector("[data-drawer-action='application']")?.addEventListener("click", () => {
@@ -1096,6 +1101,57 @@ function renderAvatar(conversation) {
   }
 
   return escapeHTML(conversation.initials || getInitials(conversation.name));
+}
+
+function setupMessageProfileWorkspace() {
+  if (messageProfileWorkspace || !window.PlacelyEmployerCandidateProfile) return;
+
+  messageProfileWorkspace = window.PlacelyEmployerCandidateProfile.createEmployerCandidateProfileWorkspace({
+    supabase: employerMessagesSupabase,
+    shellSelector: ".messages-shell",
+    source: "messages",
+    backLabel: "Back to Messages",
+    getEmployerId: () => currentUser?.id || "",
+    isSaved: (candidateId) => isCandidateSaved(candidateId),
+    onSaveToggle: async (candidate) => {
+      const conversation = conversationsData.find((item) => String(item.candidateId) === String(candidate.id)) || getActiveConversation();
+      await toggleSaveCandidate(conversation || { candidateId: candidate.id });
+    },
+    onMessage: () => {
+      messageProfileWorkspace?.close();
+      setTimeout(() => messageInput?.focus(), 0);
+    },
+    onBack: () => {
+      renderConversationList(getFilteredConversations());
+      const conversation = getActiveConversation();
+      if (conversation) renderContext(conversation);
+      window.setTimeout(() => window.scrollTo({ top: messagesScrollTop || 0, behavior: "smooth" }), 0);
+    }
+  });
+}
+
+async function restoreMessageProfileRoute() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("view") !== "profile") return;
+  const candidateId = params.get("candidate") || params.get("candidate_id") || "";
+  if (!candidateId) return;
+  setupMessageProfileWorkspace();
+  await messageProfileWorkspace?.open(candidateId, {
+    replaceHistory: true,
+    applicationId: params.get("application") || params.get("application_id") || "",
+    jobId: params.get("job") || params.get("job_id") || ""
+  });
+}
+
+function openMessageCandidateProfile(conversation) {
+  if (!conversation?.candidateId) return;
+  messagesScrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+  closeDetailsDrawer();
+  setupMessageProfileWorkspace();
+  messageProfileWorkspace?.open(conversation.candidateId, {
+    applicationId: conversation.application?.id || "",
+    jobId: conversation.application?.job_id || conversation.jobId || ""
+  });
 }
 
 function getCandidatePhotoUrl(value) {

@@ -6,6 +6,12 @@ let selectedPhotoPreviewUrl = "";
 let isDeletingResume = false;
 let isUploadingResume = false;
 let isDeletingPhoto = false;
+let profileViewState = "edit";
+let profileEditScrollTop = 0;
+let workExperiences = [];
+let isSavingExperience = false;
+let isDeletingExperience = false;
+let experienceLoadError = null;
 
 const profileSearchForm = getEl("profileSearchForm");
 const profileSearchInput = getEl("profileSearchInput");
@@ -18,6 +24,47 @@ const ALLOWED_RESUME_TYPES = new Set([
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 ]);
 const RESUME_SIGNED_URL_SECONDS = 10 * 60;
+const WORK_EXPERIENCE_FIELDS = [
+  "id",
+  "candidate_id",
+  "job_title",
+  "company_name",
+  "location",
+  "employment_type",
+  "start_month",
+  "start_year",
+  "end_month",
+  "end_year",
+  "is_current",
+  "description",
+  "created_at",
+  "updated_at"
+].join(",");
+const EXPERIENCE_EMPLOYMENT_TYPES = [
+  "Full-time",
+  "Part-time",
+  "Contract",
+  "Temporary",
+  "Casual",
+  "Apprenticeship",
+  "Internship",
+  "Self-employed",
+  "Other"
+];
+const MONTH_OPTIONS = [
+  ["1", "January"],
+  ["2", "February"],
+  ["3", "March"],
+  ["4", "April"],
+  ["5", "May"],
+  ["6", "June"],
+  ["7", "July"],
+  ["8", "August"],
+  ["9", "September"],
+  ["10", "October"],
+  ["11", "November"],
+  ["12", "December"]
+];
 
 function getEl(id) {
   return document.getElementById(id);
@@ -87,6 +134,7 @@ function updatePreview() {
 
   if (previewName) previewName.textContent = fullName;
   if (previewMeta) previewMeta.textContent = `${trade} · ${location}`;
+  renderProfileVerificationStatus();
 
   if (avatar) {
     const initials = window.CandidateProfilePreview?.getInitials(fullName) || "PT";
@@ -102,6 +150,199 @@ function updatePreview() {
 
   updateStrength();
   updateVisibilityLabels();
+}
+
+function renderProfileVerificationStatus() {
+  const statusEl = getEl("profileVerificationStatus");
+  const previewBadge = getEl("previewVerificationBadge");
+  const status = String(currentProfile.verification_status || "unverified").toLowerCase().trim();
+
+  if (previewBadge) {
+    previewBadge.innerHTML = window.PlacelyVerifiedBadge?.render(currentProfile) || "";
+  }
+
+  if (!statusEl) return;
+
+  if (status === "verified") {
+    const verifiedDate = currentProfile.verified_at ? `Verified on ${formatProfileDate(currentProfile.verified_at)}.` : "Your verified badge is visible to employers.";
+    statusEl.innerHTML = `${window.PlacelyVerifiedBadge?.render(currentProfile) || "Verified by Placely"}<p>${escapeHTML(verifiedDate)}</p>`;
+    return;
+  }
+
+  if (status === "pending") {
+    statusEl.textContent = "Verification pending. We received your request and will contact you using the information on your profile.";
+    return;
+  }
+
+  if (status === "rejected") {
+    statusEl.innerHTML = `Verification was not approved. <a href="candidate-verification.html">Request another review</a>`;
+    return;
+  }
+
+  statusEl.innerHTML = `<a href="candidate-verification.html" class="primary-btn compact">Get Verified</a>`;
+}
+
+async function loadWorkExperiences(candidateId) {
+  experienceLoadError = null;
+
+  try {
+    const { data, error } = await candidateSupabase
+      .from("candidate_work_experience")
+      .select(WORK_EXPERIENCE_FIELDS)
+      .eq("candidate_id", candidateId);
+
+    if (error) throw error;
+    workExperiences = sortWorkExperiences(data || []);
+  } catch (error) {
+    experienceLoadError = error;
+    workExperiences = [];
+    console.warn("Candidate work experience lookup failed", {
+      code: error?.code,
+      message: error?.message,
+      details: error?.details,
+      hint: error?.hint
+    });
+  }
+}
+
+function renderWorkExperienceSummary() {
+  const summary = getEl("workExperienceSummary");
+  if (!summary) return;
+
+  const entries = sortWorkExperiences(workExperiences);
+
+  if (experienceLoadError) {
+    summary.innerHTML = `
+      <article class="work-empty-row">
+        <div>
+          <strong>Work experience unavailable</strong>
+          <p>We could not load detailed work history right now. Your profile fields are still available.</p>
+        </div>
+        <button type="button" class="work-add-btn">Add</button>
+      </article>
+    `;
+    bindWorkSummaryEvents();
+    return;
+  }
+
+  if (!entries.length) {
+    summary.innerHTML = `
+      <article class="work-empty-row">
+        <div>
+          <strong>Most Recent Position</strong>
+          <p>Add your latest company, title, dates, and main responsibilities.</p>
+        </div>
+        <button type="button" class="work-edit-latest-btn">Edit</button>
+      </article>
+      <article class="work-empty-row">
+        <div>
+          <strong>Add another role</strong>
+          <p>Build a stronger profile by showing previous jobs and trade experience.</p>
+        </div>
+        <button type="button" class="work-add-btn">Add</button>
+      </article>
+    `;
+    bindWorkSummaryEvents();
+    return;
+  }
+
+  const [latest, ...additional] = entries;
+  summary.innerHTML = `
+    <article class="work-summary-row">
+      <div>
+        <span class="work-row-label">Most Recent Position</span>
+        ${renderWorkSummaryText(latest)}
+      </div>
+      <button type="button" class="work-edit-btn" data-experience-id="${escapeAttribute(latest.id)}">Edit</button>
+    </article>
+    ${additional.map((entry) => `
+      <article class="work-summary-row compact">
+        <div>
+          ${renderWorkSummaryText(entry)}
+        </div>
+        <button type="button" class="work-edit-btn" data-experience-id="${escapeAttribute(entry.id)}">Edit</button>
+      </article>
+    `).join("")}
+    <article class="work-empty-row">
+      <div>
+        <strong>Add another role</strong>
+        <p>Build a stronger profile by showing previous jobs and trade experience.</p>
+      </div>
+      <button type="button" class="work-add-btn">Add</button>
+    </article>
+  `;
+  bindWorkSummaryEvents();
+}
+
+function renderWorkSummaryText(entry) {
+  return `
+    <strong>${escapeHTML(entry.job_title || "Role not listed")}</strong>
+    <p>${escapeHTML([entry.company_name, entry.location].filter(Boolean).join(" - ") || "Company not listed")}</p>
+    <p>${escapeHTML(formatExperienceDateRange(entry))}${entry.employment_type ? ` - ${escapeHTML(entry.employment_type)}` : ""}</p>
+  `;
+}
+
+function bindWorkSummaryEvents() {
+  document.querySelectorAll(".work-add-btn, #topAddExperienceBtn").forEach((button) => {
+    button.onclick = () => openExperienceEditorState("new");
+  });
+
+  document.querySelectorAll(".work-edit-btn").forEach((button) => {
+    button.onclick = () => openExperienceEditorState("edit", button.dataset.experienceId);
+  });
+
+  document.querySelectorAll(".work-edit-latest-btn").forEach((button) => {
+    button.onclick = () => {
+      const latest = sortWorkExperiences(workExperiences)[0];
+      if (latest?.id) openExperienceEditorState("edit", latest.id);
+      else openExperienceEditorState("new");
+    };
+  });
+}
+
+function sortWorkExperiences(entries = []) {
+  return [...entries].sort((a, b) => {
+    if (Boolean(a.is_current) !== Boolean(b.is_current)) return a.is_current ? -1 : 1;
+    const aValue = (Number(a.start_year) || 0) * 100 + (Number(a.start_month) || 0);
+    const bValue = (Number(b.start_year) || 0) * 100 + (Number(b.start_month) || 0);
+    if (aValue !== bValue) return bValue - aValue;
+    return String(b.updated_at || b.created_at || "").localeCompare(String(a.updated_at || a.created_at || ""));
+  });
+}
+
+function normalizeExperienceForPreview(entry) {
+  return {
+    id: entry.id,
+    position: entry.job_title,
+    employer: entry.company_name,
+    location: entry.location,
+    employment_type: entry.employment_type,
+    start_date: formatMonthYear(entry.start_month, entry.start_year),
+    end_date: entry.is_current ? "Present" : formatMonthYear(entry.end_month, entry.end_year),
+    current: Boolean(entry.is_current),
+    description: entry.description
+  };
+}
+
+function formatExperienceDateRange(entry) {
+  const start = formatMonthYear(entry.start_month, entry.start_year);
+  const end = entry.is_current ? "Present" : formatMonthYear(entry.end_month, entry.end_year);
+  return [start, end].filter(Boolean).join(" - ") || "Dates not listed";
+}
+
+function formatMonthYear(month, year) {
+  const yearNumber = Number(year);
+  if (!yearNumber) return "";
+  const monthNumber = Number(month);
+  const monthLabel = MONTH_OPTIONS.find(([value]) => Number(value) === monthNumber)?.[1] || "";
+  return monthLabel ? `${monthLabel.slice(0, 3)} ${yearNumber}` : String(yearNumber);
+}
+
+function formatProfileDate(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
 }
 
 function getStrengthHint(score) {
@@ -127,7 +368,9 @@ function getPreviewProfileFromForm() {
   return {
     ...currentProfile,
     full_name: value("full_name") || currentProfile.full_name || "Candidate Name",
-    trade: value("trade") || currentProfile.trade || "",
+    trade: value("trade_preference") || value("trade") || currentProfile.trade || "",
+    willing_to_travel: value("willing_to_travel") || currentProfile.willing_to_travel || "",
+    employment_type: value("employment_type") || currentProfile.employment_type || "",
     location: value("location") || currentProfile.location || "",
     bio: value("bio") || currentProfile.bio || "",
     experience: value("experience") || currentProfile.experience || "",
@@ -144,7 +387,8 @@ function getPreviewProfileFromForm() {
       "",
     avatar_url: currentProfile.avatar_url || "",
     resume_path: getResumePath(currentProfile),
-    resume_url: ""
+    resume_url: "",
+    work_history: workExperiences.map(normalizeExperienceForPreview)
   };
 }
 
@@ -183,6 +427,11 @@ async function loadCandidateProfile() {
   }
 
   currentProfile = profile;
+  await loadWorkExperiences(user.id);
+  currentProfile = {
+    ...currentProfile,
+    work_history: workExperiences.map(normalizeExperienceForPreview)
+  };
 
   getEl("profile_photo_preview").src =
     getCandidatePhotoUrl(currentProfile.profile_photo_url || currentProfile.avatar_url) ||
@@ -192,12 +441,15 @@ async function loadCandidateProfile() {
 
   getEl("full_name").value = currentProfile.full_name || "";
   getEl("trade").value = currentProfile.trade || "";
+  getEl("trade_preference").value = currentProfile.trade || "";
   getEl("location").value = currentProfile.location || "";
   getEl("bio").value = currentProfile.bio || "";
   getEl("experience").value = currentProfile.experience || "";
   getEl("skills").value = currentProfile.skills || "";
   getEl("certifications").value = currentProfile.certifications || "";
   getEl("availability").value = currentProfile.availability || "";
+  getEl("willing_to_travel").value = currentProfile.willing_to_travel || "";
+  getEl("employment_type").value = currentProfile.employment_type || "";
   getEl("email").value = currentProfile.email || user.email || "";
   getEl("phone").value = currentProfile.phone || "";
   getEl("contact_method").value = currentProfile.contact_method || "Email";
@@ -205,8 +457,10 @@ async function loadCandidateProfile() {
   getEl("profile_visible").checked = currentProfile.profile_visible ?? true;
 
   updatePreview();
+  renderWorkExperienceSummary();
   hydrateHeader();
   await loadHeaderCounts(user.id);
+  applyInitialProfileViewState();
 }
 
 function getCandidatePhotoUrl(value, cacheBust = "") {
@@ -536,7 +790,9 @@ async function saveCandidateProfile() {
     const updates = {
       id: currentUser.id,
       full_name: value("full_name"),
-      trade: value("trade"),
+      trade: value("trade_preference") || value("trade"),
+      willing_to_travel: value("willing_to_travel"),
+      employment_type: value("employment_type"),
       location: value("location"),
       bio: value("bio"),
       experience: value("experience"),
@@ -710,17 +966,26 @@ function setupEvents() {
     button.addEventListener("click", saveCandidateProfile);
   });
 
-  getEl("viewPreviewBtn")?.addEventListener("click", () => {
-    window.CandidateProfilePreview?.openModal(getPreviewProfileFromForm());
-  });
-
-  getEl("headerPreviewBtn")?.addEventListener("click", () => {
-    window.CandidateProfilePreview?.openModal(getPreviewProfileFromForm());
-  });
+  getEl("viewPreviewBtn")?.addEventListener("click", openPreviewState);
+  getEl("headerPreviewBtn")?.addEventListener("click", openPreviewState);
+  window.addEventListener("popstate", handleProfilePopState);
 
   document.querySelectorAll("input, textarea, select").forEach(input => {
     input.addEventListener("input", updatePreview);
     input.addEventListener("change", updatePreview);
+  });
+
+  getEl("trade_preference")?.addEventListener("input", () => {
+    const trade = getEl("trade");
+    const preference = getEl("trade_preference");
+    if (trade && preference) trade.value = preference.value;
+    updatePreview();
+  });
+
+  getEl("trade")?.addEventListener("input", () => {
+    const trade = getEl("trade");
+    const preference = getEl("trade_preference");
+    if (trade && preference) preference.value = trade.value;
   });
 
   document.querySelectorAll(".tag-row span").forEach(tag => {
@@ -743,6 +1008,538 @@ function setupEvents() {
       updatePreview();
     });
   });
+}
+
+function applyInitialProfileViewState() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("view") === "preview") {
+    renderPreviewState({ replaceHistory: true });
+  } else if (params.get("view") === "experience-new") {
+    renderExperienceEditorState({ mode: "new", replaceHistory: true });
+  } else if (params.get("view") === "experience-edit") {
+    renderExperienceEditorState({ mode: "edit", experienceId: params.get("id"), replaceHistory: true });
+  } else {
+    renderEditState({ replaceHistory: true });
+  }
+}
+
+function openPreviewState() {
+  renderPreviewState();
+}
+
+function renderPreviewState({ replaceHistory = false } = {}) {
+  const editWorkspace = getEl("profileEditWorkspace");
+  const previewWorkspace = getEl("profilePreviewWorkspace");
+  const experienceWorkspace = getEl("profileExperienceWorkspace");
+  if (!editWorkspace || !previewWorkspace || !experienceWorkspace) return;
+
+  profileEditScrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+  profileViewState = "preview";
+  editWorkspace.hidden = true;
+  previewWorkspace.hidden = false;
+  experienceWorkspace.hidden = true;
+  experienceWorkspace.innerHTML = "";
+  previewWorkspace.innerHTML = renderProfilePreviewWorkspace();
+  bindPreviewWorkspaceEvents();
+  updateProfileUrl("preview", replaceHistory);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function renderEditState({ replaceHistory = false } = {}) {
+  const editWorkspace = getEl("profileEditWorkspace");
+  const previewWorkspace = getEl("profilePreviewWorkspace");
+  const experienceWorkspace = getEl("profileExperienceWorkspace");
+  if (!editWorkspace || !previewWorkspace || !experienceWorkspace) return;
+
+  profileViewState = "edit";
+  editWorkspace.hidden = false;
+  previewWorkspace.hidden = true;
+  experienceWorkspace.hidden = true;
+  previewWorkspace.innerHTML = "";
+  experienceWorkspace.innerHTML = "";
+  renderWorkExperienceSummary();
+  updateProfileUrl("edit", replaceHistory);
+  window.setTimeout(() => window.scrollTo({ top: profileEditScrollTop || 0, behavior: "smooth" }), 0);
+}
+
+function openExperienceEditorState(mode = "new", experienceId = "") {
+  renderExperienceEditorState({ mode, experienceId });
+}
+
+function renderExperienceEditorState({ mode = "new", experienceId = "", replaceHistory = false } = {}) {
+  const editWorkspace = getEl("profileEditWorkspace");
+  const previewWorkspace = getEl("profilePreviewWorkspace");
+  const experienceWorkspace = getEl("profileExperienceWorkspace");
+  if (!editWorkspace || !previewWorkspace || !experienceWorkspace) return;
+
+  profileEditScrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+  profileViewState = mode === "edit" ? "experience-edit" : "experience-new";
+  editWorkspace.hidden = true;
+  previewWorkspace.hidden = true;
+  previewWorkspace.innerHTML = "";
+  experienceWorkspace.hidden = false;
+
+  const experience = mode === "edit"
+    ? workExperiences.find((entry) => String(entry.id) === String(experienceId))
+    : null;
+
+  if (mode === "edit" && !experience) {
+    experienceWorkspace.innerHTML = renderMissingExperienceState();
+    bindExperienceWorkspaceEvents();
+    updateProfileUrl("experience-edit", replaceHistory, experienceId);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
+
+  experienceWorkspace.innerHTML = renderExperienceEditor({ mode, experience });
+  bindExperienceWorkspaceEvents();
+  updateEndDateState();
+  updateProfileUrl(mode === "edit" ? "experience-edit" : "experience-new", replaceHistory, experienceId);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function renderMissingExperienceState() {
+  return `
+    <section class="dashboard-briefing profile-briefing" aria-labelledby="experienceUnavailableTitle">
+      <div class="briefing-copy">
+        <h1 id="experienceUnavailableTitle">Position unavailable</h1>
+        <p>This work-experience entry could not be found.</p>
+      </div>
+      <div class="briefing-actions">
+        <button type="button" class="secondary-btn back-to-profile-btn">${getBackIcon()} Back to Profile</button>
+      </div>
+    </section>
+    <section class="panel experience-editor-card">
+      <p class="panel-text">Return to your profile and choose another position, or add a new role.</p>
+      <button type="button" class="primary-btn add-experience-from-empty">Add Work Experience</button>
+    </section>
+  `;
+}
+
+function renderExperienceEditor({ mode, experience }) {
+  const isEdit = mode === "edit";
+  const title = isEdit ? "Edit Work Experience" : "Add Work Experience";
+  const description = isEdit
+    ? "Update the details employers will see about this position."
+    : "Add a previous or current role to help employers understand your background.";
+
+  return `
+    <section class="dashboard-briefing profile-briefing" aria-labelledby="experienceEditorTitle">
+      <div class="briefing-copy">
+        <h1 id="experienceEditorTitle">${escapeHTML(title)}</h1>
+        <p>${escapeHTML(description)}</p>
+      </div>
+      <div class="briefing-actions">
+        <button type="button" class="secondary-btn back-to-profile-btn">${getBackIcon()} Back to Profile</button>
+      </div>
+    </section>
+
+    <form class="panel experience-editor-card" id="workExperienceForm" novalidate data-mode="${escapeAttribute(mode)}" data-experience-id="${escapeAttribute(experience?.id || "")}">
+      <div class="experience-form-message" id="experienceFormMessage" role="alert" hidden></div>
+
+      <section class="experience-form-section">
+        <div class="panel-heading compact">
+          <div>
+            <span class="eyebrow">Role Details</span>
+            <h2>Position information</h2>
+          </div>
+        </div>
+        <div class="form-grid">
+          ${renderExperienceField("experience_job_title", "Job title", "text", experience?.job_title || "", "e.g. HVAC Apprentice", true)}
+          ${renderExperienceField("experience_company_name", "Company name", "text", experience?.company_name || "", "e.g. NorthX Systems", true)}
+          ${renderExperienceField("experience_location", "Location", "text", experience?.location || "", "e.g. Calgary, AB")}
+          <div>
+            <label for="experience_employment_type">Employment type</label>
+            <select id="experience_employment_type">
+              <option value="">Select employment type</option>
+              ${EXPERIENCE_EMPLOYMENT_TYPES.map((type) => `<option${type === experience?.employment_type ? " selected" : ""}>${escapeHTML(type)}</option>`).join("")}
+            </select>
+            <p class="field-error" id="experience_employment_type_error"></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="experience-form-section">
+        <div class="panel-heading compact">
+          <div>
+            <span class="eyebrow">Employment Period</span>
+            <h2>Dates</h2>
+          </div>
+        </div>
+        <div class="form-grid">
+          ${renderMonthSelect("experience_start_month", "Start month", experience?.start_month, true)}
+          ${renderYearInput("experience_start_year", "Start year", experience?.start_year, true)}
+          ${renderMonthSelect("experience_end_month", "End month", experience?.end_month)}
+          ${renderYearInput("experience_end_year", "End year", experience?.end_year)}
+        </div>
+        <label class="toggle-row experience-current-row" for="experience_is_current">
+          <input id="experience_is_current" type="checkbox"${experience?.is_current ? " checked" : ""} />
+          <span>I currently work here</span>
+        </label>
+      </section>
+
+      <section class="experience-form-section">
+        <div class="panel-heading compact">
+          <div>
+            <span class="eyebrow">Position Summary</span>
+            <h2>Role description</h2>
+          </div>
+        </div>
+        <label for="experience_description">Role description</label>
+        <textarea id="experience_description" maxlength="1200" placeholder="Describe your responsibilities, daily work, accomplishments, equipment, projects, or skills used in this role.">${escapeHTML(experience?.description || "")}</textarea>
+        <p class="field-helper">Describe your responsibilities, daily work, accomplishments, equipment, projects, or skills used in this role.</p>
+      </section>
+
+      <div class="experience-actions">
+        ${isEdit ? '<button type="button" class="danger-outline-btn" id="removeExperienceBtn">Remove Position</button>' : ""}
+        <div class="experience-actions-main">
+          <button type="button" class="secondary-btn cancel-experience-btn">Cancel</button>
+          <button type="submit" class="primary-btn" id="saveExperienceBtn">${isEdit ? "Save Changes" : "Save Experience"}</button>
+        </div>
+      </div>
+    </form>
+  `;
+}
+
+function renderExperienceField(id, label, type, currentValue, placeholder, required = false) {
+  return `
+    <div>
+      <label for="${escapeAttribute(id)}">${escapeHTML(label)}</label>
+      <input id="${escapeAttribute(id)}" type="${escapeAttribute(type)}" value="${escapeAttribute(currentValue)}" placeholder="${escapeAttribute(placeholder)}"${required ? " required" : ""} />
+      <p class="field-error" id="${escapeAttribute(id)}_error"></p>
+    </div>
+  `;
+}
+
+function renderMonthSelect(id, label, currentValue, required = false) {
+  const normalizedValue = String(currentValue || "");
+  return `
+    <div>
+      <label for="${escapeAttribute(id)}">${escapeHTML(label)}</label>
+      <select id="${escapeAttribute(id)}"${required ? " required" : ""}>
+        <option value="">Select month</option>
+        ${MONTH_OPTIONS.map(([value, text]) => `<option value="${escapeAttribute(value)}"${value === normalizedValue ? " selected" : ""}>${escapeHTML(text)}</option>`).join("")}
+      </select>
+      <p class="field-error" id="${escapeAttribute(id)}_error"></p>
+    </div>
+  `;
+}
+
+function renderYearInput(id, label, currentValue, required = false) {
+  return `
+    <div>
+      <label for="${escapeAttribute(id)}">${escapeHTML(label)}</label>
+      <input id="${escapeAttribute(id)}" type="number" min="1950" max="2100" step="1" value="${escapeAttribute(currentValue || "")}" placeholder="YYYY"${required ? " required" : ""} />
+      <p class="field-error" id="${escapeAttribute(id)}_error"></p>
+    </div>
+  `;
+}
+
+function bindExperienceWorkspaceEvents() {
+  document.querySelectorAll(".back-to-profile-btn, .cancel-experience-btn").forEach((button) => {
+    button.addEventListener("click", () => renderEditState({ replaceHistory: true }));
+  });
+
+  document.querySelector(".add-experience-from-empty")?.addEventListener("click", () => openExperienceEditorState("new"));
+  getEl("experience_is_current")?.addEventListener("change", updateEndDateState);
+  getEl("workExperienceForm")?.addEventListener("submit", saveWorkExperience);
+  getEl("removeExperienceBtn")?.addEventListener("click", removeWorkExperience);
+}
+
+function updateEndDateState() {
+  const isCurrent = getEl("experience_is_current")?.checked === true;
+  ["experience_end_month", "experience_end_year"].forEach((id) => {
+    const input = getEl(id);
+    if (!input) return;
+    input.disabled = isCurrent;
+    if (isCurrent) {
+      input.value = "";
+      setFieldError(id, "");
+    }
+  });
+}
+
+async function saveWorkExperience(event) {
+  event?.preventDefault();
+  if (!currentUser || isSavingExperience) return;
+
+  const form = getEl("workExperienceForm");
+  const saveButton = getEl("saveExperienceBtn");
+  const mode = form?.dataset.mode === "edit" ? "edit" : "new";
+  const experienceId = form?.dataset.experienceId || "";
+  const originalText = saveButton?.textContent || "Save Experience";
+  const validation = validateExperienceForm();
+
+  if (!validation.valid) {
+    setExperienceFormMessage("Please correct the highlighted fields.");
+    return;
+  }
+
+  isSavingExperience = true;
+  if (saveButton) {
+    saveButton.disabled = true;
+    saveButton.textContent = "Saving...";
+  }
+
+  try {
+    const payload = {
+      candidate_id: currentUser.id,
+      ...validation.payload
+    };
+
+    let result;
+    if (mode === "edit") {
+      result = await candidateSupabase
+        .from("candidate_work_experience")
+        .update(validation.payload)
+        .eq("id", experienceId)
+        .eq("candidate_id", currentUser.id)
+        .select(WORK_EXPERIENCE_FIELDS)
+        .maybeSingle();
+    } else {
+      result = await candidateSupabase
+        .from("candidate_work_experience")
+        .insert(payload)
+        .select(WORK_EXPERIENCE_FIELDS)
+        .single();
+    }
+
+    if (result.error) throw result.error;
+    if (!result.data) throw new Error("No owned work experience record was returned.");
+
+    if (mode === "edit") {
+      workExperiences = workExperiences.map((entry) => String(entry.id) === String(result.data.id) ? result.data : entry);
+    } else {
+      workExperiences = [...workExperiences, result.data];
+    }
+
+    workExperiences = sortWorkExperiences(workExperiences);
+    currentProfile = {
+      ...currentProfile,
+      work_history: workExperiences.map(normalizeExperienceForPreview)
+    };
+    updatePreview();
+    showToast(mode === "edit" ? "Experience updated." : "Experience added.");
+    renderEditState({ replaceHistory: true });
+    window.setTimeout(() => getEl("experience-section")?.scrollIntoView({ block: "start", behavior: "smooth" }), 60);
+  } catch (error) {
+    console.error("Work experience save failed", {
+      code: error?.code,
+      message: error?.message,
+      details: error?.details,
+      hint: error?.hint
+    });
+    setExperienceFormMessage("We could not save this experience. Please try again.");
+  } finally {
+    isSavingExperience = false;
+    if (saveButton) {
+      saveButton.disabled = false;
+      saveButton.textContent = originalText;
+    }
+  }
+}
+
+async function removeWorkExperience() {
+  if (!currentUser || isDeletingExperience) return;
+  const form = getEl("workExperienceForm");
+  const experienceId = form?.dataset.experienceId || "";
+  if (!experienceId) return;
+  if (!window.confirm("Remove this position from your profile?")) return;
+
+  isDeletingExperience = true;
+  const removeButton = getEl("removeExperienceBtn");
+  if (removeButton) {
+    removeButton.disabled = true;
+    removeButton.textContent = "Removing...";
+  }
+
+  try {
+    const { error } = await candidateSupabase
+      .from("candidate_work_experience")
+      .delete()
+      .eq("id", experienceId)
+      .eq("candidate_id", currentUser.id);
+
+    if (error) throw error;
+    workExperiences = workExperiences.filter((entry) => String(entry.id) !== String(experienceId));
+    currentProfile = {
+      ...currentProfile,
+      work_history: workExperiences.map(normalizeExperienceForPreview)
+    };
+    updatePreview();
+    showToast("Experience removed.");
+    renderEditState({ replaceHistory: true });
+  } catch (error) {
+    console.error("Work experience remove failed", {
+      code: error?.code,
+      message: error?.message,
+      details: error?.details,
+      hint: error?.hint
+    });
+    setExperienceFormMessage("We could not remove this position. Please try again.");
+  } finally {
+    isDeletingExperience = false;
+    if (removeButton) {
+      removeButton.disabled = false;
+      removeButton.textContent = "Remove Position";
+    }
+  }
+}
+
+function validateExperienceForm() {
+  clearExperienceErrors();
+
+  const jobTitle = value("experience_job_title");
+  const companyName = value("experience_company_name");
+  const location = value("experience_location");
+  const employmentType = value("experience_employment_type");
+  const startMonth = Number(value("experience_start_month"));
+  const startYear = Number(value("experience_start_year"));
+  const isCurrent = getEl("experience_is_current")?.checked === true;
+  const endMonthValue = value("experience_end_month");
+  const endYearValue = value("experience_end_year");
+  const endMonth = Number(endMonthValue);
+  const endYear = Number(endYearValue);
+  const description = value("experience_description");
+  let valid = true;
+
+  if (!jobTitle) valid = setFieldError("experience_job_title", "Job title is required.");
+  if (!companyName) valid = setFieldError("experience_company_name", "Company name is required.");
+  if (!Number.isInteger(startMonth) || startMonth < 1 || startMonth > 12) valid = setFieldError("experience_start_month", "Select a start month.");
+  if (!isValidYear(startYear)) valid = setFieldError("experience_start_year", "Enter a valid start year.");
+
+  if (!isCurrent) {
+    if (!Number.isInteger(endMonth) || endMonth < 1 || endMonth > 12) valid = setFieldError("experience_end_month", "Select an end month.");
+    if (!isValidYear(endYear)) valid = setFieldError("experience_end_year", "Enter a valid end year.");
+    if (valid && endYear * 100 + endMonth < startYear * 100 + startMonth) {
+      valid = setFieldError("experience_end_month", "End date cannot be earlier than start date.");
+      setFieldError("experience_end_year", "End date cannot be earlier than start date.");
+    }
+  }
+
+  return {
+    valid,
+    payload: {
+      job_title: jobTitle,
+      company_name: companyName,
+      location: location || null,
+      employment_type: employmentType || null,
+      start_month: startMonth,
+      start_year: startYear,
+      end_month: isCurrent ? null : endMonth,
+      end_year: isCurrent ? null : endYear,
+      is_current: isCurrent,
+      description: description || null
+    }
+  };
+}
+
+function clearExperienceErrors() {
+  document.querySelectorAll(".field-error").forEach((element) => {
+    element.textContent = "";
+  });
+  setExperienceFormMessage("");
+}
+
+function setFieldError(id, message) {
+  const error = getEl(`${id}_error`);
+  const input = getEl(id);
+  if (error) error.textContent = message || "";
+  if (input) input.setAttribute("aria-invalid", message ? "true" : "false");
+  return false;
+}
+
+function setExperienceFormMessage(message) {
+  const messageEl = getEl("experienceFormMessage");
+  if (!messageEl) return;
+  messageEl.hidden = !message;
+  messageEl.textContent = message || "";
+}
+
+function isValidYear(year) {
+  const currentYear = new Date().getFullYear() + 1;
+  return Number.isInteger(year) && year >= 1950 && year <= currentYear;
+}
+
+function renderProfilePreviewWorkspace() {
+  try {
+    const profile = getPreviewProfileFromForm();
+
+    return `
+      <section class="dashboard-briefing profile-briefing profile-preview-briefing" aria-labelledby="profilePreviewTitle">
+        <div class="briefing-copy">
+          <h1 id="profilePreviewTitle">Profile Preview</h1>
+          <p>This is how employers with Candidate Access will see your profile.</p>
+        </div>
+        <div class="briefing-actions">
+          <button type="button" class="secondary-btn" id="backToEditProfileBtn">${getBackIcon()} Back to Edit Profile</button>
+        </div>
+      </section>
+      ${window.CandidateProfilePreview?.renderCandidateProfile?.(profile, {
+        viewer: "candidate-self",
+        showContactAccordingToVisibility: true,
+        showEmployerActions: false
+      }) || ""}
+    `;
+  } catch (error) {
+    console.error("Profile preview render failed", error);
+    return `
+      <section class="dashboard-briefing profile-briefing profile-preview-briefing" aria-labelledby="profilePreviewTitle">
+        <div class="briefing-copy">
+          <h1 id="profilePreviewTitle">Profile Preview</h1>
+          <p>This is how employers with Candidate Access will see your profile.</p>
+        </div>
+      </section>
+      <section class="panel profile-preview-error">
+        <h2>We could not load your profile preview</h2>
+        <p class="panel-text">Return to your profile and try again.</p>
+        <button type="button" class="secondary-btn" id="backToEditProfileBtn">${getBackIcon()} Back to Edit Profile</button>
+      </section>
+    `;
+  }
+}
+
+function getBackIcon() {
+  return '<svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16"><path fill="currentColor" d="m10.8 12 4.6 4.6L14 18l-6-6 6-6 1.4 1.4L10.8 12Z"/></svg>';
+}
+
+function bindPreviewWorkspaceEvents() {
+  getEl("backToEditProfileBtn")?.addEventListener("click", () => {
+    renderEditState({ replaceHistory: true });
+  });
+}
+
+function handleProfilePopState() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("view") === "preview") {
+    renderPreviewState({ replaceHistory: true });
+  } else if (params.get("view") === "experience-new") {
+    renderExperienceEditorState({ mode: "new", replaceHistory: true });
+  } else if (params.get("view") === "experience-edit") {
+    renderExperienceEditorState({ mode: "edit", experienceId: params.get("id"), replaceHistory: true });
+  } else {
+    renderEditState({ replaceHistory: true });
+  }
+}
+
+function updateProfileUrl(view, replaceHistory = false, experienceId = "") {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("id");
+
+  if (view === "preview") {
+    url.searchParams.set("view", "preview");
+  } else if (view === "experience-new") {
+    url.searchParams.set("view", "experience-new");
+  } else if (view === "experience-edit") {
+    url.searchParams.set("view", "experience-edit");
+    if (experienceId) url.searchParams.set("id", experienceId);
+  } else {
+    url.searchParams.delete("view");
+  }
+
+  const state = { profileView: view };
+  if (replaceHistory) window.history.replaceState(state, "", url);
+  else window.history.pushState(state, "", url);
 }
 
 async function removeCurrentPhoto() {
