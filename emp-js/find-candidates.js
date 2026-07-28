@@ -350,7 +350,7 @@ function createCandidateRow(candidate, index) {
   const availabilityCategory = getAvailabilityCategory(candidate.availability);
   const tags = getCandidateTags(candidate);
   const isSaved = isCandidateSaved(id);
-  const verifiedBadge = renderVerifiedBadge(candidate, { short: true });
+  const isVerified = isCandidateVerified(candidate);
   const contextLabel = getCandidateContextLabel(candidate);
 
   row.className = `candidate-row${hasCandidateAccess ? "" : " locked"}${isSelected ? " active" : ""}`;
@@ -372,7 +372,7 @@ function createCandidateRow(candidate, index) {
       <div>
         <div class="candidate-name-line">
           <h3 class="candidate-name">${escapeHTML(name)}</h3>
-          ${verifiedBadge}
+          ${isVerified ? `<span class="verified-badge">Verified</span>` : ""}
         </div>
         <p class="candidate-title">${escapeHTML(trade)}</p>
         <p class="candidate-meta sensitive">${escapeHTML(location)}</p>
@@ -1108,11 +1108,19 @@ function getCandidateContextLabel(candidate) {
 }
 
 function isCandidateVerified(candidate) {
-  return String(candidate?.verification_status || "").toLowerCase().trim() === "verified";
-}
+  const fields = [
+    candidate.verified,
+    candidate.is_verified,
+    candidate.profile_verified,
+    candidate.identity_verified,
+    candidate.verification_status
+  ];
 
-function renderVerifiedBadge(candidate, options = {}) {
-  return window.PlacelyVerifiedBadge?.render(candidate, options) || "";
+  return fields.some((value) => {
+    if (typeof value === "boolean") return value;
+    const text = clean(value);
+    return text === "verified" || text === "true" || text === "approved";
+  });
 }
 
 function matchesActiveJobTrade(candidate) {
