@@ -6,86 +6,197 @@
 
   <title>Saved Talent | Placely Talent</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/manage-jobs.css" />
   <link rel="stylesheet" href="../css/saved-talent.css" />
   <link rel="stylesheet" href="../css/candidate-detail-drawer.css" />
-  <link rel="stylesheet" href="../css/employer-consistency.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
-<body>
-
-<header>
-  <div class="logo-wrapper">
-    <a href="employer-dashboard.html" class="logo">PLACELY TALENT</a>
-    <div class="logo-subtitle">Employer Platform</div>
-  </div>
-
-  <nav data-employer-nav>
-    <a href="employer-dashboard.html" class="employer-nav-link">Dashboard</a>
-    <a href="manage-jobs.html" class="employer-nav-link">Jobs</a>
-    <a href="employer-applicants.html" class="employer-nav-link">Applicants</a>
-    <a href="find-candidates.html" id="employerCandidatesNav" class="employer-nav-link employer-candidates-nav" hidden>Candidates</a>
-    <a href="saved-talent.html" class="employer-nav-link">Saved Talent</a>
-    <a href="employer-messages.html" class="employer-nav-link">Messages</a>
-    <a href="employer-profile.html" class="employer-nav-link">Company</a>
-    <button type="button" id="logoutBtn" class="logout-btn">Logout</button>
-  </nav>
-</header>
-
-<main class="page-shell">
-
-  <section class="hero-card">
-    <div>
-      <span class="eyebrow">SAVED TALENT</span>
-      <h1>Your candidate shortlist</h1>
-      <p>Review saved candidates, filter your shortlist, and move the strongest matches into conversations.</p>
+<body data-plan="pro">
+<div class="dashboard-shell saved-talent-page">
+  <aside class="dashboard-sidebar" id="dashboardSidebar" aria-label="Employer navigation">
+    <div class="sidebar-brand">
+      <a href="employer-dashboard.html" class="brand-mark" aria-label="Placely Talent dashboard">P</a>
+      <div>
+        <a href="employer-dashboard.html" class="brand-name">PLACELY TALENT</a>
+        <span>Employer Platform</span>
+      </div>
     </div>
 
-    <div class="hero-actions">
-      <a href="find-candidates.html" class="primary-link">Find Candidates</a>
-      <a href="employer-dashboard.html" class="secondary-link">Dashboard</a>
+    <nav class="sidebar-nav" data-employer-nav aria-label="Employer sections">
+      <div class="nav-group">
+        <span class="nav-label">Overview</span>
+        <a href="employer-dashboard.html" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h7V4H4v9Zm9 7h7v-7h-7v7ZM4 20h7v-5H4v5Zm9-9h7V4h-7v7Z"/></svg>
+          <span>Dashboard</span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <span class="nav-label">Hiring</span>
+        <a href="manage-jobs.html" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6V5a3 3 0 0 1 3-3h1a3 3 0 0 1 3 3v1h3a2 2 0 0 1 2 2v10.5A2.5 2.5 0 0 1 18.5 21h-13A2.5 2.5 0 0 1 3 18.5V8a2 2 0 0 1 2-2h4Zm2 0h3V5a1 1 0 0 0-1-1h-1a1 1 0 0 0-1 1v1Zm9 5H4v7.5c0 .28.22.5.5.5h15c.28 0 .5-.22.5-.5V11Z"/></svg>
+          <span>Jobs</span>
+        </a>
+        <a href="employer-applicants.html" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.33 0-8 2.03-8 4.43V20a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1.57C20 16.03 16.33 14 12 14Z"/></svg>
+          <span>Applicants</span>
+        </a>
+        <a href="employer-applicants.html?stage=interview" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h10a2 2 0 0 1 2 2v18l-7-3-7 3V4a2 2 0 0 1 2-2Zm0 17 5-2.14L17 19V4H7v15Zm2-9h6v2H9v-2Zm0-4h6v2H9V6Z"/></svg>
+          <span>Interviews</span>
+        </a>
+        <a href="employer-messages.html" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H9.8l-4.1 3.08A1.05 1.05 0 0 1 4 19.24V17a3 3 0 0 1-2-2.83V7a3 3 0 0 1 3-3Zm0 2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1v2.25L9.13 15H19a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5Z"/></svg>
+          <span>Messages</span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <span class="nav-label">Talent</span>
+        <a href="find-candidates.html" id="employerCandidatesNav" class="employer-nav-link employer-candidates-nav nav-item" data-plan-gated="candidate-network">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.97 12.04l3.25 3.24a1 1 0 0 1-1.42 1.42l-3.24-3.25A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/></svg>
+          <span>Candidates</span>
+          <span class="nav-lock" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h1Zm2 0h6V8a3 3 0 0 0-6 0v2Z"/></svg></span>
+          <span class="nav-pro-badge">Pro</span>
+        </a>
+        <a href="saved-talent.html" id="employerSavedTalentNav" class="employer-nav-link nav-item active" data-plan-gated="candidate-network">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a2 2 0 0 1 2 2v16a1 1 0 0 1-1.55.83L12 17.53l-6.45 4.3A1 1 0 0 1 4 21V5a2 2 0 0 1 2-2Zm0 2v14.13l5.45-3.63a1 1 0 0 1 1.1 0L18 19.13V5H6Z"/></svg>
+          <span>Saved Talent</span>
+          <span class="nav-lock" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h1Zm2 0h6V8a3 3 0 0 0-6 0v2Z"/></svg></span>
+          <span class="nav-pro-badge">Pro</span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <span class="nav-label">Company</span>
+        <a href="employer-profile.html" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3h2a2 2 0 0 1 2 2v11h-6v-4H10v4H4Zm2-2h2v-4h8v4h2v-9h-4V5H6v14Zm2-11h2v2H8V8Zm0 4h2v2H8v-2Zm4-4h2v2h-2V8Zm0 4h2v2h-2v-2Z"/></svg>
+          <span>Company Profile</span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <section class="sidebar-plan-card" id="sidebarPlanCard" aria-live="polite"></section>
+      <section class="sidebar-utility-section">
+        <a href="employer-support.html" id="employerSupportSidebarLink" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10v5a3 3 0 0 1-3 3h-2v-8h3a8 8 0 1 0-16 0h3v8H5a3 3 0 0 1-3-3v-5A10 10 0 0 1 12 2Zm-3 8h2v10H9V10Zm4 0h2v10h-2V10Z"/></svg>
+          <span>Support</span>
+        </a>
+        <a href="employer-profile.html" id="employerSettingsSidebarLink" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.43 12.98c.04-.32.07-.65.07-.98s-.02-.66-.07-.98l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.6-.22l-2.49 1a7.28 7.28 0 0 0-1.69-.98L14.5 2.42A.5.5 0 0 0 14 2h-4a.5.5 0 0 0-.5.42L9.12 5.07c-.61.24-1.18.56-1.69.98l-2.49-1a.5.5 0 0 0-.6.22l-2 3.46a.5.5 0 0 0 .12.64l2.11 1.65c-.04.32-.07.65-.07.98s.02.66.07.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46c.13.22.39.31.62.22l2.47-1c.51.4 1.07.73 1.69.98l.38 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.38-2.65c.61-.25 1.18-.58 1.69-.98l2.47 1c.23.09.49 0 .62-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z"/></svg>
+          <span>Settings</span>
+        </a>
+        <button type="button" id="logoutBtn" class="logout-btn nav-logout">Logout</button>
+      </section>
     </div>
-  </section>
+  </aside>
 
-  <section class="stats-grid">
-    <div class="stat-card">
-      <span>Saved candidates</span>
-      <strong id="savedCount">0</strong>
-      <p>Total shortlisted talent</p>
-    </div>
+  <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
 
-    <div class="stat-card">
-      <span>Available now</span>
-      <strong id="readyCount">0</strong>
-      <p>Can start immediately</p>
-    </div>
+  <div class="dashboard-workspace">
+    <header class="utility-bar">
+      <button type="button" class="mobile-menu-btn" id="sidebarToggle" aria-controls="dashboardSidebar" aria-expanded="false">
+        <span class="sr-only">Open navigation</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v2H4V7Zm0 4h16v2H4v-2Zm0 4h16v2H4v-2Z"/></svg>
+      </button>
 
-    <div class="stat-card">
-      <span>Trades covered</span>
-      <strong id="tradeCount">0</strong>
-      <p>Different skill areas</p>
-    </div>
+      <form class="utility-search" role="search">
+        <label class="sr-only" for="globalSavedTalentSearch">Search candidates, jobs, or messages</label>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.97 12.04l3.25 3.24a1 1 0 0 1-1.42 1.42l-3.24-3.25A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/></svg>
+        <input id="globalSavedTalentSearch" type="search" placeholder="Search candidates, jobs, or messages..." autocomplete="off" />
+        <span class="search-shortcut" aria-hidden="true">/</span>
+      </form>
 
-    <div class="stat-card">
-      <span>Newest save</span>
-      <strong id="newestSave">-</strong>
-      <p>Most recent shortlist add</p>
-    </div>
-  </section>
+      <div class="utility-actions">
+        <a href="employer-messages.html" class="utility-icon-link" aria-label="Open messages">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H9.8l-4.1 3.08A1.05 1.05 0 0 1 4 19.24V17a3 3 0 0 1-2-2.83V7a3 3 0 0 1 3-3Zm0 2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1v2.25L9.13 15H19a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5Z"/></svg>
+        </a>
+        <a href="employer-applicants.html?stage=new" class="utility-icon-link pro-notification-link" aria-label="Open applicant notifications">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5-6.71V3a2 2 0 1 0-4 0v1.29A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg>
+        </a>
+        <a href="employer-profile.html" class="top-account">
+          <span class="account-avatar small" id="topCompanyAvatar">PT</span>
+          <span id="topCompanyName">Placely Talent</span>
+        </a>
+      </div>
+    </header>
 
-  <section class="content-layout">
-
-    <section class="main-panel">
-
-      <div class="toolbar-card">
-        <div>
-          <span class="eyebrow">FILTER SHORTLIST</span>
-          <h2>Saved candidate search</h2>
+    <main class="employer-shell saved-talent-shell" data-plan="pro">
+      <section class="dashboard-briefing" aria-labelledby="savedTalentTitle">
+        <div class="briefing-copy">
+          <h1 id="savedTalentTitle">Saved Talent</h1>
+          <p>Review and manage your saved candidates.</p>
         </div>
 
-        <div class="toolbar-grid">
-          <input id="searchInput" type="text" placeholder="Search by name, trade, skill, city, or certification..." />
+        <div class="briefing-actions">
+          <a href="find-candidates.html" class="primary-btn">Find Candidates</a>
+          <a href="employer-dashboard.html" class="secondary-btn">Dashboard</a>
+        </div>
+      </section>
 
+      <section class="kpi-strip manage-kpi-strip saved-talent-kpi-strip" aria-label="Saved talent overview">
+        <div class="kpi-item saved-candidates-kpi">
+          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12a2 2 0 0 1 2 2v16a1 1 0 0 1-1.55.83L12 17.53l-6.45 4.3A1 1 0 0 1 4 21V5a2 2 0 0 1 2-2Zm0 2v14.13l5.45-3.63a1 1 0 0 1 1.1 0L18 19.13V5H6Z"/></svg></span>
+          <span class="kpi-copy">
+            <span class="kpi-label">Saved Candidates</span>
+            <strong id="savedCount">—</strong>
+            <span class="kpi-context">Your saved talent</span>
+          </span>
+        </div>
+
+        <div class="kpi-item available-now-kpi">
+          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 1-10 10A10 10 0 0 1 12 2Zm4.29 6.29L10.5 14.09 7.71 11.3 6.29 12.7l4.21 4.21 7.21-7.2-1.42-1.42Z"/></svg></span>
+          <span class="kpi-copy">
+            <span class="kpi-label">Available Now</span>
+            <strong id="readyCount">—</strong>
+            <span class="kpi-context">Open to new opportunities</span>
+          </span>
+        </div>
+
+        <div class="kpi-item new-this-week-kpi">
+          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 1-9 9 9 9 0 0 1 9-9Zm1 4h-2v6l5 3 .98-1.74L13 11.9V7Z"/></svg></span>
+          <span class="kpi-copy">
+            <span class="kpi-label">New This Week</span>
+            <strong id="newThisWeekCount">—</strong>
+            <span class="kpi-context">Saved in the last 7 days</span>
+          </span>
+        </div>
+
+        <div class="kpi-item top-matches-kpi">
+          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2 15.09 8.26 22 9.27l-5 4.87L18.18 21 12 17.75 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2Z"/></svg></span>
+          <span class="kpi-copy">
+            <span class="kpi-label">Top Matches</span>
+            <strong id="topMatchesCount">—</strong>
+            <span class="kpi-context">High match percentage</span>
+          </span>
+        </div>
+      </section>
+
+      <section class="workspace-panel saved-filter-card" aria-label="Saved Talent filters">
+        <div class="section-heading">
+          <div>
+            <h2>Filter your saved talent</h2>
+          </div>
+        </div>
+
+        <div class="saved-toolbar-grid">
+          <label class="sr-only" for="searchInput">Search saved candidates</label>
+          <div class="saved-search-control">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.97 12.04l3.25 3.24a1 1 0 0 1-1.42 1.42l-3.24-3.25A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/></svg>
+            <input id="searchInput" type="search" placeholder="Search by name, trade, skill, city, or certification..." autocomplete="off" />
+          </div>
+
+          <label class="sr-only" for="locationFilter">Location</label>
+          <div class="saved-search-control">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 1 7 7c0 5.25-7 13-7 13S5 14.25 5 9a7 7 0 0 1 7-7Zm0 9.5A2.5 2.5 0 1 0 12 6a2.5 2.5 0 0 0 0 5.5Z"/></svg>
+            <input id="locationFilter" type="search" placeholder="Location" autocomplete="off" />
+          </div>
+
+          <label class="sr-only" for="tradeFilter">Trade</label>
           <select id="tradeFilter">
             <option value="">All trades</option>
             <option value="electrical">Electrical</option>
@@ -98,6 +209,17 @@
             <option value="labour">Labour</option>
           </select>
 
+          <label class="sr-only" for="experienceFilter">Experience</label>
+          <select id="experienceFilter">
+            <option value="">Any experience</option>
+            <option value="entry">Entry level</option>
+            <option value="under-2">Under 2 years</option>
+            <option value="2-5">2-5 years</option>
+            <option value="5-10">5-10 years</option>
+            <option value="10+">10+ years</option>
+          </select>
+
+          <label class="sr-only" for="availabilityFilter">Availability</label>
           <select id="availabilityFilter">
             <option value="">Any availability</option>
             <option value="immediately">Available immediately</option>
@@ -106,38 +228,85 @@
             <option value="1 month">Within 1 month</option>
           </select>
 
-          <select id="sortFilter">
-            <option value="newest">Newest saved</option>
-            <option value="oldest">Oldest saved</option>
-            <option value="name">Name A-Z</option>
-            <option value="trade">Trade A-Z</option>
-            <option value="location">Location A-Z</option>
-          </select>
+          <button type="button" id="moreFiltersBtn" class="saved-more-filters-btn" disabled aria-disabled="true">More Filters</button>
         </div>
-      </div>
 
-      <div class="section-heading">
-        <div>
-          <span class="eyebrow">SHORTLIST</span>
-          <h2>Saved candidates</h2>
+        <div class="saved-filter-meta">
+          <p id="savedAccessState" class="saved-access-state" hidden>
+            <span class="access-dot" aria-hidden="true"></span>
+            <span>Full candidate access enabled</span>
+          </p>
+
+          <button type="button" id="clearAllFiltersBtn" class="saved-clear-all-btn">Clear all</button>
         </div>
-        <p id="resultsText">Loading saved talent...</p>
-      </div>
+      </section>
 
-      <section class="talent-grid" id="savedTalentGrid"></section>
+      <section class="workspace-panel saved-results-card" aria-labelledby="savedResultsTitle">
+        <div class="saved-results-toolbar">
+          <p id="resultsText">Loading saved talent...</p>
 
-      <div class="empty-state hidden" id="emptyState">
-        <div class="empty-icon">PT</div>
-        <h3>No saved candidates yet</h3>
-        <p>Save candidates from the candidate network and they will appear here.</p>
-        <a href="find-candidates.html">Find Candidates</a>
-      </div>
+          <div class="saved-results-controls">
+            <label for="sortFilter">Sort by:</label>
+            <select id="sortFilter">
+              <option value="newest">Newest saved</option>
+              <option value="oldest">Oldest saved</option>
+              <option value="name">Name A-Z</option>
+              <option value="availability">Availability</option>
+            </select>
 
-    </section>
+            <button type="button" class="saved-view-btn active" aria-label="List view" aria-pressed="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h3v3H4V6Zm5 0h11v3H9V6Zm-5 5h3v3H4v-3Zm5 0h11v3H9v-3Zm-5 5h3v3H4v-3Zm5 0h11v3H9v-3Z"/></svg>
+            </button>
+          </div>
+        </div>
 
-  </section>
+        <div class="saved-table-wrap">
+          <table class="saved-talent-table">
+            <thead>
+              <tr>
+                <th class="select-col"><span class="sr-only">Select</span></th>
+                <th>Candidate</th>
+                <th>Experience</th>
+                <th>Availability</th>
+                <th>Top Skills</th>
+                <th>Match</th>
+                <th>Saved</th>
+                <th class="actions-col">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="savedTalentGrid"></tbody>
+          </table>
+        </div>
 
-</main>
+        <div class="empty-state hidden" id="emptyState">
+          <span class="empty-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M6 3h12a2 2 0 0 1 2 2v16a1 1 0 0 1-1.55.83L12 17.53l-6.45 4.3A1 1 0 0 1 4 21V5a2 2 0 0 1 2-2Zm0 2v14.13l5.45-3.63a1 1 0 0 1 1.1 0L18 19.13V5H6Z"/></svg>
+          </span>
+          <span class="empty-copy">
+            <strong>No saved candidates yet</strong>
+            <p>Save candidates from the candidate network and they will appear here.</p>
+          </span>
+          <a href="find-candidates.html" class="empty-action">Find Candidates</a>
+        </div>
+
+        <div class="saved-pagination hidden" id="savedPagination">
+          <p id="paginationSummary">Showing 0-0 of 0</p>
+          <div class="pagination-controls">
+            <label for="pageSizeSelect">Rows</label>
+            <select id="pageSizeSelect">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+            <button type="button" id="prevPageBtn" class="pagination-btn">Previous</button>
+            <span id="pageIndicator">Page 1 of 1</span>
+            <button type="button" id="nextPageBtn" class="pagination-btn">Next</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
 
 <aside class="candidate-detail-panel" id="candidateDetailPanel">
   <button class="close-panel-btn" id="closePanelBtn">Close</button>
