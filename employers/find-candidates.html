@@ -6,64 +6,152 @@
 
   <title>Find Candidates | Placely Talent</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/manage-jobs.css" />
   <link rel="stylesheet" href="../css/find-candidates.css" />
   <link rel="stylesheet" href="../css/candidate-detail-drawer.css" />
-  <link rel="stylesheet" href="../css/employer-consistency.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
-<body>
-
-<header>
-  <div class="logo-wrapper">
-    <a href="employer-dashboard.html" class="logo">PLACELY TALENT</a>
-    <div class="logo-subtitle">Employer Platform</div>
-  </div>
-
-  <nav data-employer-nav>
-    <a href="employer-dashboard.html" class="employer-nav-link">Dashboard</a>
-    <a href="manage-jobs.html" class="employer-nav-link">Jobs</a>
-    <a href="employer-applicants.html" class="employer-nav-link">Applicants</a>
-    <a href="find-candidates.html" id="employerCandidatesNav" class="employer-nav-link employer-candidates-nav" hidden>Candidates</a>
-    <a href="saved-talent.html" class="employer-nav-link">Saved Talent</a>
-    <a href="employer-messages.html" class="employer-nav-link">Messages</a>
-    <a href="employer-profile.html" class="employer-nav-link">Company</a>
-    <button type="button" id="logoutBtn" class="logout-btn">Logout</button>
-  </nav>
-</header>
-
-<main class="page-shell" id="findPage">
-
-  <section class="hero-card">
-    <div>
-      <span class="eyebrow">CANDIDATE NETWORK</span>
-      <h1>Search verified trades talent.</h1>
-      <p>Filter visible candidate profiles by trade, location, experience, availability, certifications, and skills.</p>
+<body data-plan="pro">
+<div class="dashboard-shell candidates-page">
+  <aside class="dashboard-sidebar" id="dashboardSidebar" aria-label="Employer navigation">
+    <div class="sidebar-brand">
+      <a href="employer-dashboard.html" class="brand-mark" aria-label="Placely Talent dashboard">P</a>
+      <div>
+        <a href="employer-dashboard.html" class="brand-name">PLACELY TALENT</a>
+        <span>Employer Platform</span>
+      </div>
     </div>
 
-    <div class="hero-actions">
-      <a href="employer-dashboard.html" class="secondary-link">Dashboard</a>
-      <a href="saved-talent.html" class="primary-link">Saved Talent</a>
+    <nav class="sidebar-nav" data-employer-nav aria-label="Employer sections">
+      <div class="nav-group">
+        <span class="nav-label">Overview</span>
+        <a href="employer-dashboard.html" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h7V4H4v9Zm9 7h7v-7h-7v7ZM4 20h7v-5H4v5Zm9-9h7V4h-7v7Z"/></svg>
+          <span>Dashboard</span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <span class="nav-label">Hiring</span>
+        <a href="manage-jobs.html" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6V5a3 3 0 0 1 3-3h1a3 3 0 0 1 3 3v1h3a2 2 0 0 1 2 2v10.5A2.5 2.5 0 0 1 18.5 21h-13A2.5 2.5 0 0 1 3 18.5V8a2 2 0 0 1 2-2h4Zm2 0h3V5a1 1 0 0 0-1-1h-1a1 1 0 0 0-1 1v1Zm9 5H4v7.5c0 .28.22.5.5.5h15c.28 0 .5-.22.5-.5V11Z"/></svg>
+          <span>Jobs</span>
+        </a>
+        <a href="employer-applicants.html" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.33 0-8 2.03-8 4.43V20a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1.57C20 16.03 16.33 14 12 14Z"/></svg>
+          <span>Applicants</span>
+        </a>
+        <a href="employer-applicants.html?stage=interview" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h10a2 2 0 0 1 2 2v18l-7-3-7 3V4a2 2 0 0 1 2-2Zm0 17 5-2.14L17 19V4H7v15Zm2-9h6v2H9v-2Zm0-4h6v2H9V6Z"/></svg>
+          <span>Interviews</span>
+        </a>
+        <a href="employer-messages.html" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H9.8l-4.1 3.08A1.05 1.05 0 0 1 4 19.24V17a3 3 0 0 1-2-2.83V7a3 3 0 0 1 3-3Zm0 2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1v2.25L9.13 15H19a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5Z"/></svg>
+          <span>Messages</span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <span class="nav-label">Talent</span>
+        <a href="find-candidates.html" id="employerCandidatesNav" class="employer-nav-link employer-candidates-nav nav-item active" data-plan-gated="candidate-network">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.97 12.04l3.25 3.24a1 1 0 0 1-1.42 1.42l-3.24-3.25A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/></svg>
+          <span>Candidates</span>
+          <span class="nav-lock" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h1Zm2 0h6V8a3 3 0 0 0-6 0v2Z"/></svg></span>
+          <span class="nav-pro-badge">Pro</span>
+        </a>
+        <a href="saved-talent.html" id="employerSavedTalentNav" class="employer-nav-link nav-item" data-plan-gated="candidate-network">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a2 2 0 0 1 2 2v16a1 1 0 0 1-1.55.83L12 17.53l-6.45 4.3A1 1 0 0 1 4 21V5a2 2 0 0 1 2-2Zm0 2v14.13l5.45-3.63a1 1 0 0 1 1.1 0L18 19.13V5H6Z"/></svg>
+          <span>Saved Talent</span>
+          <span class="nav-lock" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h1Zm2 0h6V8a3 3 0 0 0-6 0v2Z"/></svg></span>
+          <span class="nav-pro-badge">Pro</span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <span class="nav-label">Company</span>
+        <a href="employer-profile.html" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3h2a2 2 0 0 1 2 2v11h-6v-4H10v4H4Zm2-2h2v-4h8v4h2v-9h-4V5H6v14Zm2-11h2v2H8V8Zm0 4h2v2H8v-2Zm4-4h2v2h-2V8Zm0 4h2v2h-2v-2Z"/></svg>
+          <span>Company Profile</span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="employer-profile.html" class="sidebar-account" aria-label="Open company profile">
+        <span class="account-avatar">PT</span>
+        <span class="account-copy">
+          <strong>Placely Talent</strong>
+          <span>Employer account</span>
+        </span>
+      </a>
+      <button type="button" id="logoutBtn" class="logout-btn nav-logout">Logout</button>
+    </div>
+  </aside>
+
+  <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+
+  <div class="dashboard-workspace">
+    <header class="utility-bar">
+      <button type="button" class="mobile-menu-btn" id="sidebarToggle" aria-controls="dashboardSidebar" aria-expanded="false">
+        <span class="sr-only">Open navigation</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v2H4V7Zm0 4h16v2H4v-2Zm0 4h16v2H4v-2Z"/></svg>
+      </button>
+
+      <form class="utility-search" role="search">
+        <label class="sr-only" for="globalCandidateSearch">Search candidates, jobs, or messages</label>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.97 12.04l3.25 3.24a1 1 0 0 1-1.42 1.42l-3.24-3.25A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/></svg>
+        <input id="globalCandidateSearch" type="search" placeholder="Search candidates, jobs, or messages..." autocomplete="off" />
+        <span class="search-shortcut" aria-hidden="true">/</span>
+      </form>
+
+      <div class="utility-actions">
+        <a href="employer-messages.html" class="utility-icon-link" aria-label="Open messages">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H9.8l-4.1 3.08A1.05 1.05 0 0 1 4 19.24V17a3 3 0 0 1-2-2.83V7a3 3 0 0 1 3-3Zm0 2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1v2.25L9.13 15H19a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5Z"/></svg>
+        </a>
+        <a href="employer-applicants.html?stage=new" class="utility-icon-link pro-notification-link" aria-label="Open applicant notifications">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5-6.71V3a2 2 0 1 0-4 0v1.29A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg>
+        </a>
+        <a href="employer-profile.html" class="top-account">
+          <span class="account-avatar small">PT</span>
+          <span>Placely Talent</span>
+        </a>
+      </div>
+    </header>
+
+    <main class="employer-shell candidates-shell" id="findPage" data-plan="pro">
+
+  <section class="dashboard-briefing" aria-labelledby="candidateSearchTitle">
+    <div class="briefing-copy">
+      <h1 id="candidateSearchTitle">Candidates</h1>
+      <p>Search and discover verified trades talent from your active jobs network.</p>
+    </div>
+
+    <div class="briefing-actions">
+      <a href="employer-dashboard.html" class="secondary-btn">Dashboard</a>
+      <a href="saved-talent.html" class="primary-btn">Saved Talent</a>
     </div>
   </section>
 
   <section class="candidate-summary-strip" aria-label="Candidate network summary">
-    <button type="button" class="summary-pill active">
+    <button type="button" class="summary-pill active" data-summary-filter="recommended" aria-pressed="true" aria-label="Recommended view">
       <span>Recommended</span>
       <strong id="recommendedSignal">View</strong>
     </button>
 
-    <button type="button" class="summary-pill">
+    <button type="button" class="summary-pill" data-summary-filter="available" aria-pressed="false" aria-label="Available now view">
       <span>Available now</span>
       <strong id="fastStartCount">Ready</strong>
     </button>
 
-    <button type="button" class="summary-pill">
+    <button type="button" class="summary-pill" data-summary-filter="new" aria-pressed="false" aria-label="Recently joined view">
       <span>Recently joined</span>
       <strong id="newThisWeekCount">New</strong>
     </button>
 
-    <button type="button" class="summary-pill">
+    <button type="button" class="summary-pill" data-summary-filter="saved" aria-pressed="false" aria-label="Saved talent view">
       <span>Saved talent</span>
       <strong id="savedCount">0</strong>
     </button>
@@ -85,9 +173,8 @@
   <section class="candidate-database-panel">
     <div class="panel-heading">
       <div>
-        <span class="eyebrow">TALENT DATABASE</span>
         <h2>Candidate search</h2>
-        <p id="resultsText">Loading candidates...</p>
+        <p>Find the right people for your open roles.</p>
       </div>
 
       <button type="button" class="secondary-link button-link" id="clearFiltersBtn">Clear filters</button>
@@ -95,9 +182,15 @@
 
     <form class="filter-bar" id="candidateSearchForm" aria-label="Candidate filters">
       <label class="sr-only" for="keywordInput">Keyword search</label>
-      <input id="keywordInput" type="search" placeholder="Search name, trade, skill, certification..." autocomplete="off" />
+      <div class="candidate-filter-control keyword-control">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.97 12.04l3.25 3.24a1 1 0 0 1-1.42 1.42l-3.24-3.25A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/></svg>
+        <input id="keywordInput" type="search" placeholder="Search name, trade, skill, certification..." autocomplete="off" />
+      </div>
       <label class="sr-only" for="cityFilter">Location</label>
-      <input id="cityFilter" type="search" placeholder="Location" autocomplete="off" />
+      <div class="candidate-filter-control location-control">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 1 7 7c0 5.25-7 13-7 13S5 14.25 5 9a7 7 0 0 1 7-7Zm0 9.5A2.5 2.5 0 1 0 12 6a2.5 2.5 0 0 0 0 5.5Z"/></svg>
+        <input id="cityFilter" type="search" placeholder="Location" autocomplete="off" />
+      </div>
 
       <label class="sr-only" for="tradeFilter">Trade</label>
       <select id="tradeFilter">
@@ -137,13 +230,26 @@
       </select>
     </form>
 
-    <div class="candidate-results-panel">
-      <div class="results-meta" aria-live="polite">
-        <span id="accessStateText">Candidate access loading...</span>
-        <span hidden><strong id="resultCount">0</strong> results</span>
-      </div>
+    <div class="results-meta" aria-live="polite">
+      <span id="accessStateText">Candidate access loading...</span>
+      <span hidden><strong id="resultCount">0</strong> results</span>
+    </div>
 
-      <div class="active-filter-chips" id="activeFilterChips" aria-label="Active filters"></div>
+    <div class="active-filter-chips" id="activeFilterChips" aria-label="Active filters"></div>
+  </section>
+
+  <section class="candidate-results-panel">
+      <div class="candidate-results-head">
+        <p id="resultsText">Loading candidates...</p>
+        <div class="candidate-view-controls" aria-label="Candidate results view">
+          <button type="button" class="view-control active" aria-label="List view" aria-pressed="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h3v3H4V6Zm5 0h11v3H9V6Zm-5 5h3v3H4v-3Zm5 0h11v3H9v-3Zm-5 5h3v3H4v-3Zm5 0h11v3H9v-3Z"/></svg>
+          </button>
+          <button type="button" class="view-control" aria-label="Grid view unavailable" aria-disabled="true" tabindex="-1">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4V4Zm9 0h7v7h-7V4ZM4 13h7v7H4v-7Zm9 0h7v7h-7v-7Z"/></svg>
+          </button>
+        </div>
+      </div>
 
       <div class="candidate-list-head" aria-hidden="true">
         <span>Candidate</span>
@@ -165,10 +271,11 @@
         <p>Try clearing filters or searching a broader trade, city, skill, or certification.</p>
         <button type="button" id="emptyClearBtn">Clear search</button>
       </div>
-    </div>
   </section>
 
-</main>
+    </main>
+  </div>
+</div>
 
 <div class="panel-overlay" id="panelOverlay"></div>
 <aside class="candidate-detail-panel" id="candidateDetailPanel" aria-hidden="true">
