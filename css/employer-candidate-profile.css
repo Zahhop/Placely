@@ -55,6 +55,137 @@
   color: #2563eb;
 }
 
+.employer-candidate-profile-workspace .candidate-preview-profile {
+  width: 100%;
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.employer-candidate-profile-workspace .candidate-preview-hero,
+.employer-candidate-profile-workspace .candidate-preview-card,
+.employer-candidate-profile-workspace .candidate-preview-secure {
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.04);
+}
+
+.employer-candidate-profile-workspace .candidate-preview-hero {
+  min-height: 236px;
+  padding: clamp(20px, 3vw, 32px);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(280px, 360px);
+  gap: 24px;
+  align-items: center;
+  overflow: hidden;
+}
+
+.employer-candidate-profile-workspace .candidate-preview-photo-wrap {
+  width: 136px;
+  min-width: 136px;
+  max-width: 136px;
+  flex: 0 0 136px;
+}
+
+.employer-candidate-profile-workspace .candidate-preview-photo {
+  width: 136px;
+  height: 136px;
+  min-width: 136px;
+  max-width: 136px;
+  aspect-ratio: 1 / 1;
+  flex: 0 0 136px;
+  border-radius: 20px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.employer-candidate-profile-workspace .candidate-preview-photo img {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.employer-candidate-profile-workspace .candidate-preview-identity {
+  min-width: 0;
+}
+
+.employer-candidate-profile-workspace .candidate-preview-name-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.employer-candidate-profile-workspace .candidate-preview-name-row h2 {
+  overflow-wrap: anywhere;
+}
+
+.employer-candidate-profile-workspace .candidate-preview-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.employer-candidate-profile-workspace .candidate-preview-fact {
+  min-width: 0;
+}
+
+.employer-candidate-profile-workspace .candidate-preview-about {
+  min-width: 280px;
+  max-width: 360px;
+  align-self: stretch;
+}
+
+.employer-candidate-profile-workspace .candidate-preview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.9fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.employer-candidate-profile-workspace .candidate-preview-left,
+.employer-candidate-profile-workspace .candidate-preview-right {
+  min-width: 0;
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+.employer-candidate-profile-workspace .candidate-preview-card {
+  padding: 24px;
+  min-width: 0;
+}
+
+.employer-candidate-profile-workspace .candidate-preview-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.employer-candidate-profile-workspace .candidate-preview-chip-row span {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.employer-candidate-profile-workspace .candidate-preview-info-row {
+  min-width: 0;
+}
+
+.employer-candidate-profile-workspace .candidate-preview-info-row strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.employer-candidate-profile-workspace .candidate-preview-secure {
+  width: 100%;
+  grid-column: 1 / -1;
+}
+
 .employer-candidate-profile-error {
   min-height: 420px;
   padding: 34px 24px;
@@ -208,6 +339,66 @@
 
   .employer-candidate-actions {
     display: grid;
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1180px) {
+  .employer-candidate-profile-workspace .candidate-preview-hero {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .employer-candidate-profile-workspace .candidate-preview-about {
+    grid-column: 1 / -1;
+    min-width: 0;
+    max-width: none;
+  }
+}
+
+@media (max-width: 980px) {
+  .employer-candidate-profile-workspace .candidate-preview-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .employer-candidate-profile-workspace .candidate-preview-hero {
+    grid-template-columns: 1fr;
+    justify-items: start;
+    gap: 18px;
+  }
+
+  .employer-candidate-profile-workspace .candidate-preview-photo-wrap,
+  .employer-candidate-profile-workspace .candidate-preview-photo {
+    width: 122px;
+    height: 122px;
+    min-width: 122px;
+    max-width: 122px;
+    flex-basis: 122px;
+    border-radius: 18px;
+  }
+
+  .employer-candidate-profile-workspace .candidate-preview-facts {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .employer-candidate-profile-workspace .candidate-preview-fact {
+    border-right: 0;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0 0 12px;
+  }
+
+  .employer-candidate-profile-workspace .candidate-preview-fact:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .employer-candidate-profile-workspace .candidate-preview-card {
+    padding: 20px;
+  }
+
+  .employer-candidate-profile-workspace .candidate-preview-resume {
     grid-template-columns: 1fr;
   }
 }

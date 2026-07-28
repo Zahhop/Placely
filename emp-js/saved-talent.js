@@ -37,12 +37,10 @@ let filteredSavedCandidates = [];
 let hasCandidateAccess = false;
 let candidateAccessState = { state: "denied", status: "missing", active: false, pending: false };
 let savedTalentRowsByCandidateId = new Map();
-<<<<<<< HEAD
 let currentPage = 1;
 let pageSize = 10;
 let openMenuCandidateId = null;
 let confirmRemoveCandidateId = null;
-=======
 let savedCandidateProfileWorkspace = null;
 let savedTalentScrollTop = 0;
 const SAVED_TALENT_CANDIDATE_COLUMNS = [
@@ -59,7 +57,6 @@ const SAVED_TALENT_CANDIDATE_COLUMNS = [
   "profile_visible",
   "verification_status"
 ].join(",");
->>>>>>> e60667c9b5836edbe76cb33628ad92f2f55a9a5a
 
 document.addEventListener("DOMContentLoaded", initSavedTalent);
 
@@ -430,7 +427,6 @@ function createTalentRow(candidate) {
   const location = candidate.location || "Location not listed";
   const experience = candidate.experience || "Experience not listed";
   const availability = candidate.availability || "Availability not listed";
-<<<<<<< HEAD
   const tags = getCandidateTags(candidate, 99);
   const visibleTags = tags.slice(0, 3);
   const remainingTags = Math.max(0, tags.length - visibleTags.length);
@@ -438,10 +434,7 @@ function createTalentRow(candidate) {
   const availabilityCategory = getAvailabilityCategory(candidate.availability);
   const isMenuOpen = openMenuCandidateId === id;
   const isConfirmOpen = confirmRemoveCandidateId === id;
-=======
-  const tags = getCandidateTags(candidate);
   const verifiedBadge = renderVerifiedBadge(candidate, { short: true });
->>>>>>> e60667c9b5836edbe76cb33628ad92f2f55a9a5a
 
   row.innerHTML = `
     <td><input type="checkbox" class="saved-select-checkbox" aria-label="Select ${escapeAttribute(name)}"></td>
@@ -456,7 +449,6 @@ function createTalentRow(candidate) {
           <button type="button" class="saved-profile-link" data-action="view" data-id="${escapeAttribute(id)}">View profile</button>
         </span>
       </div>
-<<<<<<< HEAD
     </td>
     <td>
       <span class="table-stack">
@@ -473,12 +465,6 @@ function createTalentRow(candidate) {
       <div class="tag-row">
         ${visibleTags.length ? visibleTags.map((tag) => `<span>${escapeHTML(tag)}</span>`).join("") : `<span class="skills-empty">Skills not listed</span>`}
         ${remainingTags ? `<span>+${remainingTags}</span>` : ""}
-=======
-
-      <div>
-        <h3>${escapeHTML(name)} ${verifiedBadge}</h3>
-        <p>${escapeHTML(trade)}</p>
->>>>>>> e60667c9b5836edbe76cb33628ad92f2f55a9a5a
       </div>
     </td>
     <td>
