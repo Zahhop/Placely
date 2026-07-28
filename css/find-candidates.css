@@ -1086,6 +1086,29 @@ html {
   overflow-y: scroll;
 }
 
+@media (min-width: 901px) {
+  .candidates-page.dashboard-shell,
+  .dashboard-shell.candidates-page {
+    display: block;
+  }
+
+  .candidates-page .dashboard-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    min-height: 100vh;
+    z-index: 100;
+  }
+
+  .candidates-page .dashboard-workspace {
+    width: calc(100% - var(--sidebar-width));
+    min-height: 100vh;
+    margin-left: var(--sidebar-width);
+  }
+}
+
 .candidates-page .dashboard-sidebar {
   overflow-y: auto;
   overflow-x: hidden;

@@ -1,0 +1,371 @@
+.verification-shell {
+  width: 100%;
+}
+
+.verification-page-container {
+  width: min(100%, 980px);
+  margin-inline: auto;
+  padding: 8px 0 44px;
+}
+
+.verification-heading {
+  width: 100%;
+  margin: 0 0 18px;
+}
+
+.verification-heading .briefing-copy {
+  max-width: 760px;
+}
+
+.verification-card {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+  padding: clamp(22px, 4vw, 34px);
+}
+
+.verification-state-header,
+.verification-loading,
+.verification-error {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+
+.verification-state-header {
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.verification-loading,
+.verification-error {
+  min-height: 360px;
+  align-content: center;
+  gap: 12px;
+}
+
+.verification-state-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.verification-state-icon.pending {
+  border-color: #fed7aa;
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.verification-state-icon.verified {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.verification-state-icon.rejected,
+.verification-state-icon.error {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.verification-state-icon.loading {
+  border-color: #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.verification-state-label,
+.verification-state-badge {
+  min-height: 28px;
+  padding: 0 11px;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.verification-state-badge.pending {
+  border-color: #fed7aa;
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.verification-state-badge.verified {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.verification-state-badge.rejected {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.verification-state-header h2,
+.verification-loading h2,
+.verification-error h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1.12;
+  letter-spacing: 0;
+}
+
+.verification-state-header p,
+.verification-loading p,
+.verification-error p {
+  max-width: 680px;
+  margin: 0;
+  color: #64748b;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.verification-section {
+  margin-top: 22px;
+}
+
+.verification-section-title {
+  margin: 0 0 12px;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.verification-benefits,
+.verification-next-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.verification-benefit,
+.verification-next-step {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 14px;
+  min-width: 0;
+}
+
+.verification-benefit {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  color: #334155;
+  font-weight: 800;
+}
+
+.verification-benefit-icon,
+.verification-step-number {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.verification-next-step strong {
+  display: block;
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.verification-next-step p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.verification-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.verification-detail-item {
+  min-width: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px;
+  background: #fff;
+}
+
+.verification-detail-item span {
+  display: block;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.verification-detail-item strong {
+  display: block;
+  margin-top: 6px;
+  color: #0f172a;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.verification-detail-item dd {
+  margin: 0;
+}
+
+.verification-form {
+  display: grid;
+  gap: 14px;
+}
+
+.verification-form label:not(.verification-confirmation) {
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.verification-form textarea {
+  width: 100%;
+  min-height: 116px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: #0f172a;
+  font: inherit;
+  resize: vertical;
+}
+
+.verification-confirmation {
+  align-items: flex-start;
+  display: flex;
+  gap: 10px;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.verification-confirmation input {
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  accent-color: #2563eb;
+}
+
+.verification-helper-text {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.verification-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+
+.verification-actions .primary-btn,
+.verification-actions .secondary-btn {
+  min-width: 156px;
+}
+
+.verification-banner {
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1e3a8a;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.verification-banner h2,
+.verification-banner p {
+  margin: 0;
+}
+
+.verification-banner h2 {
+  font-size: 16px;
+}
+
+.verification-banner p {
+  color: #1e40af;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.verified-preview {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 880px) {
+  .verification-page-container {
+    padding-bottom: 32px;
+  }
+
+  .verification-benefits,
+  .verification-next-steps {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .verification-card {
+    padding: 20px;
+  }
+
+  .verification-details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .verification-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .verification-actions .primary-btn,
+  .verification-actions .secondary-btn {
+    width: 100%;
+  }
+
+  .verification-banner {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

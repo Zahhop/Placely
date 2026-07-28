@@ -11,6 +11,8 @@
 
   <link rel="stylesheet" href="../css/candidate-dashboard.css" />
   <link rel="stylesheet" href="../css/candidate-preview.css" />
+  <link rel="stylesheet" href="../css/verified-badge.css" />
+  <link rel="stylesheet" href="../css/candidate-verification.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
@@ -67,6 +69,10 @@
         <a href="candidate-profile.html#resume" class="candidate-nav-link nav-item">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h9l5 5v15H6V2Zm8 2H8v16h10V8h-4V4Zm-3 8h4v2h-4v-2Zm0 4h4v2h-4v-2ZM9 8h2v2H9V8Z"/></svg>
           <span>Resume</span>
+        </a>
+        <a href="candidate-verification.html" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3Zm0 2.15 6 2.25V11c0 3.9-2.45 7.6-6 8.9-3.55-1.3-6-5-6-8.9V6.4l6-2.25Zm3.7 5.7-4.35 4.35-2.05-2.05-1.4 1.42 3.45 3.43 5.75-5.75-1.4-1.4Z"/></svg>
+          <span>Get Verified</span>
         </a>
       </div>
     </nav>
@@ -145,6 +151,8 @@
           <a href="candidate-profile.html" class="secondary-btn">Edit Profile</a>
         </div>
       </section>
+
+      <section id="verificationBanner" class="verification-banner" hidden></section>
 
       <section class="kpi-strip" aria-label="Candidate overview">
         <a href="candidate-applications.html" class="kpi-item">
@@ -239,8 +247,10 @@
 <script src="../js/auth-guards.js"></script>
 <script src="../js/job-url-utils.js"></script>
 <script src="../js/public-company-utils.js"></script>
+<script src="../js/candidate-sidebar.js"></script>
 <script src="../js/candidate-global-search.js"></script>
 <script src="../js/candidate-preview.js"></script>
+<script src="../js/verified-badge.js"></script>
 <script src="../js/candidate-dashboard.js"></script>
 
 </body>
