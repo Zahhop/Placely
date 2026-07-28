@@ -352,6 +352,279 @@
   word-break: break-word;
 }
 
+.application-panel-state {
+  width: min(1040px, 100%);
+  min-height: 100%;
+  margin: 0 auto;
+  display: grid;
+  gap: 20px;
+}
+
+.application-workspace {
+  display: block;
+}
+
+.application-workspace[hidden] {
+  display: none;
+}
+
+.application-job-header {
+  display: grid;
+  gap: 16px;
+}
+
+.application-page-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.application-page-heading h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(28px, 4vw, 42px);
+  line-height: 1.05;
+  font-weight: 900;
+}
+
+.application-page-heading p {
+  max-width: 720px;
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.application-back-btn {
+  justify-self: flex-start;
+}
+
+.application-job-title-row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.application-job-title-row h3 {
+  margin: 3px 0 5px;
+  color: var(--ink);
+  font-size: 22px;
+  line-height: 1.18;
+  font-weight: 900;
+}
+
+.application-helper {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.application-summary-card,
+.application-success-card,
+.application-inline-notice {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 16px;
+}
+
+.application-section-heading {
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.application-section-heading h3,
+.application-success-card h3,
+.inline-candidate-summary h4 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.application-section-heading .small-btn {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.inline-candidate-summary {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.inline-candidate-summary > div:last-child,
+.application-job-title-row > div:last-child {
+  min-width: 0;
+  flex: 1;
+}
+
+.candidate-photo.compact {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: #e0f2fe;
+  color: var(--blue);
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.candidate-photo.compact img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.application-facts {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.application-facts.compact {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.application-facts div {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px;
+}
+
+.application-facts span {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.application-facts strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 900;
+  word-break: break-word;
+}
+
+.tag-row.compact {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag-row.compact span {
+  max-width: 100%;
+  word-break: break-word;
+}
+
+.inline-application-form {
+  display: grid;
+  gap: 10px;
+}
+
+.inline-application-form label:not(.confirm-row) {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.inline-application-form textarea {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+  outline: none;
+  padding: 13px 14px;
+  resize: vertical;
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.inline-application-form textarea[data-field="coverLetter"],
+.inline-application-form textarea[data-field="additionalNotes"] {
+  min-height: 150px;
+}
+
+.inline-application-form textarea:focus {
+  border-color: #bfdbfe;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.inline-confirm-row {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  padding: 12px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.inline-confirm-row input {
+  margin-top: 2px;
+  width: 17px;
+  height: 17px;
+  accent-color: var(--blue);
+}
+
+.form-message {
+  min-height: 20px;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.application-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.sticky-actions {
+  position: sticky;
+  bottom: 0;
+  margin: 8px 0 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+}
+
+.application-inline-notice {
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.application-inline-notice p,
+.application-success-card p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 .mobile-back-btn {
   display: none;
   margin-bottom: 14px;
@@ -456,16 +729,22 @@
 
 @media (max-width: 640px) {
   .job-detail-top,
-  .public-job-heading {
+  .public-job-heading,
+  .application-page-heading,
+  .application-job-title-row,
+  .inline-candidate-summary {
     flex-direction: column;
   }
 
-  .detail-grid {
+  .detail-grid,
+  .application-facts,
+  .application-facts.compact {
     grid-template-columns: 1fr;
   }
 
   .job-detail-actions,
-  .public-job-actions {
+  .public-job-actions,
+  .application-actions-row {
     display: grid;
     grid-template-columns: 1fr;
   }
@@ -473,7 +752,13 @@
   .job-detail-actions .primary-btn,
   .job-detail-actions .secondary-btn,
   .public-job-actions .primary-btn,
-  .public-job-actions .secondary-btn {
+  .public-job-actions .secondary-btn,
+  .application-actions-row .primary-btn,
+  .application-actions-row .secondary-btn {
+    width: 100%;
+  }
+
+  .application-page-heading .secondary-btn {
     width: 100%;
   }
 

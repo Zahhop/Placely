@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" class="auth-booting">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Candidate Verification Requests | Placely Admin</title>
+  <link rel="stylesheet" href="../css/admin-verification.css" />
+  <link rel="stylesheet" href="../css/verified-badge.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <main class="admin-verification-shell">
+    <section class="admin-page-heading">
+      <div>
+        <span class="eyebrow">Placely Admin</span>
+        <h1>Candidate Verification Requests</h1>
+        <p>Review pending manual verification requests after completing the external screening call.</p>
+      </div>
+      <button type="button" id="refreshRequestsBtn">Refresh</button>
+    </section>
+
+    <section class="admin-panel">
+      <div id="adminStatus" class="admin-status">Loading requests...</div>
+      <div id="verificationRequestsList" class="admin-request-list"></div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/auth-utils.js"></script>
+  <script src="../js/verified-badge.js"></script>
+  <script src="../js/admin-verification-requests.js"></script>
+</body>
+</html>

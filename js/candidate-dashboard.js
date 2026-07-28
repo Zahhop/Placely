@@ -219,10 +219,63 @@ function renderDashboard() {
   );
 
   renderAvatar(profile);
+  renderVerificationBanner(profile);
   renderUtilityBadges(unreadMessagesCount, activeNotificationCount);
   renderApplicationsTable();
   renderSuggestedJobs();
   renderActivity();
+}
+
+function renderVerificationBanner(profile) {
+  const banner = document.getElementById("verificationBanner");
+  if (!banner) return;
+
+  const status = String(profile.verification_status || "unverified").toLowerCase().trim();
+
+  if (status === "verified") {
+    banner.hidden = false;
+    banner.innerHTML = `
+      <div>
+        <h2>${window.PlacelyVerifiedBadge?.render(profile) || "Verified by Placely"}</h2>
+        <p>Your Placely verification badge is visible to employers.</p>
+      </div>
+      <a href="candidate-profile.html" class="secondary-btn compact">View Profile</a>
+    `;
+    return;
+  }
+
+  if (status === "pending") {
+    banner.hidden = false;
+    banner.innerHTML = `
+      <div>
+        <h2>Verification pending</h2>
+        <p>We received your request and will contact you using the information on your profile.</p>
+      </div>
+      <a href="candidate-verification.html" class="secondary-btn compact">View Status</a>
+    `;
+    return;
+  }
+
+  if (status === "rejected") {
+    banner.hidden = false;
+    banner.innerHTML = `
+      <div>
+        <h2>Verification was not approved</h2>
+        <p>You can request another Placely review when your profile information is ready.</p>
+      </div>
+      <a href="candidate-verification.html" class="secondary-btn compact">Get Verified</a>
+    `;
+    return;
+  }
+
+  banner.hidden = false;
+  banner.innerHTML = `
+    <div>
+      <h2>Stand out to employers</h2>
+      <p>Request a Placely verification call to add a verified badge to your profile.</p>
+    </div>
+    <a href="candidate-verification.html" class="primary-btn compact">Get Verified</a>
+  `;
 }
 
 function renderAvatar(profile) {

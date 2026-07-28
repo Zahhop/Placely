@@ -217,41 +217,10 @@ textarea:focus {
 
 .content-layout {
   display: grid;
-  grid-template-columns: 190px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
   align-items: start;
-}
-
-.sidebar-card {
-  position: sticky;
-  top: 92px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--surface);
-  box-shadow: var(--shadow);
-  padding: 10px;
-  display: grid;
-  gap: 6px;
-}
-
-.sidebar-card a {
-  min-height: 36px;
-  padding: 0 10px;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  color: var(--muted);
-  display: inline-flex;
-  align-items: center;
-  text-decoration: none;
-  font-size: 12.5px;
-  font-weight: 900;
-}
-
-.sidebar-card a.active,
-.sidebar-card a:hover {
-  color: var(--blue);
-  background: #eff6ff;
-  border-color: #bfdbfe;
+  width: 100%;
 }
 
 .profile-content {
@@ -371,6 +340,20 @@ textarea:focus {
   gap: 16px;
 }
 
+.work-summary-row.compact {
+  background: #fff;
+}
+
+.work-row-label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .work-list strong,
 .resume-preview strong,
 .resume-drop strong {
@@ -390,7 +373,8 @@ textarea:focus {
 }
 
 .work-list button,
-.resume-preview button {
+.resume-preview button,
+.danger-outline-btn {
   min-height: 34px;
   padding: 0 11px;
   border: 1px solid var(--line);
@@ -400,6 +384,86 @@ textarea:focus {
   cursor: pointer;
   font-size: 12.5px;
   font-weight: 900;
+}
+
+.danger-outline-btn {
+  border-color: #fecaca;
+  color: var(--danger);
+}
+
+.danger-outline-btn:hover {
+  background: var(--danger-soft);
+}
+
+.profile-experience-workspace {
+  display: grid;
+  gap: 24px;
+}
+
+.experience-editor-card {
+  display: grid;
+  gap: 24px;
+}
+
+.experience-form-section {
+  display: grid;
+  gap: 4px;
+}
+
+.panel-heading.compact {
+  margin-bottom: 4px;
+}
+
+.panel-heading.compact h2 {
+  font-size: 18px;
+}
+
+.field-helper,
+.field-error {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.field-helper {
+  color: var(--muted);
+}
+
+.field-error {
+  min-height: 18px;
+  color: var(--danger);
+}
+
+.experience-current-row {
+  margin-top: 12px;
+}
+
+.experience-form-message {
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.experience-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+
+.experience-actions-main {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-left: auto;
 }
 
 .resume-drop {
@@ -483,8 +547,7 @@ textarea:focus {
 }
 
 @media (max-width: 1180px) {
-  .profile-summary-card,
-  .content-layout {
+  .profile-summary-card {
     grid-template-columns: 1fr;
   }
 
@@ -498,15 +561,6 @@ textarea:focus {
     grid-row: span 2;
   }
 
-  .sidebar-card {
-    position: static;
-    display: flex;
-    overflow-x: auto;
-  }
-
-  .sidebar-card a {
-    flex: 0 0 auto;
-  }
 }
 
 @media (max-width: 760px) {
@@ -514,7 +568,9 @@ textarea:focus {
   .preview-card,
   .visibility-panel,
   .work-list article,
-  .resume-preview {
+  .resume-preview,
+  .experience-actions,
+  .experience-actions-main {
     display: grid;
     grid-template-columns: 1fr;
     align-items: start;
@@ -536,9 +592,15 @@ textarea:focus {
   .preview-card button,
   .visibility-panel button,
   .resume-preview button,
+  .experience-actions button,
+  .experience-actions-main button,
   .primary-wide,
   .secondary-wide {
     width: 100%;
+  }
+
+  .experience-actions-main {
+    margin-left: 0;
   }
 
   .panel-heading {

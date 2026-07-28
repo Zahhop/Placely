@@ -55,6 +55,7 @@
     ensureHeaderSupportLink();
     ensureTopAccountMenu();
     wireLogoutButton();
+    hydrateEmployerAccountIdentity();
   }
 
   function renderNavbarMarkup() {
@@ -179,6 +180,88 @@
     } catch {
       return false;
     }
+  }
+
+  async function hydrateEmployerAccountIdentity() {
+    const employerClient = window.employerSupabase;
+    if (!employerClient) return;
+
+    try {
+      const {
+        data: { session },
+        error: sessionError
+      } = await employerClient.auth.getSession();
+
+      if (sessionError || !session?.user) return;
+
+      const { data: profile, error } = await employerClient
+        .from("employer_profiles")
+        .select("id, company_name, company_email, company_logo_url, candidate_access, subscription_status")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Employer account identity lookup failed", {
+          code: error?.code,
+          message: error?.message,
+          details: error?.details,
+          hint: error?.hint
+        });
+        applyEmployerAccountIdentity(null, session.user);
+        return;
+      }
+
+      applyEmployerAccountIdentity(profile, session.user);
+      window.applyCandidateAccessUI?.(hasCandidateSearchAccess(profile || {}));
+    } catch (error) {
+      console.error("Employer account identity hydration failed", {
+        message: error?.message || String(error || "")
+      });
+    }
+  }
+
+  function applyEmployerAccountIdentity(profile = {}, user = {}) {
+    const companyName = String(
+      profile?.company_name ||
+      user?.user_metadata?.company_name ||
+      user?.email?.split("@")[0] ||
+      "Employer"
+    ).trim();
+    const email = String(profile?.company_email || user?.email || "").trim();
+    const initials = window.PlacelyAuth?.getInitials?.(companyName) || getInitials(companyName);
+    const logoUrl = window.PlacelyAuth?.resolveEmployerLogoUrl?.(profile?.company_logo_url) || "";
+
+    setText("topCompanyName", companyName);
+    setText("companyNameTitle", companyName);
+
+    document.querySelectorAll(".utility-actions .top-account, .utility-actions #topAccountButton").forEach((account) => {
+      const avatar = account.querySelector(".account-avatar");
+      const label = [...account.querySelectorAll("span")].find((span) => !span.classList.contains("account-avatar"));
+      if (avatar) renderEmployerAvatar(avatar, companyName, initials, logoUrl);
+      if (label) label.textContent = companyName;
+    });
+
+    document.querySelectorAll(".sidebar-account").forEach((account) => {
+      const avatar = account.querySelector(".account-avatar");
+      const name = account.querySelector(".account-copy strong");
+      const caption = account.querySelector(".account-copy span");
+      if (avatar) renderEmployerAvatar(avatar, companyName, initials, logoUrl);
+      if (name) name.textContent = companyName;
+      if (caption) caption.textContent = "Employer account";
+    });
+
+    updateTopAccountMenu({
+      companyName,
+      email,
+      companyEmail: email
+    });
+  }
+
+  function renderEmployerAvatar(avatar, companyName, initials, logoUrl) {
+    avatar.textContent = "";
+    avatar.innerHTML = logoUrl
+      ? `<img src="${escapeHTML(logoUrl)}" alt="${escapeHTML(companyName)} logo" loading="lazy" decoding="async" onerror="this.parentElement.textContent='${escapeHTML(initials)}'">`
+      : escapeHTML(initials);
   }
 
   function ensureSidebarUtilitySection() {
@@ -504,6 +587,18 @@
     }
   }
 
+  function setText(id, value) {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value || "";
+  }
+
+  function getInitials(value) {
+    const words = String(value || "Employer").trim().split(/\s+/).filter(Boolean);
+    const initials = words.slice(0, 2).map((word) => word[0]?.toUpperCase() || "").join("");
+    return initials || "E";
+  }
+
   window.applyCandidateAccessUI = applyCandidateAccessUI;
   window.updateEmployerAccountMenu = updateTopAccountMenu;
+  window.loadEmployerAccountIdentity = hydrateEmployerAccountIdentity;
 })();

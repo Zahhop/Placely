@@ -1,0 +1,166 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f6f7fb;
+  color: #111827;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.admin-verification-shell {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 36px 22px;
+}
+
+.admin-page-heading,
+.admin-panel,
+.admin-request-row {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+}
+
+.admin-page-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px;
+  align-items: flex-start;
+}
+
+.eyebrow {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  margin-top: 6px;
+  font-size: 30px;
+}
+
+.admin-page-heading p {
+  margin-top: 8px;
+  color: #64748b;
+}
+
+button,
+.admin-link {
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 14px;
+  background: #111827;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 800;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+button.secondary,
+.admin-link {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+button.danger {
+  background: #991b1b;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.admin-panel {
+  margin-top: 18px;
+  padding: 18px;
+}
+
+.admin-status {
+  color: #64748b;
+  font-weight: 700;
+  padding: 12px 0;
+}
+
+.admin-request-list {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-request-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.2fr) minmax(200px, 1fr) minmax(220px, 1fr);
+  gap: 16px;
+  padding: 16px;
+}
+
+.admin-request-row h2 {
+  font-size: 18px;
+}
+
+.admin-request-row p,
+.admin-request-row span {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.admin-request-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-request-actions textarea {
+  min-height: 88px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px;
+  resize: vertical;
+}
+
+.admin-button-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  background: #111827;
+  color: #fff;
+  border-radius: 8px;
+  padding: 12px 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.toast.show {
+  opacity: 1;
+}
+
+@media (max-width: 860px) {
+  .admin-page-heading,
+  .admin-request-row {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+}

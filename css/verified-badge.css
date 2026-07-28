@@ -1,0 +1,39 @@
+.placely-verified-badge,
+.verification-status-pill {
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid #bbf7d0;
+  border-radius: 999px;
+  background: #f0fdf4;
+  color: #15803d;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.placely-verified-badge::before,
+.verification-status-pill.verified::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: #22c55e;
+  box-shadow: inset 0 0 0 3px #dcfce7;
+}
+
+.verification-status-pill.pending {
+  border-color: #fed7aa;
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.verification-status-pill.rejected,
+.verification-status-pill.unverified {
+  border-color: #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+}
