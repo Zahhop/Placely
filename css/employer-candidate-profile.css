@@ -123,6 +123,71 @@
   width: 45%;
 }
 
+.resume-request-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.resume-request-modal {
+  width: min(100%, 460px);
+  border: 1px solid #dbe3ef;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.2);
+  padding: 22px;
+}
+
+.resume-request-modal h2,
+.resume-request-modal p {
+  margin: 0;
+}
+
+.resume-request-modal h2 {
+  color: #0f172a;
+  font-size: 20px;
+}
+
+.resume-request-modal p {
+  margin-top: 10px;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.55;
+  font-weight: 650;
+}
+
+.resume-request-modal-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.resume-request-modal-actions .primary-btn,
+.resume-request-modal-actions .secondary-btn {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.resume-request-modal-actions .primary-btn {
+  border: 1px solid #2563eb;
+  background: #2563eb;
+  color: #fff;
+}
+
+.resume-request-modal-actions .secondary-btn {
+  border: 1px solid #dbe3ef;
+  background: #fff;
+  color: #2563eb;
+}
+
 @keyframes employerCandidateSkeleton {
   0% {
     background-position: 100% 50%;

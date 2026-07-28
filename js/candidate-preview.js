@@ -37,13 +37,13 @@
             ${renderSkillsAndCertifications(profile)}
           </div>
           <div class="candidate-preview-right">
-            ${renderContactInformation(profile, contact)}
+            ${renderContactInformation(profile, contact, { viewer })}
             ${renderWorkPreferences(profile)}
-            ${renderVerification(profile)}
-        ${renderResumeStatus(profile)}
+            ${renderVerification(profile, { viewer })}
+        ${renderResumeStatus(profile, { viewer })}
           </div>
         </div>
-        ${renderPrivateNotice()}
+        ${renderPrivateNotice({ viewer })}
         ${showEmployerActions ? renderEmployerActions() : ""}
       </div>
     `;
@@ -157,14 +157,17 @@
     `, "skills-card");
   }
 
-  function renderContactInformation(profile, contact) {
+  function renderContactInformation(profile, contact, options = {}) {
+    const isEmployer = options.viewer === "employer";
     const rows = [];
-    if (contact.showEmail) rows.push(renderInfoRow(icons.contact, "Email", profile.email || "Not provided"));
-    if (contact.showPhone) rows.push(renderInfoRow(icons.phone, "Phone", profile.phone || "Not provided"));
+    if (contact.showEmail) rows.push(renderInfoRow(icons.contact, "Email", profile.email || (isEmployer ? "Hidden by candidate" : "Not provided")));
+    if (contact.showPhone) rows.push(renderInfoRow(icons.phone, "Phone", profile.phone || (isEmployer ? "Hidden by candidate" : "Not provided")));
+    if (isEmployer && !contact.showEmail) rows.push(renderInfoRow(icons.contact, "Email", "Hidden by candidate"));
+    if (isEmployer && !contact.showPhone) rows.push(renderInfoRow(icons.phone, "Phone", "Hidden by candidate"));
     rows.push(renderInfoRow(icons.clock, "Preferred Contact", profile.contact_method || formatContactPreference(contact.preference) || "Not listed"));
 
     if (!contact.showEmail && !contact.showPhone) {
-      rows.unshift(renderInfoRow(icons.contact, "Contact", "Contact through Placely messaging"));
+      rows.unshift(renderInfoRow(icons.contact, "Contact", isEmployer ? "Contact this candidate through Placely Messaging." : "Contact through Placely messaging"));
     }
 
     return renderPreviewCard("Contact Information", icons.contact, rows.join(""));
@@ -184,20 +187,27 @@
     return renderPreviewCard("Work Preferences", icons.preferences, rows.join(""));
   }
 
-  function renderVerification(profile) {
+  function renderVerification(profile, options = {}) {
+    const isEmployer = options.viewer === "employer";
     const status = normalizeVerificationStatus(profile.verification_status);
     let statusMarkup = "";
     let text = "";
 
     if (status === "verified") {
       statusMarkup = window.PlacelyVerifiedBadge?.render(profile) || '<span class="candidate-preview-status verified">Verified by Placely</span>';
-      text = `Your profile has been verified by the Placely team.${profile.verified_at ? `<br>Verified on ${escapeHTML(formatDate(profile.verified_at))}` : ""}`;
+      text = isEmployer
+        ? `This candidate has been verified by the Placely team.${profile.verified_at ? `<br>Verified on ${escapeHTML(formatDate(profile.verified_at))}` : ""}`
+        : `Your profile has been verified by the Placely team.${profile.verified_at ? `<br>Verified on ${escapeHTML(formatDate(profile.verified_at))}` : ""}`;
     } else if (status === "pending") {
       statusMarkup = '<span class="candidate-preview-status pending">Verification pending</span>';
-      text = "Your verification request is currently under review.";
+      text = isEmployer
+        ? "This candidate has submitted a verification request and it is currently under review by Placely."
+        : "Your verification request is currently under review.";
     } else if (status === "rejected") {
       statusMarkup = '<span class="candidate-preview-status neutral">Verification not approved</span>';
-      text = "Your verification request was not approved.";
+      text = isEmployer
+        ? "This candidate is not currently verified by Placely."
+        : "Your verification request was not approved.";
     } else {
       statusMarkup = '<span class="candidate-preview-status neutral">Not verified</span>';
       text = "This profile has not yet been verified by Placely.";
@@ -209,34 +219,93 @@
     `);
   }
 
-  function renderResumeStatus(profile) {
+  function renderResumeStatus(profile, options = {}) {
+    const isEmployer = options.viewer === "employer";
     const hasResume = Boolean(getResumePath(profile));
-    const heading = hasResume ? "Resume available by request" : "No resume uploaded";
-    const text = hasResume
-      ? "Employers will need to request access to your resume."
-      : "Upload a resume from your Profile to make it available for future requests.";
+    const request = normalizeResumeRequest(profile.resume_request);
+    const heading = getResumeHeading({ hasResume, request, isEmployer });
+    const text = getResumeText({ hasResume, request, isEmployer });
+    const actions = isEmployer ? renderEmployerResumeActions({ hasResume, request }) : "";
 
     return renderPreviewCard("Resume", icons.resume, `
       <div class="candidate-preview-resume">
         <div>
           <strong>${escapeHTML(heading)}</strong>
           <p>${escapeHTML(text)}</p>
+          ${actions}
         </div>
         <div class="candidate-preview-document-icon">${icons.resume}</div>
       </div>
     `, "resume-card");
   }
 
-  function renderPrivateNotice() {
+  function renderPrivateNotice(options = {}) {
+    const isEmployer = options.viewer === "employer";
     return `
       <section class="candidate-preview-secure">
         <span>${icons.lock}</span>
         <div>
           <strong>Private & Secure</strong>
-          <p>Only employers with Candidate Access can view your profile. Your personal information is protected and only shown according to your visibility settings.</p>
+          <p>${escapeHTML(isEmployer
+            ? "Contact information and documents are displayed according to this candidate's privacy settings."
+            : "Only employers with Candidate Access can view your profile. Your personal information is protected and only shown according to your visibility settings.")}</p>
         </div>
       </section>
     `;
+  }
+
+  function getResumeHeading({ hasResume, request, isEmployer }) {
+    if (!isEmployer) return hasResume ? "Resume available by request" : "No resume uploaded";
+    if (!hasResume) return "No resume uploaded";
+    if (request.status === "approved") return "Resume Approved";
+    if (request.status === "pending") return "Request Sent";
+    return "Resume Available";
+  }
+
+  function getResumeText({ hasResume, request, isEmployer }) {
+    if (!isEmployer) {
+      return hasResume
+        ? "Employers will need to request access to your resume."
+        : "Upload a resume from your Profile to make it available for future requests.";
+    }
+    if (!hasResume) return "This candidate has not uploaded a resume.";
+    if (request.status === "approved") return "This candidate approved resume access. Use the secure link below to review it.";
+    if (request.status === "pending") return "This candidate has been notified. You can view the resume if they approve your request.";
+    if (request.status === "declined") return "This candidate declined the resume request.";
+    return "Request access to review this candidate's resume. The candidate will be notified and can approve or decline your request.";
+  }
+
+  function renderEmployerResumeActions({ hasResume, request }) {
+    if (!hasResume) return "";
+    if (request.status === "approved") {
+      return `
+        <div class="candidate-preview-resume-actions">
+          <button type="button" class="secondary-btn compact" data-resume-action="view">View Resume</button>
+          <button type="button" class="secondary-btn compact" data-resume-action="download">Download Resume</button>
+        </div>
+      `;
+    }
+    if (request.status === "pending") {
+      return `
+        <div class="candidate-preview-resume-actions">
+          <button type="button" class="secondary-btn compact" disabled>Request Sent</button>
+        </div>
+      `;
+    }
+    return `
+      <div class="candidate-preview-resume-actions">
+        <button type="button" class="secondary-btn compact" data-resume-action="request">Request Resume</button>
+      </div>
+    `;
+  }
+
+  function normalizeResumeRequest(value) {
+    const request = value && typeof value === "object" ? value : {};
+    const status = String(request.status || "").toLowerCase().trim();
+    return {
+      ...request,
+      status: ["pending", "approved", "declined"].includes(status) ? status : ""
+    };
   }
 
   function renderPreviewCard(title, icon, content, extraClass = "") {

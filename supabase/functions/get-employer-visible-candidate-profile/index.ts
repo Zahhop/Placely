@@ -144,11 +144,13 @@ Deno.serve(async (req) => {
 
   const workHistory = await loadWorkHistory(adminClient, candidateId);
   const saved = await isSavedByEmployer(adminClient, user.id, candidateId);
+  const resumeRequest = await loadResumeRequest(adminClient, user.id, candidateId);
 
   return json({
     candidate: mapCandidateProfile(profile, {
       workHistory,
       saved,
+      resumeRequest,
       source: applicantAccess.allowed ? "applicant" : "candidate-access"
     })
   }, 200, corsHeaders);
@@ -231,7 +233,24 @@ async function isSavedByEmployer(adminClient: any, employerId: string, candidate
   return Boolean(data?.length);
 }
 
-function mapCandidateProfile(profile: Record<string, any>, options: { workHistory: any[]; saved: boolean; source: string }) {
+async function loadResumeRequest(adminClient: any, employerId: string, candidateId: string) {
+  const { data, error } = await adminClient
+    .from("candidate_resume_access_requests")
+    .select("id, status, requested_at, responded_at")
+    .eq("employer_id", employerId)
+    .eq("candidate_id", candidateId)
+    .order("requested_at", { ascending: false })
+    .limit(1);
+
+  if (error) {
+    console.warn("resume access request lookup failed", safeError(error));
+    return null;
+  }
+
+  return data?.[0] || null;
+}
+
+function mapCandidateProfile(profile: Record<string, any>, options: { workHistory: any[]; saved: boolean; resumeRequest: any; source: string }) {
   const visibleContact = getVisibleContact(profile);
   const response: Record<string, unknown> = {
     id: profile.id,
@@ -253,6 +272,7 @@ function mapCandidateProfile(profile: Record<string, any>, options: { workHistor
     verified_at: normalizeVerificationStatus(profile.verification_status) === "verified" ? profile.verified_at || null : null,
     work_history: options.workHistory,
     resume_available: Boolean(text(profile.resume_path || profile.resume_url)),
+    resume_request: normalizeResumeRequest(options.resumeRequest),
     saved_by_employer: options.saved,
     access_source: options.source
   };
@@ -261,6 +281,18 @@ function mapCandidateProfile(profile: Record<string, any>, options: { workHistor
   if (visibleContact.showPhone) response.phone = text(profile.phone);
 
   return response;
+}
+
+function normalizeResumeRequest(request: any) {
+  if (!request) return null;
+  const status = String(request.status || "").toLowerCase().trim();
+  if (!["pending", "approved", "declined"].includes(status)) return null;
+  return {
+    id: request.id,
+    status,
+    requested_at: request.requested_at || null,
+    responded_at: request.responded_at || null
+  };
 }
 
 function getVisibleContact(profile: Record<string, any>) {

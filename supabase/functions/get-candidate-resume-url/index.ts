@@ -75,6 +75,23 @@ Deno.serve(async (req) => {
       return json({ error: "Candidate Network access is required." }, 403, corsHeaders);
     }
 
+    const { data: approvedRequests, error: requestError } = await admin
+      .from("candidate_resume_access_requests")
+      .select("id")
+      .eq("employer_id", user.id)
+      .eq("candidate_id", candidateId)
+      .eq("status", "approved")
+      .limit(1);
+
+    if (requestError) {
+      console.error("Resume approval lookup failed:", safeError(requestError));
+      return json({ error: "Resume access could not be verified." }, 500, corsHeaders);
+    }
+
+    if (!approvedRequests?.length) {
+      return json({ error: "Resume access has not been approved." }, 403, corsHeaders);
+    }
+
     const { data: candidate, error: candidateError } = await admin
       .from("candidate_profiles")
       .select("id, resume_path, resume_url")
@@ -143,6 +160,10 @@ function resumePathBelongsToCandidate(path: string, candidateId: string) {
 
 function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function safeError(error: any) {
+  return { code: error?.code, message: error?.message, details: error?.details, hint: error?.hint };
 }
 
 function getCorsHeaders(req: Request) {
