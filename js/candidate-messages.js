@@ -11,14 +11,19 @@ const chatCompany = document.getElementById("chatCompany");
 const chatRole = document.getElementById("chatRole");
 const chatMessages = document.getElementById("chatMessages");
 const chatActions = document.getElementById("chatActions");
-const replyHelpBtn = document.getElementById("replyHelpBtn");
+const viewApplicationLink = document.getElementById("viewApplicationLink");
+const viewJobLink = document.getElementById("viewJobLink");
+const backToConversationsBtn = document.getElementById("backToConversationsBtn");
 
 const form = document.getElementById("messageForm");
 const input = document.getElementById("messageInput");
 const sendMessageBtn = document.getElementById("sendMessageBtn");
 const composerStatus = document.getElementById("composerStatus");
+const messagesSearchForm = document.getElementById("messagesSearchForm");
+const messagesSearchInput = document.getElementById("messagesSearchInput");
 
 let currentUser = null;
+let currentProfile = {};
 let conversationsData = [];
 let activeMessages = [];
 let activeConversationId = null;
@@ -29,26 +34,42 @@ let isSendingMessage = false;
 document.addEventListener("DOMContentLoaded", initMessages);
 
 async function initMessages() {
-  const user = await verifyCandidateAccess(candidateMessagesSupabase, {
-    loginPath: "candidate-login.html",
-    employerDashboardPath: "../employers/employer-dashboard.html"
-  });
-
-  if (!user) return;
-  currentUser = user;
-  activeConversationId = new URLSearchParams(window.location.search).get("conversation");
-
   setupEvents();
-  await loadConversations();
-  renderConversationList(getFilteredConversations());
 
-  if (activeConversationId) {
-    await openConversation(activeConversationId);
-  } else {
-    showNoConversationState();
+  try {
+    const user = await verifyCandidateAccess(candidateMessagesSupabase, {
+      loginPath: "candidate-login.html",
+      employerDashboardPath: "../employers/employer-dashboard.html"
+    });
+
+    if (!user) return;
+    currentUser = user;
+    activeConversationId = new URLSearchParams(window.location.search).get("conversation");
+
+    await Promise.all([
+      loadCandidateProfile(user),
+      loadConversations(),
+      loadHeaderCounts(user.id)
+    ]);
+
+    renderConversationList(getFilteredConversations());
+
+    if (activeConversationId) {
+      await openConversation(activeConversationId);
+    } else {
+      showNoConversationState();
+    }
+
+    startConversationPolling();
+  } catch (error) {
+    console.error("Candidate messages failed to load", {
+      code: error?.code,
+      message: error?.message
+    });
+    showNoConversationState("Could not load messages", "Please refresh the page and try again.");
+  } finally {
+    revealMessages();
   }
-
-  startConversationPolling();
 }
 
 async function loadConversations() {
@@ -76,12 +97,8 @@ async function loadConversations() {
         "Employer";
 
       const logoUrl = getEmployerLogoUrl(
-        employerProfile?.company_logo_url ||
-        employerProfile?.logo_url ||
-        employerProfile?.company_logo ||
-        employerProfile?.company_logo_preview ||
+        window.PlacelyAuth.getPublicEmployerLogoValue(employerProfile) ||
         conversation.company_logo_url ||
-        conversation.logo_url ||
         ""
       );
 
@@ -91,6 +108,7 @@ async function loadConversations() {
       return {
         id: conversation.id,
         employerId: conversation.employer_id,
+        jobId: conversation.job_id || conversation.related_job_id || "",
         employerName,
         initials: getInitials(employerName),
         logoUrl,
@@ -107,7 +125,7 @@ async function loadConversations() {
 
   conversationsData.sort(sortByLatestActivity);
 
-  if (!activeConversationId) {
+  if (!activeConversationId && !isMobileConversationLayout()) {
     activeConversationId = conversationsData[0]?.id || null;
   }
 }
@@ -117,7 +135,7 @@ async function getEmployerProfile(employerId) {
 
   const { data, error } = await candidateMessagesSupabase
     .from("public_employer_profiles")
-    .select("*")
+    .select("id, company_name, company_logo_url")
     .eq("id", employerId)
     .maybeSingle();
 
@@ -128,7 +146,49 @@ async function getEmployerProfile(employerId) {
   return data;
 }
 
+function loadCandidateProfile(user) {
+  const identity = window.PlacelyAuth.getCachedCandidateIdentity?.() || {
+    fullName: user?.email?.split("@")[0] || "Candidate",
+    firstName: user?.email?.split("@")[0] || "Candidate",
+    email: user?.email || "",
+    initials: "PT",
+    photoUrl: ""
+  };
+
+  currentProfile = {
+    full_name: identity.fullName,
+    email: identity.email || user.email || "",
+    profile_photo_url: identity.photoUrl || ""
+  };
+  window.PlacelyAuth.updateCandidateHeader?.(identity);
+}
+
+async function loadHeaderCounts(userId) {
+  const [{ count: unreadCount }, { count: notificationCount }] = await Promise.all([
+    candidateMessagesSupabase
+      .from("messages")
+      .select("*", { count: "exact", head: true })
+      .eq("candidate_id", userId)
+      .eq("sender_type", "employer")
+      .eq("read_by_candidate", false),
+    candidateMessagesSupabase
+      .from("applications")
+      .select("*", { count: "exact", head: true })
+      .eq("candidate_id", userId)
+      .in("status", ["reviewing", "interview", "offer"])
+  ]);
+
+  updateBadge("topUnreadBadge", unreadCount || 0);
+  updateBadge("topNotificationBadge", notificationCount || 0);
+}
+
 function setupEvents() {
+  document.getElementById("logoutBtn")?.addEventListener("click", handleLogout);
+  document.getElementById("accountMenuLogoutBtn")?.addEventListener("click", handleLogout);
+  bindAccountMenu();
+  bindMobileSidebar();
+  bindHeaderSearch();
+
   conversationSearch?.addEventListener("input", () => {
     renderConversationList(getFilteredConversations());
 
@@ -137,17 +197,8 @@ function setupEvents() {
     }
   });
 
-  replyHelpBtn?.addEventListener("click", () => {
-    const conversation = getActiveConversation();
-    if (!conversation || !input) return;
-
-    input.focus();
-
-    if (!input.value.trim()) {
-      input.value =
-        "Hi, thanks for reaching out. I'm interested and available to discuss the opportunity. What would be the best next step?";
-      updateSendAvailability();
-    }
+  backToConversationsBtn?.addEventListener("click", () => {
+    messagesLayout?.classList.remove("conversation-open");
   });
 
   input?.addEventListener("input", updateSendAvailability);
@@ -264,6 +315,20 @@ function renderConversationChrome(conversation) {
   if (chatEyebrow) chatEyebrow.textContent = conversation.source ? `${conversation.source} conversation` : "Employer conversation";
   if (chatCompany) chatCompany.textContent = conversation.employerName;
   if (chatRole) chatRole.textContent = conversation.role;
+
+  if (viewApplicationLink) {
+    viewApplicationLink.href = "candidate-applications.html";
+  }
+
+  if (viewJobLink) {
+    if (conversation.jobId) {
+      viewJobLink.hidden = false;
+      viewJobLink.href = `../public/find-jobs.html?role=candidate&job=${encodeURIComponent(conversation.jobId)}`;
+    } else {
+      viewJobLink.hidden = true;
+      viewJobLink.removeAttribute("href");
+    }
+  }
 }
 
 async function loadMessages(conversationId) {
@@ -493,10 +558,12 @@ function startConversationPolling() {
   }, 30000);
 }
 
-function showNoConversationState() {
+function showNoConversationState(title = null, message = null) {
   activeConversationId = null;
   activeMessages = [];
   setComposerEnabled(false);
+  messagesLayout?.classList.remove("conversation-open");
+  chatActions?.classList.add("disabled-area");
 
   if (activeRealtimeChannel) {
     candidateMessagesSupabase.removeChannel(activeRealtimeChannel);
@@ -507,16 +574,26 @@ function showNoConversationState() {
   if (chatEyebrow) chatEyebrow.textContent = "Select a conversation";
   if (chatCompany) chatCompany.textContent = "No conversation selected";
   if (chatRole) chatRole.textContent = "Employer messages will appear here.";
+  if (viewJobLink) {
+    viewJobLink.hidden = true;
+    viewJobLink.removeAttribute("href");
+  }
 
   if (chatMessages) {
+    const emptyTitle = title || (conversationsData.length ? "Select a conversation" : "No conversations yet");
+    const emptyMessage = message || (conversationsData.length
+      ? "Choose a conversation from the left to view messages."
+      : "Messages from employers will appear here when they contact you about applications or opportunities.");
+
     chatMessages.innerHTML = `
       <div class="empty-message">
-        <h3>No conversations yet</h3>
-        <p>When an employer contacts you or you follow up on an application, your messages will appear here.</p>
-        <div class="empty-actions">
-          <a href="../public/find-jobs.html?role=candidate" class="primary-link">Find Jobs</a>
-          <a href="candidate-applications.html" class="secondary-link">Applications</a>
-        </div>
+        <h3>${escapeHTML(emptyTitle)}</h3>
+        <p>${escapeHTML(emptyMessage)}</p>
+        ${conversationsData.length ? "" : `
+          <div class="empty-actions">
+            <a href="../public/find-jobs.html?role=candidate" class="primary-mini-btn">Find Jobs</a>
+          </div>
+        `}
       </div>
     `;
   }
@@ -545,9 +622,16 @@ function renderThreadLoading() {
 }
 
 function setConversationMode() {
-  if (messagesLayout) messagesLayout.classList.remove("empty");
+  if (messagesLayout) {
+    messagesLayout.classList.remove("empty");
+    messagesLayout.classList.add("conversation-open");
+  }
   if (chatActions) chatActions.classList.remove("disabled-area");
   setComposerEnabled(true);
+}
+
+function isMobileConversationLayout() {
+  return window.matchMedia?.("(max-width: 760px)")?.matches || false;
 }
 
 function setComposerEnabled(enabled) {
@@ -610,18 +694,125 @@ async function getUnreadCount(conversationId) {
 
 function renderAvatar(url, initials, altText) {
   if (url) {
-    return `<img src="${escapeAttribute(url)}" class="message-avatar-img" alt="${escapeAttribute(altText || "Avatar")}">`;
+    return `<img src="${escapeAttribute(url)}" class="message-avatar-img" alt="${escapeAttribute(altText || "Avatar")}" onerror="this.parentElement.textContent='${escapeAttribute(initials || "PT")}'">`;
   }
 
   return `<span>${escapeHTML(initials || "PT")}</span>`;
 }
 
 function getEmployerLogoUrl(value) {
-  return window.PlacelyAuth?.getPublicImageUrl?.(candidateMessagesSupabase, "employer-logos", value) || String(value || "");
+  return window.PlacelyAuth?.resolveEmployerLogoUrl?.(value, { supabase: candidateMessagesSupabase }) || "";
 }
 
 function getActiveConversation() {
   return conversationsData.find((item) => String(item.id) === String(activeConversationId));
+}
+
+function bindAccountMenu() {
+  const button = document.getElementById("candidateAccountButton");
+  const menu = document.getElementById("candidateAccountMenu");
+  if (!button || !menu) return;
+
+  const closeMenu = ({ restoreFocus = false } = {}) => {
+    menu.hidden = true;
+    button.setAttribute("aria-expanded", "false");
+    if (restoreFocus) button.focus();
+  };
+
+  const openMenu = () => {
+    menu.hidden = false;
+    button.setAttribute("aria-expanded", "true");
+    menu.querySelector("[role='menuitem']")?.focus();
+  };
+
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (menu.hidden) openMenu();
+    else closeMenu();
+  });
+
+  menu.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (event.target.closest("a")) closeMenu();
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!menu.hidden && !event.target.closest(".top-account-menu-wrap")) closeMenu();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !menu.hidden) closeMenu({ restoreFocus: true });
+  });
+}
+
+function bindMobileSidebar() {
+  const toggle = document.getElementById("sidebarToggle");
+  const backdrop = document.getElementById("sidebarBackdrop");
+  if (!toggle || !backdrop) return;
+
+  const setSidebarOpen = (isOpen) => {
+    document.body.classList.toggle("sidebar-open", isOpen);
+    toggle.setAttribute("aria-expanded", String(isOpen));
+    backdrop.hidden = !isOpen;
+  };
+
+  toggle.addEventListener("click", () => setSidebarOpen(!document.body.classList.contains("sidebar-open")));
+  backdrop.addEventListener("click", () => setSidebarOpen(false));
+
+  document.querySelectorAll(".candidate-nav-link").forEach((link) => {
+    link.addEventListener("click", () => setSidebarOpen(false));
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 980) setSidebarOpen(false);
+  });
+}
+
+function bindHeaderSearch() {
+  if (!messagesSearchForm || !messagesSearchInput) return;
+
+  messagesSearchForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const query = messagesSearchInput.value.trim();
+    const url = new URL("../public/find-jobs.html?role=candidate", window.location.href);
+    if (query) url.searchParams.set("keyword", query);
+    window.location.href = url.toString();
+  });
+}
+
+function updateBadge(id, value) {
+  const badge = document.getElementById(id);
+  if (!badge) return;
+
+  const count = Number(value) || 0;
+  badge.hidden = count <= 0;
+  badge.textContent = count > 9 ? "9+" : String(count);
+}
+
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value || "";
+}
+
+function resolveCandidatePhotoUrl(profile) {
+  const rawUrl = profile.profile_photo_url || profile.profile_photo || profile.avatar_url || profile.photo_url || "";
+  if (!rawUrl) return "";
+  if (/^https?:\/\//i.test(rawUrl)) return rawUrl;
+  return window.PlacelyAuth.getPublicImageUrl(candidateMessagesSupabase, "candidate-photos", rawUrl);
+}
+
+async function handleLogout() {
+  try {
+    await window.PlacelyAuth.clearAuthState();
+  } catch {
+    sessionStorage.removeItem("placelyAuthGuardRedirecting");
+  }
+
+  window.location.replace("candidate-login.html");
+}
+
+function revealMessages() {
+  document.documentElement.classList.remove("messages-booting");
 }
 
 function formatMessageTime(value) {

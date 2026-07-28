@@ -459,14 +459,18 @@ function parseSnapshot(snapshot) {
 function updateCompanyChrome() {
   const companyName = employerProfile.company_name || "Employer";
   const initials = getInitials(companyName);
+  const accountEmail = employerProfile.company_email || currentUser?.email || "";
 
   setText("companyNameTitle", companyName);
-  setText("sidebarCompanyName", companyName);
   setText("topCompanyName", companyName);
   setText("dashboardGreeting", getTimeGreeting());
 
-  renderCompanyAvatar("sidebarCompanyAvatar", companyName, initials);
   renderCompanyAvatar("topCompanyAvatar", companyName, initials);
+  window.updateEmployerAccountMenu?.({
+    companyName,
+    companyEmail: employerProfile.company_email || "",
+    email: accountEmail
+  });
 }
 
 function renderCompanyAvatar(id, companyName, initials) {
@@ -510,7 +514,7 @@ function updateHeroSummary() {
     const secondary = document.getElementById("secondaryDashboardAction");
 
     if (primary) {
-      primary.href = "post-job.html";
+      primary.href = "manage-jobs.html?view=create";
       primary.textContent = "Post Job";
     }
 
@@ -555,7 +559,7 @@ function updateHeroSummary() {
   const secondary = document.getElementById("secondaryDashboardAction");
 
   if (primary) {
-    primary.href = reviewCount ? "employer-applicants.html" : activeJobs.length ? "manage-jobs.html" : "post-job.html";
+    primary.href = reviewCount ? "employer-applicants.html" : activeJobs.length ? "manage-jobs.html" : "manage-jobs.html?view=create";
     primary.textContent = hasCandidateNetworkAccess
       ? reviewCount ? "Review Applicants" : activeJobs.length ? "Manage Jobs" : "Post a Job"
       : reviewCount ? "REVIEW APPLICANTS" : activeJobs.length ? "MANAGE JOBS" : "POST A JOB";
@@ -653,7 +657,7 @@ function renderPipeline() {
       hasCandidateNetworkAccess
         ? activeJobs.length ? "Open Jobs" : "Post Job"
         : "Post Job",
-      hasCandidateNetworkAccess && activeJobs.length ? "manage-jobs.html" : "post-job.html"
+      hasCandidateNetworkAccess && activeJobs.length ? "manage-jobs.html" : "manage-jobs.html?view=create"
     );
     return;
   }
@@ -766,7 +770,7 @@ function renderActiveJobs() {
         ? "Post a role to begin receiving applications."
         : "Create your first job posting to begin receiving applicants.",
       "Post Job",
-      "post-job.html"
+      "manage-jobs.html?view=create"
     );
     return;
   }
@@ -872,7 +876,7 @@ function renderRecentActivity() {
         "No activity yet",
         "Your hiring activity will appear here.",
         "Post Job",
-        "post-job.html"
+        "manage-jobs.html?view=create"
       );
       return;
     }
@@ -881,7 +885,7 @@ function renderRecentActivity() {
       <div class="empty-state">
         <strong>${hasCandidateNetworkAccess ? "No recent activity yet" : "No activity yet"}</strong>
         <p>${hasCandidateNetworkAccess ? "Applications, messages, and job activity will appear here." : "Your hiring activity will appear here."}</p>
-        ${hasCandidateNetworkAccess && activeJobs.length ? "" : `<a href="post-job.html" class="empty-action">Post Job</a>`}
+        ${hasCandidateNetworkAccess && activeJobs.length ? "" : `<a href="manage-jobs.html?view=create" class="empty-action">Post Job</a>`}
       </div>
     `;
     return;
@@ -933,19 +937,17 @@ function renderSidebarPlanCard() {
   if (!card) return;
 
   if (hasCandidateNetworkAccess) {
-    card.className = "sidebar-plan-card pro";
-    card.innerHTML = `
-      <span class="plan-kicker">PRO ACCESS</span>
-      <h2>Full candidate network</h2>
-      <p>Browse, message, save, and connect with pre-screened candidates.</p>
-    `;
+    card.hidden = true;
+    card.replaceChildren();
+    card.className = "sidebar-plan-card";
     return;
   }
 
+  card.hidden = false;
   card.className = "sidebar-plan-card free";
   card.innerHTML = `
-    <span class="plan-kicker">FREE PLAN</span>
-    <h2>Upgrade to Pro</h2>
+    <span class="plan-kicker">GET ACCESS</span>
+    <h2>Unlock candidate search</h2>
     <p>Unlock:</p>
     <ul class="plan-feature-list">
       <li>Candidate Search</li>

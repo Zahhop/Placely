@@ -1,145 +1,235 @@
 <!DOCTYPE html>
-<html lang="en" class="auth-booting">
+<html lang="en" class="auth-booting dashboard-booting">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <link rel="dns-prefetch" href="https://ornxlspufzmvapdrwexc.supabase.co">
+  <link rel="preconnect" href="https://ornxlspufzmvapdrwexc.supabase.co" crossorigin>
+
   <title>Candidate Dashboard | Placely Talent</title>
 
   <link rel="stylesheet" href="../css/candidate-dashboard.css" />
-  <link rel="stylesheet" href="../css/candidate-header.css" />
   <link rel="stylesheet" href="../css/candidate-preview.css" />
-  <link rel="stylesheet" href="../css/candidate-scale.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
 <body>
+<div class="candidate-dashboard-shell">
+  <aside class="candidate-sidebar" id="candidateSidebar" aria-label="Candidate navigation">
+    <div class="sidebar-brand">
+      <a href="candidate-dashboard.html" class="brand-mark" aria-label="Placely Talent candidate dashboard">P</a>
+      <div>
+        <a href="candidate-dashboard.html" class="brand-name">Placely Talent</a>
+        <span>Talent Platform</span>
+      </div>
+    </div>
 
-<header>
-  <div class="logo-wrapper">
-    <a href="candidate-dashboard.html" class="logo">PLACELY TALENT</a>
-    <div class="logo-subtitle">Talent Platform</div>
+    <nav class="sidebar-nav" aria-label="Candidate sections">
+      <div class="nav-group">
+        <span class="nav-label">Overview</span>
+        <a href="candidate-dashboard.html" class="candidate-nav-link nav-item active">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h7V4H4v9Zm9 7h7v-7h-7v7ZM4 20h7v-5H4v5Zm9-9h7V4h-7v7Z"/></svg>
+          <span>Dashboard</span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <span class="nav-label">Jobs</span>
+        <a href="../public/find-jobs.html?role=candidate" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6V5a3 3 0 0 1 3-3h1a3 3 0 0 1 3 3v1h3a2 2 0 0 1 2 2v10.5A2.5 2.5 0 0 1 18.5 21h-13A2.5 2.5 0 0 1 3 18.5V8a2 2 0 0 1 2-2h4Zm2 0h3V5a1 1 0 0 0-1-1h-1a1 1 0 0 0-1 1v1Zm9 5H4v7.5c0 .28.22.5.5.5h15c.28 0 .5-.22.5-.5V11Z"/></svg>
+          <span>Find Jobs</span>
+        </a>
+        <a href="companies.html" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V7l6-4 6 4v3h6v11h-7v-5H10v5H3Zm2-2h3v-5h8v5h3v-7h-6V8.07L9 5.4 5 8.07V19Zm2-8h2v2H7v-2Zm0-3h2v2H7V8Zm4 0h2v2h-2V8Zm0 3h2v2h-2v-2Z"/></svg>
+          <span>Companies</span>
+        </a>
+        <a href="candidate-applications.html" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h10a2 2 0 0 1 2 2v18l-7-3-7 3V4a2 2 0 0 1 2-2Zm0 17 5-2.14L17 19V4H7v15Zm2-9h6v2H9v-2Zm0-4h6v2H9V6Z"/></svg>
+          <span>Applications</span>
+        </a>
+        <a href="../public/saved-jobs.html" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a2 2 0 0 1 2 2v16a1 1 0 0 1-1.55.83L12 17.53l-6.45 4.3A1 1 0 0 1 4 21V5a2 2 0 0 1 2-2Zm0 2v14.13l5.45-3.63a1 1 0 0 1 1.1 0L18 19.13V5H6Z"/></svg>
+          <span>Saved Jobs</span>
+        </a>
+        <a href="candidate-messages.html" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H9.8l-4.1 3.08A1.05 1.05 0 0 1 4 19.24V17a3 3 0 0 1-2-2.83V7a3 3 0 0 1 3-3Zm0 2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1v2.25L9.13 15H19a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5Z"/></svg>
+          <span>Messages</span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <span class="nav-label">Profile</span>
+        <a href="candidate-profile.html" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.33 0-8 2.03-8 4.43V20a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1.57C20 16.03 16.33 14 12 14Z"/></svg>
+          <span>Profile</span>
+        </a>
+        <a href="candidate-profile.html#resume" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h9l5 5v15H6V2Zm8 2H8v16h10V8h-4V4Zm-3 8h4v2h-4v-2Zm0 4h4v2h-4v-2ZM9 8h2v2H9V8Z"/></svg>
+          <span>Resume</span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="nav-group utility-group">
+        <span class="nav-label">Company</span>
+        <a href="candidate-support.html" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10v5a3 3 0 0 1-3 3h-2v-8h3a8 8 0 1 0-16 0h3v8H5a3 3 0 0 1-3-3v-5A10 10 0 0 1 12 2Zm-3 8h2v10H9V10Zm4 0h2v10h-2V10Z"/></svg>
+          <span>Support</span>
+        </a>
+        <a href="candidate-settings.html" class="candidate-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.43 12.98c.04-.32.07-.65.07-.98s-.02-.66-.07-.98l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.6-.22l-2.49 1a7.28 7.28 0 0 0-1.69-.98L14.5 2.42A.5.5 0 0 0 14 2h-4a.5.5 0 0 0-.5.42L9.12 5.07c-.61.24-1.18.56-1.69.98l-2.49-1a.5.5 0 0 0-.6.22l-2 3.46a.5.5 0 0 0 .12.64l2.11 1.65c-.04.32-.07.65-.07.98s.02.66.07.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46c.13.22.39.31.62.22l2.47-1c.51.4 1.07.73 1.69.98l.38 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.38-2.65c.61-.25 1.18-.58 1.69-.98l2.47 1c.23.09.49 0 .62-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z"/></svg>
+          <span>Settings</span>
+        </a>
+        <button type="button" id="logoutBtn" class="candidate-logout-btn">Logout</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+
+  <div class="candidate-workspace">
+    <header class="utility-bar">
+      <button type="button" class="mobile-menu-btn" id="sidebarToggle" aria-controls="candidateSidebar" aria-expanded="false">
+        <span class="sr-only">Open navigation</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v2H4V7Zm0 4h16v2H4v-2Zm0 4h16v2H4v-2Z"/></svg>
+      </button>
+
+      <form class="utility-search" id="dashboardSearchForm" role="search">
+        <label class="sr-only" for="dashboardSearchInput">Search jobs, companies, or messages</label>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.97 12.04l3.25 3.24a1 1 0 0 1-1.42 1.42l-3.24-3.25A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/></svg>
+        <input id="dashboardSearchInput" type="search" placeholder="Search jobs, companies, or messages..." autocomplete="off" />
+        <span class="search-shortcut" aria-hidden="true">/</span>
+      </form>
+
+      <div class="utility-actions">
+        <a href="candidate-messages.html" class="utility-icon-link" aria-label="Open messages">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H9.8l-4.1 3.08A1.05 1.05 0 0 1 4 19.24V17a3 3 0 0 1-2-2.83V7a3 3 0 0 1 3-3Zm0 2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1v2.25L9.13 15H19a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5Z"/></svg>
+          <span id="topUnreadBadge" class="utility-badge" hidden>0</span>
+        </a>
+        <a href="candidate-applications.html" class="utility-icon-link" aria-label="Open application notifications">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5-6.71V3a2 2 0 1 0-4 0v1.29A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg>
+          <span id="topNotificationBadge" class="utility-badge" hidden>0</span>
+        </a>
+        <div class="top-account-menu-wrap">
+          <button type="button" class="top-account" id="candidateAccountButton" aria-haspopup="menu" aria-expanded="false" aria-controls="candidateAccountMenu">
+            <span class="account-avatar small" id="topCandidateAvatar">PT</span>
+            <span id="topCandidateName">Candidate</span>
+          </button>
+          <div class="top-account-menu" id="candidateAccountMenu" role="menu" aria-label="Candidate account menu" hidden>
+            <div class="top-account-menu-header">
+              <strong id="accountMenuCandidateName">Candidate</strong>
+              <span id="accountMenuEmail">Account details loading</span>
+            </div>
+            <div class="top-account-menu-list">
+              <a href="candidate-profile.html" role="menuitem">Profile</a>
+              <a href="candidate-settings.html" role="menuitem">Settings</a>
+              <a href="candidate-support.html" role="menuitem">Support</a>
+              <button type="button" role="menuitem" id="accountMenuLogoutBtn">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="candidate-shell">
+      <section class="dashboard-briefing" aria-labelledby="dashboardTitle">
+        <div class="briefing-copy">
+          <h1 id="dashboardTitle"><span id="dashboardGreeting">Good day</span>, <span id="dashboard_first_name">Candidate</span></h1>
+          <p id="heroSummary">Track applications, interviews, saved jobs, messages, and profile readiness from one focused workspace.</p>
+        </div>
+
+        <div class="briefing-actions" aria-label="Primary dashboard actions">
+          <a href="../public/find-jobs.html?role=candidate" class="primary-btn">Find Jobs</a>
+          <a href="candidate-profile.html" class="secondary-btn">Edit Profile</a>
+        </div>
+      </section>
+
+      <section class="kpi-strip" aria-label="Candidate overview">
+        <a href="candidate-applications.html" class="kpi-item">
+          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 2h10a2 2 0 0 1 2 2v18l-7-3-7 3V4a2 2 0 0 1 2-2Z"/></svg></span>
+          <span class="kpi-copy">
+            <span class="kpi-label">Applied Jobs</span>
+            <strong id="applications_count">0</strong>
+            <span class="kpi-context">Submitted applications</span>
+          </span>
+        </a>
+        <a href="candidate-applications.html?status=interview" class="kpi-item">
+          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3h10v2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3V3Zm2 2v2h6V5H9Zm-5 6v8h16v-8H4Z"/></svg></span>
+          <span class="kpi-copy">
+            <span class="kpi-label">Interviews</span>
+            <strong id="interviews_count">0</strong>
+            <span class="kpi-context">Active interview stages</span>
+          </span>
+        </a>
+        <a href="../public/saved-jobs.html" class="kpi-item">
+          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12a2 2 0 0 1 2 2v16a1 1 0 0 1-1.55.83L12 17.53l-6.45 4.3A1 1 0 0 1 4 21V5a2 2 0 0 1 2-2Z"/></svg></span>
+          <span class="kpi-copy">
+            <span class="kpi-label">Saved Jobs</span>
+            <strong id="saved_jobs_count">0</strong>
+            <span class="kpi-context">Roles to revisit</span>
+          </span>
+        </a>
+        <a href="candidate-messages.html" class="kpi-item">
+          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h14a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H9.8l-4.1 3.08A1.05 1.05 0 0 1 4 19.24V17a3 3 0 0 1-2-2.83V7a3 3 0 0 1 3-3Z"/></svg></span>
+          <span class="kpi-copy">
+            <span class="kpi-label">Unread Messages</span>
+            <strong id="candidateMessagesCount">0</strong>
+            <span class="kpi-context" id="messages_subtext">No unread messages</span>
+          </span>
+        </a>
+      </section>
+
+      <section class="dashboard-sections">
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <span class="eyebrow">Applications</span>
+              <h2>Recent Applications</h2>
+            </div>
+            <a href="candidate-applications.html">Open applications</a>
+          </div>
+          <div class="table-wrap">
+            <table class="applications-table">
+              <thead>
+                <tr>
+                  <th>Job</th>
+                  <th>Company</th>
+                  <th>Applied date</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="applicationsTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <span class="eyebrow">Recommended</span>
+              <h2>Suggested Jobs</h2>
+            </div>
+            <a href="../public/find-jobs.html?role=candidate">Browse Jobs</a>
+          </div>
+          <div class="suggested-jobs" id="suggestedJobs"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <span class="eyebrow">Recent</span>
+              <h2>Recent Activity</h2>
+            </div>
+          </div>
+          <div class="activity-list" id="activityList"></div>
+        </section>
+      </section>
+    </main>
   </div>
-
-  <nav>
-    <a href="candidate-dashboard.html" class="active">Dashboard</a>
-    <a href="../public/find-jobs.html?role=candidate">Find Jobs</a>
-    <a href="../public/saved-jobs.html">Saved Jobs</a>
-    <a href="candidate-applications.html">Applications</a>
-    <a href="candidate-messages.html">Messages</a>
-    <a href="candidate-profile.html">Profile</a>
-    <a href="candidate-settings.html">Settings</a>
-    <button id="logoutBtn" class="nav-btn" type="button">Logout</button>
-  </nav>
-</header>
-
-<main class="candidate-shell">
-
-  <section class="dashboard-intro" id="overview">
-    <div>
-      <span class="eyebrow">Candidate Dashboard</span>
-      <h1>Welcome back, <span id="dashboard_first_name">Candidate</span></h1>
-      <p>Track applications, saved roles, messages, and profile completion from one focused workspace.</p>
-    </div>
-
-    <div class="intro-actions">
-      <a href="../public/find-jobs.html?role=candidate" class="primary-btn">Find Jobs</a>
-      <a href="candidate-profile.html" class="secondary-btn">Edit Profile</a>
-    </div>
-  </section>
-
-  <section class="metrics-grid">
-    <a href="candidate-profile.html" class="metric-card">
-      <span>Profile Completion</span>
-      <strong id="profile_completion_count">0%</strong>
-      <p id="profile_completion_text">Complete your profile</p>
-    </a>
-
-    <a href="../public/saved-jobs.html" class="metric-card">
-      <span>Saved Jobs</span>
-      <strong id="saved_jobs_count">0</strong>
-      <p>Roles you want to revisit</p>
-    </a>
-
-    <a href="candidate-applications.html" class="metric-card">
-      <span>Applications</span>
-      <strong id="applications_count">0</strong>
-      <p>Submitted applications</p>
-    </a>
-
-    <a href="candidate-messages.html" class="metric-card">
-      <span>Messages</span>
-      <h3 id="candidateMessagesCount">0</h3>
-      <p id="messages_subtext">No unread messages</p>
-    </a>
-  </section>
-
-  <section class="dashboard-grid">
-
-    <section class="main-column">
-
-      <section class="panel" id="applications">
-        <div class="panel-heading">
-          <div>
-            <span class="eyebrow">Applications</span>
-            <h2>Recent Applications</h2>
-          </div>
-          <a href="candidate-applications.html">View all</a>
-        </div>
-
-        <div id="applications_list" class="activity-list"></div>
-      </section>
-
-      <section class="panel" id="profile-preview">
-        <div class="panel-heading">
-          <div>
-            <span class="eyebrow">Employer View</span>
-            <h2>How employers see you</h2>
-            <p>This is the profile snapshot employers see when reviewing candidates.</p>
-          </div>
-        </div>
-
-        <div id="dashboard_profile_preview" class="dashboard-profile-preview"></div>
-      </section>
-
-    </section>
-
-    <aside class="right-rail">
-
-      <section class="rail-panel">
-        <div class="panel-heading tight">
-          <div>
-            <span class="eyebrow">Shortcuts</span>
-            <h2>Quick Actions</h2>
-          </div>
-        </div>
-
-        <div class="quick-actions">
-          <a href="../public/find-jobs.html?role=candidate">Find Jobs</a>
-          <a href="../public/saved-jobs.html">Saved Jobs</a>
-          <a href="candidate-applications.html">Applications</a>
-          <a href="candidate-messages.html">Messages</a>
-          <a href="candidate-profile.html">Edit Profile</a>
-        </div>
-      </section>
-
-      <section class="rail-panel" id="messages">
-        <div class="panel-heading tight">
-          <div>
-            <span class="eyebrow">Inbox</span>
-            <h2>Recent Messages</h2>
-          </div>
-          <a href="candidate-messages.html">Open</a>
-        </div>
-
-        <div id="messages_list" class="message-list"></div>
-      </section>
-
-    </aside>
-
-  </section>
-
-</main>
+</div>
 
 <div id="toast" class="toast"></div>
 
@@ -147,6 +237,9 @@
 <script src="../js/config.js"></script>
 <script src="../js/auth-utils.js"></script>
 <script src="../js/auth-guards.js"></script>
+<script src="../js/job-url-utils.js"></script>
+<script src="../js/public-company-utils.js"></script>
+<script src="../js/candidate-global-search.js"></script>
 <script src="../js/candidate-preview.js"></script>
 <script src="../js/candidate-dashboard.js"></script>
 

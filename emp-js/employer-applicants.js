@@ -198,10 +198,13 @@ async function loadEmployerShellProfile() {
   document.body.dataset.plan = hasCandidateAccess ? "pro" : "free";
   document.querySelector(".applicants-shell")?.setAttribute("data-plan", hasCandidateAccess ? "pro" : "free");
 
-  setText("sidebarCompanyName", companyName);
   setText("topCompanyName", companyName);
-  renderCompanyAvatar("sidebarCompanyAvatar", companyName, initials, logoUrl);
   renderCompanyAvatar("topCompanyAvatar", companyName, initials, logoUrl);
+  window.updateEmployerAccountMenu?.({
+    companyName,
+    companyEmail: profile?.company_email || "",
+    email: profile?.company_email || currentUser?.email || ""
+  });
   renderSidebarPlanCard(hasCandidateAccess);
 
   if (typeof window.applyCandidateAccessUI === "function") {
@@ -213,19 +216,21 @@ function renderSidebarPlanCard(hasCandidateAccess) {
   const card = document.getElementById("sidebarPlanCard");
   if (!card) return;
 
-  card.className = `sidebar-plan-card ${hasCandidateAccess ? "pro" : "free"}`;
-  card.innerHTML = hasCandidateAccess
-    ? `
-      <span class="plan-kicker">PRO ACCESS</span>
-      <h2>Full candidate network</h2>
-      <p>Browse, message, save, and connect with pre-screened candidates.</p>
-    `
-    : `
-      <span class="plan-kicker">GET PRO ACCESS</span>
-      <h2>Unlock candidate search</h2>
-      <p>Find, save, and message pre-screened talent from your employer workspace.</p>
-      <a class="plan-card-action" href="employer-dashboard.html#candidate-access">GET ACCESS</a>
-    `;
+  if (hasCandidateAccess) {
+    card.hidden = true;
+    card.replaceChildren();
+    card.className = "sidebar-plan-card";
+    return;
+  }
+
+  card.hidden = false;
+  card.className = "sidebar-plan-card free";
+  card.innerHTML = `
+    <span class="plan-kicker">GET ACCESS</span>
+    <h2>Unlock candidate search</h2>
+    <p>Find, save, and message pre-screened talent from your employer workspace.</p>
+    <a class="plan-card-action" href="employer-dashboard.html#candidate-access">GET ACCESS</a>
+  `;
 }
 
 function renderCompanyAvatar(elementId, companyName, initials, logoUrl) {

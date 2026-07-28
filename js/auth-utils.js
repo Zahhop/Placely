@@ -1,6 +1,8 @@
 (function () {
   const resendCooldownMs = 60_000;
   const resendTimestamps = new Map();
+  const candidateIdentityCacheKey = "placelyCandidateIdentityCache";
+  const candidateIdentityCacheTtlMs = 10 * 60 * 1000;
 
   function client() {
     if (!window.placelySupabase && window.createPlacelySupabaseClient) {
@@ -148,15 +150,17 @@
   }
 
   function hasStructuredCompensation(profile = {}) {
+    if (!profile || typeof profile !== "object") return false;
+
     const type = normalizeCompensationType(profile.compensation_type);
     const min = Number(profile.compensation_min);
-    const max = Number(profile.compensation_max);
+    const hasMax = String(profile.compensation_max ?? "").trim() !== "";
+    const max = hasMax ? Number(profile.compensation_max) : null;
 
     return Boolean(type) &&
       Number.isFinite(min) &&
-      Number.isFinite(max) &&
       min > 0 &&
-      max >= min;
+      (!hasMax || (Number.isFinite(max) && max >= min));
   }
 
   function normalizeCompensationType(value) {
@@ -176,8 +180,10 @@
 
   function validateCompensationValues(type, minimum, maximum) {
     const normalizedType = normalizeCompensationType(type);
+    const rawMinimum = String(minimum ?? "").trim();
+    const rawMaximum = String(maximum ?? "").trim();
     const min = parseCompensationAmount(minimum);
-    const max = parseCompensationAmount(maximum);
+    const max = rawMaximum ? parseCompensationAmount(maximum) : null;
 
     if (!normalizedType) {
       return {
@@ -189,17 +195,27 @@
       };
     }
 
-    if (min === null || max === null) {
+    if (!rawMinimum || min === null) {
       return {
         valid: false,
-        message: "Enter valid positive numbers for minimum and maximum compensation.",
+        message: "Enter a valid minimum compensation.",
         type: normalizedType,
         minimum: min,
         maximum: max
       };
     }
 
-    if (max < min) {
+    if (rawMaximum && max === null) {
+      return {
+        valid: false,
+        message: "Enter a valid maximum compensation.",
+        type: normalizedType,
+        minimum: min,
+        maximum: max
+      };
+    }
+
+    if (max !== null && max < min) {
       return {
         valid: false,
         message: "Maximum compensation must be greater than or equal to minimum compensation.",
@@ -244,18 +260,25 @@
 
   function formatCompensation(type, minimum, maximum, legacyValue = "") {
     const normalizedType = normalizeCompensationType(type);
-    const min = Number(minimum);
-    const max = Number(maximum);
+    const min = parseCompensationAmount(minimum);
+    const rawMax = String(maximum ?? "").trim();
+    const max = rawMax ? parseCompensationAmount(maximum) : null;
+
+    if (rawMax && max === null) {
+      return String(legacyValue || "").trim();
+    }
 
     if (normalizedType &&
-      Number.isFinite(min) &&
-      Number.isFinite(max) &&
-      min > 0 &&
-      max >= min) {
+      min !== null &&
+      (max === null || max >= min)) {
       const formatter = new Intl.NumberFormat("en-US", {
         maximumFractionDigits: normalizedType === "hourly" ? 2 : 0
       });
       const suffix = normalizedType === "hourly" ? "/hour" : "/year";
+      if (max === null || max === min) {
+        return `$${formatter.format(min)}${suffix}`;
+      }
+      return `$${formatter.format(min)}\u2013$${formatter.format(max)}${suffix}`;
       return `$${formatter.format(min)}–$${formatter.format(max)}${suffix}`;
     }
 
@@ -263,6 +286,8 @@
   }
 
   function formatCompensationFromRecord(record = {}, fallback = "Pay not listed") {
+    if (!record || typeof record !== "object") return fallback;
+
     return formatCompensation(
       record.compensation_type,
       record.compensation_min,
@@ -378,30 +403,39 @@
   function getStoragePathFromValue(value, bucket) {
     const raw = String(value || "").trim();
     const normalizedBucket = getStorageBucketName(bucket);
+    const bucketAliases = getStorageBucketAliases(normalizedBucket, bucket);
     if (!raw) return "";
 
     if (!/^https?:\/\//i.test(raw)) {
-      return safeDecode(raw)
-        .replace(/^\/+/, "")
-        .replace(new RegExp(`^${escapeRegExp(normalizedBucket)}\/+`), "")
-        .replace(new RegExp(`^${escapeRegExp(bucket)}\/+`), "");
+      let path = safeDecode(raw).replace(/^\/+/, "");
+      bucketAliases.forEach((alias) => {
+        path = path.replace(new RegExp(`^${escapeRegExp(alias)}\/+`), "");
+      });
+      return path;
     }
 
     try {
       const url = new URL(raw);
       const decodedPath = safeDecode(url.pathname);
-      const markers = [
-        `/object/public/${normalizedBucket}/`,
-        `/object/sign/${normalizedBucket}/`,
-        `/${normalizedBucket}/`,
-        bucket && bucket !== normalizedBucket ? `/${bucket}/` : ""
-      ].filter(Boolean);
+      const markers = bucketAliases.flatMap((alias) => [
+        `/object/public/${alias}/`,
+        `/object/sign/${alias}/`,
+        `/${alias}/`
+      ]);
       const marker = markers.find((item) => decodedPath.includes(item));
       if (!marker) return "";
       return decodedPath.slice(decodedPath.indexOf(marker) + marker.length).replace(/^\/+/, "");
     } catch {
       return "";
     }
+  }
+
+  function getStorageBucketAliases(normalizedBucket, originalBucket) {
+    const aliases = [normalizedBucket, originalBucket].filter(Boolean);
+    if (normalizedBucket === "employer-logos" || originalBucket === "employer_logos") {
+      aliases.push("employer_logos", "employer-logos");
+    }
+    return [...new Set(aliases)];
   }
 
   function isOwnedStoragePath(value, bucket, userId) {
@@ -427,6 +461,22 @@
 
     const { data } = supabase.storage.from(normalizedBucket).getPublicUrl(path);
     return addCacheBuster(data?.publicUrl || "", options.cacheBust);
+  }
+
+  function resolveEmployerLogoUrl(logoValue, options = {}) {
+    const raw = String(logoValue || "").trim();
+    if (!raw) return "";
+
+    return getPublicImageUrl(
+      options.supabase || client(),
+      "employer-logos",
+      raw,
+      { cacheBust: options.cacheBust }
+    );
+  }
+
+  function getPublicEmployerLogoValue(source = {}) {
+    return String(source?.company_logo_url || "").trim();
   }
 
   async function uploadOwnedImage(supabase, kind, file, userId) {
@@ -850,7 +900,7 @@
     if (accountType === "employer") {
       const { data: profile } = await supabase
         .from("employer_profiles")
-        .select("company_location, company_description, main_hiring_industry, employment_type, hiring_needs, hiring_roles, hiring_role_other, pay_range, compensation_type, compensation_min, compensation_max, hiring_timeline, candidate_qualities, onboarding_completed")
+        .select("company_location, company_description, main_hiring_industry, employment_type, hiring_needs, hiring_roles, hiring_role_other, pay_range, hiring_timeline, candidate_qualities")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -868,6 +918,286 @@
     return isCandidateOnboardingComplete(profile)
       ? `${getAppBaseUrl()}/candidates/candidate-dashboard.html`
       : `${getAppBaseUrl()}/candidates/candidate-setup.html`;
+  }
+
+  function getCandidateMetadataName(user) {
+    const metadata = user?.user_metadata || {};
+    return String(
+      metadata.full_name ||
+      metadata.name ||
+      [metadata.first_name, metadata.last_name].filter(Boolean).join(" ")
+    ).trim();
+  }
+
+  function getEmailPrefix(email) {
+    return String(email || "").split("@")[0].trim();
+  }
+
+  function getInitials(value) {
+    const words = String(value || "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+
+    if (!words.length) return "PT";
+    return words.slice(0, 2).map((word) => word[0]).join("").toUpperCase();
+  }
+
+  function serializeCandidateIdentity(identity) {
+    if (!identity) return null;
+
+    return {
+      fullName: identity.fullName || "Candidate",
+      firstName: identity.firstName || "Candidate",
+      email: identity.email || "",
+      initials: identity.initials || "PT",
+      photoUrl: identity.photoUrl || "",
+      nameSource: identity.nameSource || "fallback",
+      profileFound: Boolean(identity.profileFound),
+      expiresAt: Date.now() + candidateIdentityCacheTtlMs
+    };
+  }
+
+  function readCandidateIdentityCache() {
+    try {
+      const cached = JSON.parse(sessionStorage.getItem(candidateIdentityCacheKey) || "null");
+      if (!cached || Number(cached.expiresAt || 0) <= Date.now()) {
+        sessionStorage.removeItem(candidateIdentityCacheKey);
+        return null;
+      }
+
+      return cached;
+    } catch {
+      sessionStorage.removeItem(candidateIdentityCacheKey);
+      return null;
+    }
+  }
+
+  function writeCandidateIdentityCache(identity) {
+    const cached = serializeCandidateIdentity(identity);
+    if (!cached) return null;
+
+    try {
+      sessionStorage.setItem(candidateIdentityCacheKey, JSON.stringify(cached));
+    } catch {}
+
+    return cached;
+  }
+
+  function clearCandidateIdentityCache() {
+    sessionStorage.removeItem(candidateIdentityCacheKey);
+  }
+
+  function resolveCandidateName(profile, user) {
+    const profileName = String(profile?.full_name || "").trim();
+    if (profileName) return { fullName: profileName, source: "profile" };
+
+    const metadataName = getCandidateMetadataName(user);
+    if (metadataName) return { fullName: metadataName, source: "metadata" };
+
+    const emailName = getEmailPrefix(user?.email || profile?.email || "");
+    if (emailName) return { fullName: emailName, source: "email" };
+
+    return { fullName: "Candidate", source: "fallback" };
+  }
+
+  async function loadCandidateIdentity(supabase = client(), options = {}) {
+    let user = options.user || null;
+
+    if (!user) {
+      const {
+        data: { user: authUser },
+        error
+      } = await supabase.auth.getUser();
+
+      if (error) {
+        console.warn("candidate identity: authenticated user lookup failed", {
+          code: error.code || "",
+          message: error.message || ""
+        });
+      }
+
+      user = authUser;
+    }
+
+    let profile = null;
+    let profileFound = false;
+
+    if (user?.id) {
+      const { data, error } = await supabase
+        .from("candidate_profiles")
+        .select("*")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.warn("candidate identity: candidate profile lookup failed", {
+          code: error.code || "",
+          message: error.message || ""
+        });
+      } else {
+        profile = data || null;
+        profileFound = Boolean(data);
+      }
+    }
+
+    const name = resolveCandidateName(profile, user);
+    const fullName = name.fullName;
+    const firstName = fullName.split(/\s+/)[0] || "Candidate";
+    const email = String(profile?.email || user?.email || "").trim();
+    const rawPhotoUrl = profile?.profile_photo_url || profile?.profile_photo || profile?.avatar_url || profile?.photo_url || "";
+    const photoUrl = rawPhotoUrl && /^https?:\/\//i.test(rawPhotoUrl)
+      ? rawPhotoUrl
+      : rawPhotoUrl
+        ? getPublicImageUrl(supabase, "candidate-photos", rawPhotoUrl)
+        : "";
+
+    const identity = {
+      user,
+      profile: profile || {},
+      fullName,
+      firstName,
+      email,
+      initials: getInitials(fullName || email),
+      photoUrl,
+      nameSource: name.source,
+      profileFound
+    };
+
+    writeCandidateIdentityCache(identity);
+    return identity;
+  }
+
+  function primeCandidateIdentityCache(user, profile) {
+    const name = resolveCandidateName(profile, user);
+    const fullName = name.fullName;
+    const email = String(profile?.email || user?.email || "").trim();
+    const rawPhotoUrl = profile?.profile_photo_url || profile?.profile_photo || profile?.avatar_url || profile?.photo_url || "";
+
+    return writeCandidateIdentityCache({
+      user,
+      profile: profile || {},
+      fullName,
+      firstName: fullName.split(/\s+/)[0] || "Candidate",
+      email,
+      initials: getInitials(fullName || email),
+      photoUrl: rawPhotoUrl && /^https?:\/\//i.test(rawPhotoUrl)
+        ? rawPhotoUrl
+        : rawPhotoUrl
+          ? getPublicImageUrl(client(), "candidate-photos", rawPhotoUrl)
+          : "",
+      nameSource: name.source,
+      profileFound: Boolean(profile)
+    });
+  }
+
+  function updateCandidateHeader(identity, root = document) {
+    const setText = (id, value) => {
+      const el = root.getElementById?.(id) || document.getElementById(id);
+      if (el) el.textContent = value || "";
+      return Boolean(el);
+    };
+    const avatar = root.getElementById?.("topCandidateAvatar") || document.getElementById("topCandidateAvatar");
+
+    const displayNameUpdated = setText("topCandidateName", identity?.firstName || "");
+    setText("accountMenuCandidateName", identity?.fullName || "");
+    setText("accountMenuEmail", identity?.email || "No email on file");
+
+    if (avatar) {
+      const initials = identity?.initials || "PT";
+      avatar.innerHTML = identity?.photoUrl
+        ? `<img src="${escapeHtml(identity.photoUrl)}" alt="" loading="lazy" /><span class="avatar-fallback">${escapeHtml(initials)}</span>`
+        : escapeHtml(initials);
+    }
+
+    return displayNameUpdated || Boolean(avatar);
+  }
+
+  function applyCachedCandidateHeader(root = document) {
+    const cached = readCandidateIdentityCache();
+    if (!cached) return null;
+
+    updateCandidateHeader(cached, root);
+    return cached;
+  }
+
+  function getCachedCandidateIdentity() {
+    return readCandidateIdentityCache();
+  }
+
+  function addResourceHint(rel, href, attrs = {}) {
+    if (!href || document.head.querySelector(`link[rel="${rel}"][href="${href}"]`)) return;
+
+    const link = document.createElement("link");
+    link.rel = rel;
+    link.href = href;
+    Object.entries(attrs).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) link.setAttribute(key, String(value));
+    });
+    document.head.appendChild(link);
+  }
+
+  function setupCandidateResourceHints() {
+    addResourceHint("dns-prefetch", "https://ornxlspufzmvapdrwexc.supabase.co");
+    addResourceHint("preconnect", "https://ornxlspufzmvapdrwexc.supabase.co", { crossorigin: "" });
+  }
+
+  function resolveCandidateNavHref(href) {
+    try {
+      const url = new URL(href, window.location.href);
+      if (url.origin !== window.location.origin) return "";
+      if (/logout/i.test(url.href)) return "";
+      return url.href;
+    } catch {
+      return "";
+    }
+  }
+
+  function prefetchCandidatePage(href) {
+    const resolved = resolveCandidateNavHref(href);
+    if (!resolved) return;
+
+    addResourceHint("prefetch", resolved, { as: "document" });
+  }
+
+  function setupCandidateNavPrefetch() {
+    if (!document.querySelector(".candidate-dashboard-shell")) return;
+
+    const links = Array.from(document.querySelectorAll(".candidate-nav-link[href], .top-account-menu-list a[href]"));
+    links.forEach((link) => {
+      const href = link.getAttribute("href") || "";
+      if (!href || href.startsWith("mailto:") || href.startsWith("#")) return;
+
+      link.addEventListener("mouseenter", () => prefetchCandidatePage(href), { once: true, passive: true });
+      link.addEventListener("focus", () => prefetchCandidatePage(href), { once: true, passive: true });
+      link.addEventListener("pointerdown", () => {
+        link.classList.add("is-navigating");
+        prefetchCandidatePage(href);
+      }, { passive: true });
+    });
+
+    const schedule = window.requestIdleCallback || ((callback) => window.setTimeout(callback, 1200));
+    schedule(() => {
+      links.slice(0, 3).forEach((link) => prefetchCandidatePage(link.getAttribute("href") || ""));
+    });
+  }
+
+  function initCandidatePerformanceHints() {
+    setupCandidateResourceHints();
+
+    if (!document.querySelector(".candidate-dashboard-shell")) return;
+
+    applyCachedCandidateHeader();
+    setupCandidateNavPrefetch();
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
   async function routeAuthenticatedUser(accountTypeHint) {
@@ -902,6 +1232,7 @@
     sessionStorage.removeItem(window.PLACELY_AUTH_STORAGE_KEY);
     localStorage.removeItem(window.PLACELY_AUTH_STORAGE_KEY);
     sessionStorage.removeItem("placelyAuthGuardRedirecting");
+    clearCandidateIdentityCache();
     clearPendingVerification();
   }
 
@@ -1029,6 +1360,13 @@
     detectAccountType,
     getPostAuthDestination,
     routeAuthenticatedUser,
+    loadCandidateIdentity,
+    updateCandidateHeader,
+    applyCachedCandidateHeader,
+    getCachedCandidateIdentity,
+    primeCandidateIdentityCache,
+    clearCandidateIdentityCache,
+    setupCandidateNavPrefetch,
     clearAuthState,
     setupPasswordToggles,
     validatePasswordRules,
@@ -1054,7 +1392,11 @@
     getStoragePathFromValue,
     isOwnedStoragePath,
     getPublicImageUrl,
+    resolveEmployerLogoUrl,
+    getPublicEmployerLogoValue,
     uploadOwnedImage,
     removeOwnedImage
   };
+
+  initCandidatePerformanceHints();
 })();

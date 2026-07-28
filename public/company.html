@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Company Profile | Placely Talent</title>
+  <meta name="description" content="Explore this Placely Talent company profile and current jobs." />
+  <link id="canonicalCompanyUrl" rel="canonical" href="" />
+  <meta property="og:title" content="Placely Talent Company Profile" />
+  <meta property="og:description" content="Explore this Placely Talent company profile and current jobs." />
+
+  <!-- TODO: Prerender or server-render public company pages, generate sitemap entries, and add Organization structured data so crawlers receive company-specific metadata before client JavaScript runs. Future clean URL target: /companies/{company-slug}; profile ID remains authoritative. -->
+
+  <link rel="stylesheet" href="../css/candidate-dashboard.css" />
+  <link rel="stylesheet" href="../css/find-jobs.css" />
+  <link rel="stylesheet" href="../css/companies.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+
+<body class="public-company-page">
+  <header class="public-job-header">
+    <div class="logo-wrapper">
+      <a href="../index.html" class="logo">PLACELY TALENT</a>
+      <div class="logo-subtitle">Talent Platform</div>
+    </div>
+
+    <div class="public-job-actions" id="publicCompanyActions">
+      <a href="find-jobs.html?role=candidate" class="secondary-btn">Browse Jobs</a>
+      <a href="../candidates/candidate-login.html" class="primary-btn">Candidate Login</a>
+    </div>
+  </header>
+
+  <main id="publicCompanyShell" class="public-job-shell company-profile-shell" aria-live="polite">
+    <div class="job-details-empty">
+      <span class="eyebrow">Company Profile</span>
+      <h1>Loading company</h1>
+      <p>Checking this public employer profile.</p>
+    </div>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/auth-utils.js"></script>
+  <script src="../js/job-url-utils.js"></script>
+  <script src="../js/public-company-utils.js"></script>
+  <script src="../js/public-company.js"></script>
+</body>
+</html>

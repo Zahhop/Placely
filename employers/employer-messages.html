@@ -80,14 +80,18 @@
     </nav>
 
     <div class="sidebar-footer">
-      <a href="employer-profile.html" class="sidebar-account" aria-label="Open company profile">
-        <span class="account-avatar">PT</span>
-        <span class="account-copy">
-          <strong>Placely Talent</strong>
-          <span>Employer account</span>
-        </span>
-      </a>
-      <button type="button" id="logoutBtn" class="logout-btn nav-logout">Logout</button>
+      <section class="sidebar-plan-card" id="sidebarPlanCard" aria-live="polite"></section>
+      <section class="sidebar-utility-section">
+        <a href="employer-support.html" id="employerSupportSidebarLink" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10v5a3 3 0 0 1-3 3h-2v-8h3a8 8 0 1 0-16 0h3v8H5a3 3 0 0 1-3-3v-5A10 10 0 0 1 12 2Zm-3 8h2v10H9V10Zm4 0h2v10h-2V10Z"/></svg>
+          <span>Support</span>
+        </a>
+        <a href="employer-profile.html" id="employerSettingsSidebarLink" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.43 12.98c.04-.32.07-.65.07-.98s-.02-.66-.07-.98l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.6-.22l-2.49 1a7.28 7.28 0 0 0-1.69-.98L14.5 2.42A.5.5 0 0 0 14 2h-4a.5.5 0 0 0-.5.42L9.12 5.07c-.61.24-1.18.56-1.69.98l-2.49-1a.5.5 0 0 0-.6.22l-2 3.46a.5.5 0 0 0 .12.64l2.11 1.65c-.04.32-.07.65-.07.98s.02.66.07.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46c.13.22.39.31.62.22l2.47-1c.51.4 1.07.73 1.69.98l.38 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.38-2.65c.61-.25 1.18-.58 1.69-.98l2.47 1c.23.09.49 0 .62-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z"/></svg>
+          <span>Settings</span>
+        </a>
+        <button type="button" id="logoutBtn" class="logout-btn nav-logout">Logout</button>
+      </section>
     </div>
   </aside>
 

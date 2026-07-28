@@ -78,14 +78,18 @@
     </nav>
 
     <div class="sidebar-footer">
-      <a href="employer-profile.html" class="sidebar-account" aria-label="Open company profile">
-        <span class="account-avatar">PT</span>
-        <span class="account-copy">
-          <strong>Placely Talent</strong>
-          <span>Employer account</span>
-        </span>
-      </a>
-      <button type="button" id="logoutBtn" class="logout-btn nav-logout">Logout</button>
+      <section class="sidebar-plan-card" id="sidebarPlanCard" aria-live="polite"></section>
+      <section class="sidebar-utility-section">
+        <a href="employer-support.html" id="employerSupportSidebarLink" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10v5a3 3 0 0 1-3 3h-2v-8h3a8 8 0 1 0-16 0h3v8H5a3 3 0 0 1-3-3v-5A10 10 0 0 1 12 2Zm-3 8h2v10H9V10Zm4 0h2v10h-2V10Z"/></svg>
+          <span>Support</span>
+        </a>
+        <a href="employer-profile.html" id="employerSettingsSidebarLink" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.43 12.98c.04-.32.07-.65.07-.98s-.02-.66-.07-.98l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.6-.22l-2.49 1a7.28 7.28 0 0 0-1.69-.98L14.5 2.42A.5.5 0 0 0 14 2h-4a.5.5 0 0 0-.5.42L9.12 5.07c-.61.24-1.18.56-1.69.98l-2.49-1a.5.5 0 0 0-.6.22l-2 3.46a.5.5 0 0 0 .12.64l2.11 1.65c-.04.32-.07.65-.07.98s.02.66.07.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46c.13.22.39.31.62.22l2.47-1c.51.4 1.07.73 1.69.98l.38 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.38-2.65c.61-.25 1.18-.58 1.69-.98l2.47 1c.23.09.49 0 .62-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z"/></svg>
+          <span>Settings</span>
+        </a>
+        <button type="button" id="logoutBtn" class="logout-btn nav-logout">Logout</button>
+      </section>
     </div>
   </aside>
 
@@ -120,101 +124,482 @@
     </header>
 
     <main class="employer-shell manage-shell" data-plan="pro">
-      <section class="dashboard-briefing" aria-labelledby="manageJobsTitle">
-        <div class="briefing-copy">
-          <h1 id="manageJobsTitle">Manage Jobs</h1>
-          <p>Manage postings, review applicant activity, and keep open roles moving.</p>
-        </div>
+      <section id="jobsManageView" class="jobs-view" aria-label="Manage jobs view">
+        <section class="dashboard-briefing" aria-labelledby="manageJobsTitle">
+          <div class="briefing-copy">
+            <h1 id="manageJobsTitle">Manage Jobs</h1>
+            <p>Manage postings, review applicant activity, and keep open roles moving.</p>
+          </div>
 
-        <div class="briefing-actions">
-          <a href="post-job.html" class="primary-btn">Post Job</a>
-          <a href="employer-dashboard.html" class="secondary-btn">Dashboard</a>
-        </div>
+          <div class="briefing-actions">
+            <a href="manage-jobs.html?view=create" class="primary-btn" data-open-post-job>Post Job</a>
+            <a href="employer-dashboard.html" class="secondary-btn">Dashboard</a>
+          </div>
+        </section>
+
+        <div id="manageJobsNotice" class="manage-notice" role="status" aria-live="polite" hidden></div>
+
+        <section class="kpi-strip manage-kpi-strip" aria-label="Job management overview">
+          <div class="kpi-item jobs-kpi">
+            <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6V5a3 3 0 0 1 3-3h1a3 3 0 0 1 3 3v1h3a2 2 0 0 1 2 2v10.5A2.5 2.5 0 0 1 18.5 21h-13A2.5 2.5 0 0 1 3 18.5V8a2 2 0 0 1 2-2h4Zm2 0h3V5a1 1 0 0 0-1-1h-1a1 1 0 0 0-1 1v1Z"/></svg></span>
+            <span class="kpi-copy">
+              <span class="kpi-label">Active Jobs</span>
+              <strong id="activeJobsCount">0</strong>
+              <span class="kpi-context">Currently visible</span>
+            </span>
+          </div>
+
+          <div class="kpi-item conversations-kpi">
+            <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.33 0-8 2.03-8 4.43V20a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1.57C20 16.03 16.33 14 12 14Z"/></svg></span>
+            <span class="kpi-copy">
+              <span class="kpi-label">Total Applicants</span>
+              <strong id="applicationsCount">0</strong>
+              <span class="kpi-context">Across all jobs</span>
+            </span>
+          </div>
+
+          <div class="kpi-item review-kpi">
+            <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2 1.8 20h20.4L12 2Zm1 15h-2v-2h2v2Zm0-4h-2V8h2v5Z"/></svg></span>
+            <span class="kpi-copy">
+              <span class="kpi-label">Needs Review</span>
+              <strong id="reviewCount">0</strong>
+              <span class="kpi-context">Awaiting action</span>
+            </span>
+          </div>
+
+          <div class="kpi-item interview-kpi">
+            <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 2h10a2 2 0 0 1 2 2v18l-7-3-7 3V4a2 2 0 0 1 2-2Zm0 17 5-2.14L17 19V4H7v15Zm2-9h6v2H9v-2Zm0-4h6v2H9V6Z"/></svg></span>
+            <span class="kpi-copy">
+              <span class="kpi-label">Interviews</span>
+              <strong id="interviewsCount">0</strong>
+              <span class="kpi-context">In progress</span>
+            </span>
+          </div>
+        </section>
+
+        <section class="workspace-panel manage-jobs-panel" aria-labelledby="jobWorkspaceTitle">
+          <div class="section-heading">
+            <div>
+              <h2 id="jobWorkspaceTitle">Job postings</h2>
+              <p>Search, filter, and manage every role your team is hiring for.</p>
+            </div>
+            <a href="manage-jobs.html?view=create" class="panel-link" data-open-post-job>Post Job</a>
+          </div>
+
+          <div class="jobs-toolbar">
+            <label class="sr-only" for="jobSearchInput">Search jobs</label>
+            <div class="manage-search">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.97 12.04l3.25 3.24a1 1 0 0 1-1.42 1.42l-3.24-3.25A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/></svg>
+              <input id="jobSearchInput" type="search" placeholder="Search title, location, type, pay..." autocomplete="off" />
+            </div>
+
+            <div class="filter-row" aria-label="Job status filters">
+              <button type="button" class="filter-btn active" data-filter="all">All</button>
+              <button type="button" class="filter-btn" data-filter="active">Active</button>
+              <button type="button" class="filter-btn" data-filter="paused">Paused</button>
+              <button type="button" class="filter-btn" data-filter="draft">Drafts</button>
+            </div>
+
+            <label class="sr-only" for="jobSortSelect">Sort jobs</label>
+            <select id="jobSortSelect">
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+            </select>
+          </div>
+
+          <div id="jobsGrid" class="jobs-grid"></div>
+
+          <div id="emptyState" class="empty-state">
+            <span class="empty-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M9 6V5a3 3 0 0 1 3-3h1a3 3 0 0 1 3 3v1h3a2 2 0 0 1 2 2v10.5A2.5 2.5 0 0 1 18.5 21h-13A2.5 2.5 0 0 1 3 18.5V8a2 2 0 0 1 2-2h4Zm2 0h3V5a1 1 0 0 0-1-1h-1a1 1 0 0 0-1 1v1Z"/></svg>
+            </span>
+            <span class="empty-copy">
+              <strong>No jobs posted yet</strong>
+              <p>Create your first job posting to begin receiving applicants.</p>
+            </span>
+            <a href="manage-jobs.html?view=create" class="empty-action" data-open-post-job>Post Job</a>
+          </div>
+        </section>
       </section>
 
-      <section class="kpi-strip manage-kpi-strip" aria-label="Job management overview">
-        <div class="kpi-item jobs-kpi">
-          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6V5a3 3 0 0 1 3-3h1a3 3 0 0 1 3 3v1h3a2 2 0 0 1 2 2v10.5A2.5 2.5 0 0 1 18.5 21h-13A2.5 2.5 0 0 1 3 18.5V8a2 2 0 0 1 2-2h4Zm2 0h3V5a1 1 0 0 0-1-1h-1a1 1 0 0 0-1 1v1Z"/></svg></span>
-          <span class="kpi-copy">
-            <span class="kpi-label">Active Jobs</span>
-            <strong id="activeJobsCount">0</strong>
-            <span class="kpi-context">Currently visible</span>
-          </span>
-        </div>
+      <section id="jobCreateView" class="jobs-view jobs-create-view" aria-label="Post job view" hidden>
+        <section class="dashboard-briefing" aria-labelledby="postJobTitle">
+          <div class="briefing-copy">
+            <h1 id="postJobTitle">Post a Job</h1>
+            <p>Create a clear role candidates can understand and act on.</p>
+          </div>
 
-        <div class="kpi-item conversations-kpi">
-          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.33 0-8 2.03-8 4.43V20a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1.57C20 16.03 16.33 14 12 14Z"/></svg></span>
-          <span class="kpi-copy">
-            <span class="kpi-label">Total Applicants</span>
-            <strong id="applicationsCount">0</strong>
-            <span class="kpi-context">Across all jobs</span>
-          </span>
-        </div>
+          <div class="briefing-actions">
+            <button type="button" class="secondary-btn" data-back-to-jobs>Back to Jobs</button>
+          </div>
+        </section>
 
-        <div class="kpi-item review-kpi">
-          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2 1.8 20h20.4L12 2Zm1 15h-2v-2h2v2Zm0-4h-2V8h2v5Z"/></svg></span>
-          <span class="kpi-copy">
-            <span class="kpi-label">Needs Review</span>
-            <strong id="reviewCount">0</strong>
-            <span class="kpi-context">Awaiting action</span>
-          </span>
-        </div>
+        <form class="workspace-panel job-form-card" id="jobForm">
+          <section class="form-section">
+            <div class="section-heading compact">
+              <div>
+                <span class="panel-eyebrow">Role Details</span>
+                <h2>Job basics</h2>
+              </div>
+            </div>
 
-        <div class="kpi-item interview-kpi">
-          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 2h10a2 2 0 0 1 2 2v18l-7-3-7 3V4a2 2 0 0 1 2-2Zm0 17 5-2.14L17 19V4H7v15Zm2-9h6v2H9v-2Zm0-4h6v2H9V6Z"/></svg></span>
-          <span class="kpi-copy">
-            <span class="kpi-label">Interviews</span>
-            <strong id="interviewsCount">0</strong>
-            <span class="kpi-context">In progress</span>
-          </span>
-        </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="jobTitle">Job title</label>
+                <input id="jobTitle" type="text" placeholder="Electrical Apprentice" required />
+              </div>
+
+              <div class="form-group">
+                <label for="companyName">Company name</label>
+                <input id="companyName" type="text" placeholder="Your company name" />
+              </div>
+
+              <div class="form-group">
+                <label for="location">Location</label>
+                <input id="location" type="text" placeholder="Calgary, AB" required />
+              </div>
+
+              <div class="form-group">
+                <label for="employmentType">Employment type</label>
+                <select id="employmentType">
+                  <option>Full-time</option>
+                  <option>Part-time</option>
+                  <option>Contract</option>
+                  <option>Temporary</option>
+                  <option>Rotation</option>
+                  <option>Apprenticeship</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section class="form-section">
+            <div class="section-heading compact">
+              <div>
+                <span class="panel-eyebrow">Compensation and Experience</span>
+                <h2>Pay and fit</h2>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="compensationType">Compensation type</label>
+                <select id="compensationType" required>
+                  <option value="hourly">Hourly</option>
+                  <option value="annual">Annual salary</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="compensationMin">Minimum Pay</label>
+                <input id="compensationMin" type="number" min="1" step="0.01" inputmode="decimal" placeholder="25" required />
+              </div>
+
+              <div class="form-group">
+                <label for="compensationMax">Maximum Pay</label>
+                <input id="compensationMax" type="number" min="1" step="0.01" inputmode="decimal" placeholder="40" />
+                <small id="compensationUnit" class="field-hint">per hour</small>
+                <small id="compensationError" class="field-error"></small>
+                <small id="compensationPreview" class="field-hint"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="experienceLevel">Experience level</label>
+                <select id="experienceLevel">
+                  <option>Entry Level</option>
+                  <option>Apprentice</option>
+                  <option>Journeyman</option>
+                  <option>Supervisor / Lead Hand</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section class="form-section">
+            <div class="section-heading compact">
+              <div>
+                <span class="panel-eyebrow">Work Summary</span>
+                <h2>Description</h2>
+                <p>Describe the work, schedule, job site, and responsibilities clearly.</p>
+              </div>
+            </div>
+
+            <div class="form-group full">
+              <label for="jobDescription">Job description</label>
+              <textarea id="jobDescription" placeholder="Describe the role, responsibilities, schedule, job site, and what the candidate will be doing." required></textarea>
+            </div>
+          </section>
+
+          <section class="form-section">
+            <div class="section-heading compact">
+              <div>
+                <span class="panel-eyebrow">Requirements and Perks</span>
+                <h2>Skills and benefits</h2>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group full">
+                <label for="requiredSkills">Required skills / certifications</label>
+                <textarea id="requiredSkills" placeholder="CSTS, WHMIS, Fall Protection, tools, license, reliable transportation, etc."></textarea>
+              </div>
+
+              <div class="form-group full">
+                <label for="benefits">Benefits / perks</label>
+                <textarea id="benefits" placeholder="Overtime, benefits, growth opportunities, paid training, company vehicle, etc."></textarea>
+              </div>
+            </div>
+          </section>
+
+          <section class="form-section publishing-section">
+            <div class="section-heading compact">
+              <div>
+                <span class="panel-eyebrow">Publishing</span>
+                <h2>Post status</h2>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="jobStatus">Status</label>
+                <select id="jobStatus">
+                  <option value="active">Active</option>
+                  <option value="paused">Paused</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <div id="formMessage" class="form-message" role="status" aria-live="polite"></div>
+
+          <div class="submit-bar">
+            <button type="button" class="secondary-btn" data-back-to-jobs>Cancel</button>
+            <button type="submit" class="primary-btn submit-btn">Post Job</button>
+          </div>
+        </form>
       </section>
 
-      <section class="workspace-panel manage-jobs-panel" aria-labelledby="jobWorkspaceTitle">
-        <div class="section-heading">
-          <div>
-            <h2 id="jobWorkspaceTitle">Job postings</h2>
-            <p>Search, filter, and manage every role your team is hiring for.</p>
-          </div>
-          <a href="post-job.html" class="panel-link">Post Job</a>
-        </div>
-
-        <div class="jobs-toolbar">
-          <label class="sr-only" for="jobSearchInput">Search jobs</label>
-          <div class="manage-search">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.97 12.04l3.25 3.24a1 1 0 0 1-1.42 1.42l-3.24-3.25A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/></svg>
-            <input id="jobSearchInput" type="search" placeholder="Search title, location, type, pay..." autocomplete="off" />
+      <section id="jobEditView" class="jobs-view jobs-create-view" aria-label="Edit job view" hidden>
+        <section class="dashboard-briefing" aria-labelledby="editJobTitle">
+          <div class="briefing-copy">
+            <h1 id="editJobTitle">Edit Job</h1>
+            <p>Update this role's details, publishing status, and candidate-facing information.</p>
           </div>
 
-          <div class="filter-row" aria-label="Job status filters">
-            <button type="button" class="filter-btn active" data-filter="all">All</button>
-            <button type="button" class="filter-btn" data-filter="active">Active</button>
-            <button type="button" class="filter-btn" data-filter="paused">Paused</button>
-            <button type="button" class="filter-btn" data-filter="draft">Drafts</button>
+          <div class="briefing-actions">
+            <button type="button" class="secondary-btn" data-back-to-jobs>Back to Jobs</button>
           </div>
+        </section>
 
-          <label class="sr-only" for="jobSortSelect">Sort jobs</label>
-          <select id="jobSortSelect">
-            <option value="newest">Newest first</option>
-            <option value="oldest">Oldest first</option>
-          </select>
-        </div>
+        <form class="workspace-panel job-form-card" id="editJobForm">
+          <section class="form-section">
+            <div class="section-heading compact">
+              <div>
+                <span class="panel-eyebrow">Job Basics</span>
+                <h2>Role details</h2>
+              </div>
+            </div>
 
-        <div id="jobsGrid" class="jobs-grid"></div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="editJobTitleInput">Job title</label>
+                <input id="editJobTitleInput" type="text" placeholder="Electrical Apprentice" required />
+              </div>
 
-        <div id="emptyState" class="empty-state">
-          <span class="empty-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M9 6V5a3 3 0 0 1 3-3h1a3 3 0 0 1 3 3v1h3a2 2 0 0 1 2 2v10.5A2.5 2.5 0 0 1 18.5 21h-13A2.5 2.5 0 0 1 3 18.5V8a2 2 0 0 1 2-2h4Zm2 0h3V5a1 1 0 0 0-1-1h-1a1 1 0 0 0-1 1v1Z"/></svg>
-          </span>
-          <span class="empty-copy">
-            <strong>No jobs posted yet</strong>
-            <p>Create your first job posting to begin receiving applicants.</p>
-          </span>
-          <a href="post-job.html" class="empty-action">Post Job</a>
-        </div>
+              <div class="form-group">
+                <label for="editCompanyName">Company name</label>
+                <input id="editCompanyName" type="text" placeholder="Your company name" readonly />
+                <small class="field-hint">From your company profile</small>
+              </div>
+
+              <div class="form-group">
+                <label for="editJobLocation">Location</label>
+                <input id="editJobLocation" type="text" placeholder="Calgary, AB" required />
+              </div>
+
+              <div class="form-group">
+                <label for="editEmploymentType">Employment type</label>
+                <select id="editEmploymentType">
+                  <option>Full-time</option>
+                  <option>Part-time</option>
+                  <option>Contract</option>
+                  <option>Temporary</option>
+                  <option>Rotation</option>
+                  <option>Apprenticeship</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section class="form-section">
+            <div class="section-heading compact">
+              <div>
+                <span class="panel-eyebrow">Compensation and Experience</span>
+                <h2>Pay and fit</h2>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="editCompensationType">Compensation type</label>
+                <select id="editCompensationType" required>
+                  <option value="hourly">Hourly</option>
+                  <option value="annual">Annual salary</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="editCompensationMin">Minimum Pay</label>
+                <input id="editCompensationMin" type="number" min="1" step="0.01" inputmode="decimal" placeholder="25" />
+              </div>
+
+              <div class="form-group">
+                <label for="editCompensationMax">Maximum Pay</label>
+                <input id="editCompensationMax" type="number" min="1" step="0.01" inputmode="decimal" placeholder="40" />
+                <small id="editCompensationUnit" class="field-hint">per hour</small>
+                <small id="editCompensationError" class="field-error"></small>
+                <small id="editCompensationPreview" class="field-hint"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="editExperienceLevel">Experience level</label>
+                <select id="editExperienceLevel">
+                  <option>Entry Level</option>
+                  <option>Apprentice</option>
+                  <option>Journeyman</option>
+                  <option>Supervisor / Lead Hand</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section class="form-section">
+            <div class="section-heading compact">
+              <div>
+                <span class="panel-eyebrow">Description</span>
+                <h2>Work summary</h2>
+                <p>Describe the work, schedule, job site, and responsibilities clearly.</p>
+              </div>
+            </div>
+
+            <div class="form-group full">
+              <label for="editJobDescription">Job description</label>
+              <textarea id="editJobDescription" placeholder="Describe the role, responsibilities, schedule, job site, and what the candidate will be doing." required></textarea>
+            </div>
+          </section>
+
+          <section class="form-section">
+            <div class="section-heading compact">
+              <div>
+                <span class="panel-eyebrow">Requirements and Perks</span>
+                <h2>Skills and benefits</h2>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group full">
+                <label for="editRequiredSkills">Required skills / certifications</label>
+                <textarea id="editRequiredSkills" placeholder="CSTS, WHMIS, Fall Protection, tools, license, reliable transportation, etc."></textarea>
+              </div>
+
+              <div class="form-group full">
+                <label for="editBenefits">Benefits / perks</label>
+                <textarea id="editBenefits" placeholder="Overtime, benefits, growth opportunities, paid training, company vehicle, etc."></textarea>
+              </div>
+            </div>
+          </section>
+
+          <section class="form-section publishing-section">
+            <div class="section-heading compact">
+              <div>
+                <span class="panel-eyebrow">Publishing</span>
+                <h2>Post status</h2>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="editJobStatus">Status</label>
+                <select id="editJobStatus">
+                  <option value="active">Active</option>
+                  <option value="paused">Paused</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Status badge</label>
+                <span id="editStatusBadge" class="status active">Active</span>
+              </div>
+            </div>
+          </section>
+
+          <div id="editFormMessage" class="form-message" role="status" aria-live="polite"></div>
+
+          <div class="submit-bar edit-submit-bar">
+            <button type="button" class="secondary-btn" data-back-to-jobs>Cancel</button>
+            <button type="button" class="secondary-btn" id="editApplicantsBtn">View Applicants</button>
+            <button type="button" class="secondary-btn" id="editStatusBtn">Pause Job</button>
+            <button type="button" class="secondary-btn danger-btn" id="editRemoveBtn">Remove Job</button>
+            <button type="submit" class="primary-btn submit-btn">Save Changes</button>
+          </div>
+        </form>
       </section>
     </main>
   </div>
+</div>
+
+<div id="boostModal" class="boost-modal-backdrop" hidden>
+  <section class="boost-modal" role="dialog" aria-modal="true" aria-labelledby="boostModalTitle">
+    <div class="boost-modal-header">
+      <div>
+        <h2 id="boostModalTitle">Boost this job</h2>
+        <p id="boostModalDescription">Increase the visibility of this role and reach more relevant candidates.</p>
+      </div>
+      <button type="button" class="boost-close-btn" id="boostCloseBtn" aria-label="Close boost modal">×</button>
+    </div>
+
+    <div class="boost-job-summary">
+      <strong id="boostJobTitle">Job title</strong>
+      <span id="boostJobMeta">Company · Location</span>
+    </div>
+
+    <div id="boostConfigurePanel" class="boost-configure-panel">
+      <div class="boost-option-group">
+        <span class="boost-option-label">Duration</span>
+        <div class="boost-options" id="boostDurationOptions" aria-label="Boost duration"></div>
+      </div>
+
+      <div class="boost-option-group">
+        <span class="boost-option-label">Budget</span>
+        <div class="boost-options" id="boostBudgetOptions" aria-label="Boost budget"></div>
+      </div>
+
+      <div class="boost-summary-box">
+        <div><span>Job</span><strong id="boostSummaryJob">-</strong></div>
+        <div><span>Duration</span><strong id="boostSummaryDuration">-</strong></div>
+        <div><span>Budget</span><strong id="boostSummaryBudget">-</strong></div>
+        <div><span>Estimated end date</span><strong id="boostSummaryEndDate">-</strong></div>
+        <p>Your job will receive increased placement across Placely during the selected boost period.</p>
+      </div>
+    </div>
+
+    <div id="boostManagePanel" class="boost-manage-panel" hidden>
+      <div class="boost-summary-box">
+        <div><span>Status</span><strong id="boostManageStatus">-</strong></div>
+        <div><span>Budget</span><strong id="boostManageBudget">-</strong></div>
+        <div><span>Start date</span><strong id="boostManageStart">-</strong></div>
+        <div><span>End date</span><strong id="boostManageEnd">-</strong></div>
+        <div><span>Time remaining</span><strong id="boostManageRemaining">-</strong></div>
+      </div>
+    </div>
+
+    <p id="boostModalMessage" class="boost-modal-message" role="status" aria-live="polite"></p>
+
+    <div class="boost-modal-actions">
+      <button type="button" class="secondary-btn" id="boostCancelBtn">Cancel</button>
+      <button type="button" class="primary-btn" id="boostCheckoutBtn" disabled>Continue to Payment</button>
+    </div>
+  </section>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

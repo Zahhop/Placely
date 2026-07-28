@@ -1,35 +1,518 @@
 const savedSupabase = window.PlacelyAuth.client();
 
+const SAVED_JOBS_SELECT = `
+  id,
+  saved_at,
+  job_id,
+  jobs (
+    id,
+    employer_id,
+    job_title,
+    company_name,
+    location,
+    employment_type,
+    pay_range,
+    experience_level,
+    job_description,
+    status,
+    created_at
+  )
+`;
+
 let currentUser = null;
+let currentProfile = {};
 let savedRows = [];
+let appliedJobIds = [];
+let employerProfilesById = {};
+let activeBoostsByJob = {};
+let pendingRemoveIds = new Set();
+
+const JOB_BOOSTS_ENABLED = window.PLACELY_FEATURES?.jobBoosts === true;
 
 const savedJobsList = document.getElementById("savedJobsList");
 const savedCount = document.getElementById("savedCount");
 const readyCount = document.getElementById("readyCount");
 const newestSave = document.getElementById("newestSave");
+const savedResultCount = document.getElementById("savedResultCount");
+const savedSearchInput = document.getElementById("savedSearchInput");
+const savedStatusFilter = document.getElementById("savedStatusFilter");
+const savedHeaderSearchForm = document.getElementById("savedHeaderSearchForm");
+const savedHeaderSearchInput = document.getElementById("savedHeaderSearchInput");
 
-function showToast(message) {
-  const toast = document.getElementById("toast");
+document.addEventListener("DOMContentLoaded", initSavedJobs);
 
-  if (!toast) {
-    alert(message);
+async function initSavedJobs() {
+  setupEvents();
+
+  try {
+    const user = await verifyCandidateAccess(savedSupabase, {
+      loginPath: "../candidates/candidate-login.html",
+      setupPath: "../candidates/candidate-setup.html",
+      employerDashboardPath: "../employers/employer-dashboard.html"
+    });
+
+    if (!user) return;
+    currentUser = user;
+
+    await Promise.all([
+      loadCandidateProfile(user),
+      loadSavedJobs(),
+      loadAppliedJobIds(user.id)
+    ]);
+
+    await Promise.all([
+      loadEmployerProfiles(),
+      loadActiveBoosts()
+    ]);
+
+    renderSavedJobs();
+  } catch (error) {
+    console.error("Saved Jobs failed to load", {
+      code: error?.code,
+      message: error?.message
+    });
+    renderErrorState();
+  } finally {
+    document.documentElement.classList.remove("saved-jobs-booting");
+  }
+}
+
+function setupEvents() {
+  document.getElementById("logoutBtn")?.addEventListener("click", handleLogout);
+  document.getElementById("accountMenuLogoutBtn")?.addEventListener("click", handleLogout);
+  bindAccountMenu();
+  bindMobileSidebar();
+
+  savedSearchInput?.addEventListener("input", renderSavedJobs);
+  savedStatusFilter?.addEventListener("change", renderSavedJobs);
+
+  savedHeaderSearchForm?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!savedSearchInput || !savedHeaderSearchInput) return;
+    savedSearchInput.value = savedHeaderSearchInput.value.trim();
+    renderSavedJobs();
+    savedSearchInput.focus();
+  });
+}
+
+function loadCandidateProfile(user) {
+  const identity = window.PlacelyAuth.getCachedCandidateIdentity?.() || {
+    fullName: user?.email?.split("@")[0] || "Candidate",
+    firstName: user?.email?.split("@")[0] || "Candidate",
+    email: user?.email || "",
+    initials: "PT",
+    photoUrl: ""
+  };
+
+  currentProfile = {
+    full_name: identity.fullName,
+    email: identity.email || user.email || "",
+    profile_photo_url: identity.photoUrl || ""
+  };
+  window.PlacelyAuth.updateCandidateHeader?.(identity);
+}
+
+async function loadSavedJobs() {
+  const { data, error } = await savedSupabase
+    .from("saved_jobs")
+    .select(SAVED_JOBS_SELECT)
+    .eq("candidate_id", currentUser.id)
+    .order("saved_at", { ascending: false });
+
+  if (error) {
+    console.error("Saved Jobs Supabase query failed", {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      table: "saved_jobs",
+      ownerColumn: "candidate_id"
+    });
+    throw error;
+  }
+
+  savedRows = data || [];
+}
+
+async function loadAppliedJobIds(userId) {
+  const { data, error } = await savedSupabase
+    .from("applications")
+    .select("job_id, status")
+    .eq("candidate_id", userId)
+    .neq("status", "withdrawn");
+
+  appliedJobIds = error ? [] : (data || []).map((row) => String(row.job_id));
+}
+
+async function loadEmployerProfiles() {
+  const employerIds = [
+    ...new Set(savedRows.map((row) => row.jobs?.employer_id).filter(Boolean))
+  ];
+  employerProfilesById = {};
+  if (!employerIds.length) return;
+
+  const { data, error } = await savedSupabase
+    .from("public_employer_profiles")
+    .select("id, company_name, company_logo_url")
+    .in("id", employerIds);
+
+  if (error) return;
+
+  (data || []).forEach((profile) => {
+    employerProfilesById[String(profile.id)] = profile;
+  });
+}
+
+async function loadActiveBoosts() {
+  activeBoostsByJob = {};
+  if (!JOB_BOOSTS_ENABLED) return;
+
+  const jobIds = savedRows.map((row) => row.jobs?.id || row.job_id).filter(Boolean);
+  if (!jobIds.length) return;
+
+  const { data, error } = await savedSupabase
+    .from("job_boosts")
+    .select("id, job_id, status, ends_at")
+    .in("job_id", jobIds)
+    .eq("status", "active")
+    .gt("ends_at", new Date().toISOString());
+
+  if (error) return;
+
+  (data || []).forEach((boost) => {
+    if (boost.job_id) activeBoostsByJob[String(boost.job_id)] = boost;
+  });
+}
+
+function renderSavedJobs() {
+  const rows = getFilteredRows();
+
+  updateStats();
+  setText("savedResultCount", `${rows.length} saved`);
+
+  if (!savedRows.length) {
+    savedJobsList.innerHTML = `
+      <div class="empty-state">
+        <strong>No saved jobs yet</strong>
+        <p>Save roles while browsing so you can compare them and apply later.</p>
+        <a href="find-jobs.html?role=candidate" class="primary-btn">Find Jobs</a>
+      </div>
+    `;
     return;
   }
 
-  toast.textContent = message;
-  toast.classList.add("show");
+  if (!rows.length) {
+    savedJobsList.innerHTML = `
+      <div class="empty-state">
+        <strong>No matching saved jobs</strong>
+        <p>Try a different search or status filter.</p>
+      </div>
+    `;
+    return;
+  }
 
-  setTimeout(() => {
-    toast.classList.remove("show");
-  }, 2500);
+  savedJobsList.innerHTML = rows.map(renderSavedRow).join("");
 }
 
-function clean(value, fallback = "Not listed") {
-  return value || fallback;
+function getFilteredRows() {
+  const query = cleanText(savedSearchInput?.value);
+  const filter = savedStatusFilter?.value || "all";
+
+  return savedRows.filter((row) => {
+    const job = normalizeSavedJob(row);
+    const matchesQuery =
+      !query ||
+      cleanText([job.title, job.company, job.location, job.type, job.experience, job.pay].join(" ")).includes(query);
+    const matchesFilter =
+      filter === "all" ||
+      (filter === "open" && job.isOpen && !job.alreadyApplied) ||
+      (filter === "applied" && job.alreadyApplied) ||
+      (filter === "closed" && !job.isOpen);
+
+    return matchesQuery && matchesFilter;
+  });
+}
+
+function renderSavedRow(row) {
+  const job = normalizeSavedJob(row);
+
+  if (!row.jobs) {
+    return `
+      <article class="saved-card">
+        <div class="saved-identity">
+          <div class="company-avatar">?</div>
+          <div>
+            <h3>Job no longer available</h3>
+            <p class="saved-company">Saved job unavailable</p>
+          </div>
+        </div>
+        <div class="saved-column">Not listed</div>
+        <div class="saved-column">Not listed</div>
+        <div class="saved-column">Saved ${escapeHTML(formatDate(row.saved_at))}</div>
+        <div class="saved-column"><span class="status-pill closed">Unavailable</span></div>
+        <div class="saved-actions">
+          <button class="danger-btn" type="button" onclick="removeSavedJob('${escapeHTML(row.id)}')">Remove Saved</button>
+        </div>
+      </article>
+    `;
+  }
+
+  return `
+    <article class="saved-card">
+      <div class="saved-identity">
+        ${renderCompanyAvatar(job)}
+        <div>
+          <h3>${escapeHTML(job.title)}</h3>
+          <p class="saved-company">${escapeHTML(job.company)}</p>
+        </div>
+      </div>
+      <div class="saved-column saved-location">${escapeHTML(job.location)}<span>${escapeHTML(job.type)}</span></div>
+      <div class="saved-column saved-pay">${escapeHTML(job.pay)}</div>
+      <div class="saved-column saved-experience">${escapeHTML(job.experience)}</div>
+      <div class="saved-column saved-date">Saved ${escapeHTML(formatDate(row.saved_at))}</div>
+      <div class="saved-column saved-row-status">
+        ${activeBoostsByJob[String(job.id)] ? `<span class="promoted-tag">Promoted</span>` : ""}
+        <span class="status-pill ${job.isOpen ? "open" : "closed"}">${job.isOpen ? "Open" : "Unavailable"}</span>
+        ${job.alreadyApplied ? `<span class="status-pill applied">Applied</span>` : ""}
+      </div>
+      <div class="saved-actions">
+        ${renderPrimaryAction(job)}
+        <button class="danger-btn" type="button" onclick="removeSavedJob('${escapeHTML(row.id)}')">Remove Saved</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderPrimaryAction(job) {
+  if (job.alreadyApplied) {
+    return `<a class="primary-row-btn" href="../candidates/candidate-applications.html">View Application</a>`;
+  }
+
+  if (job.isOpen) {
+    return `<a class="primary-row-btn" href="../candidates/apply-job.html?job_id=${encodeURIComponent(job.id)}">Apply</a>`;
+  }
+
+  return `<a class="secondary-btn" href="find-jobs.html?role=candidate&job=${encodeURIComponent(job.id)}">View Details</a>`;
+}
+
+function normalizeSavedJob(row) {
+  const job = row.jobs || {};
+  const employerProfile = employerProfilesById[String(job.employer_id || "")] || {};
+  const company = job.company_name || employerProfile.company_name || "Company";
+  const status = normalizeStatus(job.status);
+
+  return {
+    id: job.id || row.job_id || "",
+    title: job.job_title || "Job no longer available",
+    company,
+    location: job.location || "Location not listed",
+    type: job.employment_type || "Job type not listed",
+    experience: job.experience_level || "Experience not listed",
+    pay: window.PlacelyAuth.formatCompensationFromRecord(job, job.pay_range || "Pay not listed"),
+    isOpen: Boolean(row.jobs) && status === "active",
+    alreadyApplied: appliedJobIds.includes(String(job.id || row.job_id || "")),
+    logoUrl: getCompanyLogoUrl(employerProfile)
+  };
+}
+
+function updateStats() {
+  const readyRows = savedRows.filter((row) => {
+    const job = normalizeSavedJob(row);
+    return job.isOpen && !job.alreadyApplied;
+  });
+  const newestTitle = savedRows.length ? normalizeSavedJob(savedRows[0]).title : "None yet";
+
+  setText("savedCount", savedRows.length);
+  setText("readyCount", readyRows.length);
+  setText("newestSave", newestTitle || "None yet");
+}
+
+async function removeSavedJob(savedRowId) {
+  if (!currentUser || !savedRowId || pendingRemoveIds.has(String(savedRowId))) return;
+
+  const row = savedRows.find((item) => String(item.id) === String(savedRowId));
+  const jobTitle = row ? normalizeSavedJob(row).title : "this saved job";
+
+  if (!window.confirm(`Remove ${jobTitle} from saved jobs?`)) return;
+
+  pendingRemoveIds.add(String(savedRowId));
+
+  const { error } = await savedSupabase
+    .from("saved_jobs")
+    .delete()
+    .eq("id", savedRowId)
+    .eq("candidate_id", currentUser.id);
+
+  pendingRemoveIds.delete(String(savedRowId));
+
+  if (error) {
+    showToast("Could not remove saved job.");
+    return;
+  }
+
+  savedRows = savedRows.filter((item) => String(item.id) !== String(savedRowId));
+  renderSavedJobs();
+  showToast("Saved job removed.");
+}
+
+function renderErrorState() {
+  if (!savedJobsList) return;
+
+  savedJobsList.innerHTML = `
+    <div class="empty-state">
+      <strong>Could not load saved jobs</strong>
+      <p>Please refresh the page and try again.</p>
+      <button type="button" class="secondary-btn" onclick="window.location.reload()">Retry</button>
+    </div>
+  `;
+}
+
+function bindAccountMenu() {
+  const button = document.getElementById("candidateAccountButton");
+  const menu = document.getElementById("candidateAccountMenu");
+  if (!button || !menu) return;
+
+  const closeMenu = ({ restoreFocus = false } = {}) => {
+    menu.hidden = true;
+    button.setAttribute("aria-expanded", "false");
+    if (restoreFocus) button.focus();
+  };
+
+  const openMenu = () => {
+    menu.hidden = false;
+    button.setAttribute("aria-expanded", "true");
+    menu.querySelector("[role='menuitem']")?.focus();
+  };
+
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (menu.hidden) openMenu();
+    else closeMenu();
+  });
+
+  menu.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (event.target.closest("a")) closeMenu();
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!menu.hidden && !event.target.closest(".top-account-menu-wrap")) closeMenu();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !menu.hidden) closeMenu({ restoreFocus: true });
+  });
+}
+
+function bindMobileSidebar() {
+  const toggle = document.getElementById("sidebarToggle");
+  const backdrop = document.getElementById("sidebarBackdrop");
+  if (!toggle || !backdrop) return;
+
+  const setSidebarOpen = (isOpen) => {
+    document.body.classList.toggle("sidebar-open", isOpen);
+    toggle.setAttribute("aria-expanded", String(isOpen));
+    backdrop.hidden = !isOpen;
+  };
+
+  toggle.addEventListener("click", () => setSidebarOpen(!document.body.classList.contains("sidebar-open")));
+  backdrop.addEventListener("click", () => setSidebarOpen(false));
+
+  document.querySelectorAll(".candidate-nav-link").forEach((link) => {
+    link.addEventListener("click", () => setSidebarOpen(false));
+  });
+}
+
+function renderCompanyAvatar(job) {
+  if (job.logoUrl) {
+    const initials = getInitials(job.company);
+    return `
+      <div class="company-avatar">
+        <img src="${escapeAttribute(job.logoUrl)}" alt="${escapeAttribute(job.company)} logo" loading="lazy" onerror="this.parentElement.textContent='${escapeAttribute(initials)}'">
+      </div>
+    `;
+  }
+
+  return `<div class="company-avatar">${escapeHTML(getInitials(job.company))}</div>`;
+}
+
+function getCompanyLogoUrl(source) {
+  if (!source) return "";
+
+  return window.PlacelyAuth?.resolveEmployerLogoUrl?.(
+    window.PlacelyAuth.getPublicEmployerLogoValue(source),
+    { supabase: savedSupabase }
+  ) || "";
+}
+
+function resolveCandidatePhotoUrl(profile) {
+  const rawUrl = profile.profile_photo_url || profile.profile_photo || profile.avatar_url || profile.photo_url || "";
+  if (!rawUrl) return "";
+  if (/^https?:\/\//i.test(rawUrl)) return rawUrl;
+  return window.PlacelyAuth.getPublicImageUrl(savedSupabase, "candidate-photos", rawUrl);
+}
+
+function normalizeStatus(status) {
+  const clean = String(status || "active").toLowerCase().trim();
+  if (["draft", "drafts"].includes(clean)) return "draft";
+  if (["paused", "inactive", "closed", "archived", "deleted", "removed", "expired"].includes(clean)) return "closed";
+  return "active";
+}
+
+function cleanText(value) {
+  return String(value || "").toLowerCase().trim();
+}
+
+function formatDate(value) {
+  if (!value) return "Not listed";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Not listed";
+
+  return date.toLocaleDateString([], {
+    month: "short",
+    day: "numeric",
+    year: "numeric"
+  });
+}
+
+function getInitials(name) {
+  return String(name || "PT")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function showToast(message) {
+  const toast = document.getElementById("toast");
+  if (!toast) return;
+
+  toast.textContent = message;
+  toast.classList.add("show");
+  window.setTimeout(() => toast.classList.remove("show"), 2500);
+}
+
+async function handleLogout() {
+  try {
+    await window.PlacelyAuth.clearAuthState();
+  } catch {
+    sessionStorage.removeItem("placelyAuthGuardRedirecting");
+  }
+
+  window.location.replace("../candidates/candidate-login.html");
 }
 
 function escapeHTML(value) {
-  return String(value || "")
+  return String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -37,138 +520,8 @@ function escapeHTML(value) {
     .replaceAll("'", "&#039;");
 }
 
-function formatDate(value) {
-  if (!value) return "—";
-
-  return new Date(value).toLocaleDateString("en-CA", {
-    month: "short",
-    day: "numeric"
-  });
-}
-
-async function loadSavedJobs() {
-  const user = await verifyCandidateAccess(savedSupabase, {
-    loginPath: "../candidates/candidate-login.html",
-    setupPath: "../candidates/candidate-setup.html",
-    employerDashboardPath: "../employers/employer-dashboard.html"
-  });
-
-  if (!user) return;
-  currentUser = user;
-
-  const { data, error } = await savedSupabase
-    .from("saved_jobs")
-    .select(`
-      id,
-      saved_at,
-      job_id,
-      jobs (
-        id,
-        job_title,
-        company_name,
-        location,
-        employment_type,
-        compensation_type,
-        compensation_min,
-        compensation_max,
-        pay_range,
-        experience_level,
-        job_description,
-        status
-      )
-    `)
-    .eq("candidate_id", user.id)
-    .order("saved_at", { ascending: false });
-
-  if (error) {
-    savedJobsList.innerHTML = `
-      <div class="empty-state">
-        <strong>Could not load saved jobs</strong>
-        <p>Please refresh the page and try again.</p>
-      </div>
-    `;
-
-    return;
-  }
-
-  savedRows = data || [];
-
-  renderSavedJobs();
-}
-
-function renderSavedJobs() {
-  savedCount.textContent = savedRows.length;
-  readyCount.textContent = savedRows.filter(row => row.jobs?.status !== "closed").length;
-  newestSave.textContent = savedRows.length ? formatDate(savedRows[0].saved_at) : "—";
-
-  if (!savedRows.length) {
-    savedJobsList.innerHTML = `
-      <div class="empty-state">
-        <strong>No saved jobs yet</strong>
-        <p>Save jobs from the job board and they’ll appear here.</p>
-        <a href="find-jobs.html?role=candidate" class="primary-btn">Browse Jobs</a>
-      </div>
-    `;
-    return;
-  }
-
-  savedJobsList.innerHTML = savedRows.map(row => {
-    const job = row.jobs;
-
-    if (!job) {
-      return `
-        <article class="saved-card">
-          <div>
-            <h3>Job no longer available</h3>
-            <p>This job post may have been removed by the employer.</p>
-          </div>
-
-          <div class="saved-actions">
-            <button class="danger-btn" type="button" onclick="removeSavedJob('${row.id}')">Remove</button>
-          </div>
-        </article>
-      `;
-    }
-
-    return `
-      <article class="saved-card">
-        <div>
-          <h3>${clean(job.job_title, "Untitled Job")}</h3>
-          <p>${clean(job.company_name, "Employer")} · ${clean(job.location)} · Saved ${formatDate(row.saved_at)}</p>
-
-          <div class="tags">
-            <span>${clean(job.employment_type, "Job Type")}</span>
-            <span>${escapeHTML(window.PlacelyAuth.formatCompensationFromRecord(job))}</span>
-            <span>${clean(job.experience_level, "Experience not listed")}</span>
-          </div>
-        </div>
-
-        <div class="saved-actions">
-          <a class="secondary-btn" href="find-jobs.html?role=candidate&job=${job.id}">View Job</a>
-          <button class="danger-btn" type="button" onclick="removeSavedJob('${row.id}')">Remove</button>
-        </div>
-      </article>
-    `;
-  }).join("");
-}
-
-async function removeSavedJob(savedRowId) {
-  const { error } = await savedSupabase
-    .from("saved_jobs")
-    .delete()
-    .eq("id", savedRowId)
-    .eq("candidate_id", currentUser.id);
-
-  if (error) {
-    showToast("Could not remove saved job.");
-    return;
-  }
-
-  savedRows = savedRows.filter(row => row.id !== savedRowId);
-  renderSavedJobs();
-  showToast("Saved job removed.");
+function escapeAttribute(value) {
+  return escapeHTML(value).replaceAll("`", "&#096;");
 }
 
 window.removeSavedJob = removeSavedJob;
-
-document.addEventListener("DOMContentLoaded", loadSavedJobs);

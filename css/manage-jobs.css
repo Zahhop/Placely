@@ -339,7 +339,8 @@ body[data-plan="free"] .nav-pro-badge {
   gap: 8px;
 }
 
-.sidebar-support-section {
+.sidebar-support-section,
+.sidebar-utility-section {
   display: grid;
   gap: 8px;
 }
@@ -440,54 +441,6 @@ body[data-plan="free"] .sidebar-plan-card p {
 .plan-card-action:focus-visible {
   border-color: var(--blue-dark);
   background: var(--blue-dark);
-}
-
-.sidebar-account {
-  min-height: 70px;
-  padding: 12px;
-  border: 1px solid var(--sidebar-line);
-  border-radius: 15px;
-  background: rgba(255, 255, 255, 0.055);
-  color: inherit;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-body[data-plan="pro"] .sidebar-account,
-body[data-plan="free"] .sidebar-account {
-  padding: 12px;
-  gap: 12px;
-  min-width: 0;
-  border-color: rgba(226, 232, 240, 0.13);
-  background: rgba(255, 255, 255, 0.065);
-}
-
-.account-copy {
-  min-width: 0;
-  display: grid;
-  gap: 3px;
-}
-
-body[data-plan="pro"] .account-copy,
-body[data-plan="free"] .account-copy {
-  gap: 4px;
-}
-
-.account-copy strong {
-  color: #fff;
-  font-size: 13.5px;
-  font-weight: 800;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.account-copy span {
-  color: #94a3b8;
-  font-size: 12.5px;
-  font-weight: 600;
 }
 
 .nav-logout {
@@ -652,6 +605,11 @@ body[data-plan="free"] .search-shortcut {
   gap: 12px;
 }
 
+.top-account-menu-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
 .utility-badge {
   position: absolute;
   top: -7px;
@@ -801,6 +759,7 @@ body[data-plan="free"] .pro-notification-link {
   font-size: 13.5px;
   font-weight: 800;
   max-width: 280px;
+  cursor: pointer;
 }
 
 body[data-plan="pro"] .top-account,
@@ -820,6 +779,75 @@ body[data-plan="free"] .top-account {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.top-account-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 120;
+  width: min(280px, calc(100vw - 32px));
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.16);
+  overflow: hidden;
+}
+
+.top-account-menu-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 4px;
+}
+
+.top-account-menu-header strong {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.top-account-menu-header span {
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.top-account-menu-list {
+  padding: 6px;
+  display: grid;
+  gap: 2px;
+}
+
+.top-account-menu-list a,
+.top-account-menu-list button {
+  min-height: 40px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.top-account-menu-list a:hover,
+.top-account-menu-list a:focus-visible,
+.top-account-menu-list button:hover,
+.top-account-menu-list button:focus-visible {
+  background: #f1f5f9;
+  color: var(--blue);
 }
 
 .employer-shell {
@@ -1717,6 +1745,11 @@ body[data-plan="pro"] .manage-shell {
   color: #3730a3;
 }
 
+.status.boosted {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
 .job-company {
   margin: 10px 0 0;
   color: var(--muted);
@@ -1814,12 +1847,180 @@ body[data-plan="pro"] .manage-shell {
   background: #eff6ff;
 }
 
-.job-actions .more-action {
-  width: 42px;
-  padding: 0;
+.boost-remaining {
+  color: var(--warning);
+  font-size: 12.5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.boost-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.48);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.boost-modal {
+  width: min(560px, 100%);
+  max-height: min(760px, calc(100vh - 48px));
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22);
+  padding: 24px;
+}
+
+.boost-modal-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.boost-modal-header h2 {
+  margin: 0 0 8px;
   color: var(--ink);
-  font-size: 18px;
-  letter-spacing: 0.08em;
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.boost-modal-header p,
+.boost-modal-message,
+.boost-summary-box p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.boost-close-btn {
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--muted-strong);
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.boost-job-summary {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f8fafc;
+  display: grid;
+  gap: 5px;
+  margin-bottom: 18px;
+}
+
+.boost-job-summary strong {
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.boost-job-summary span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.boost-configure-panel,
+.boost-manage-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.boost-option-group {
+  display: grid;
+  gap: 10px;
+}
+
+.boost-option-label {
+  color: var(--muted-strong);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.boost-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.boost-option {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--blue);
+  cursor: pointer;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.boost-option.active {
+  border-color: var(--blue);
+  background: #eff6ff;
+}
+
+.boost-summary-box {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fbfdff;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.boost-summary-box div {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.boost-summary-box strong {
+  color: var(--ink);
+  text-align: right;
+  font-weight: 800;
+}
+
+.boost-modal-message {
+  min-height: 22px;
+  margin-top: 16px;
+  color: var(--warning);
+  font-weight: 700;
+}
+
+.boost-modal-message.success {
+  color: var(--success);
+}
+
+.boost-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.boost-modal-actions .primary-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .manage-jobs-panel .empty-state {
@@ -1839,6 +2040,146 @@ body[data-plan="pro"] .manage-shell {
 .manage-jobs-panel .empty-copy {
   max-width: 420px;
   flex: 0 1 auto;
+}
+
+.manage-notice {
+  margin: -10px 0 24px;
+  padding: 14px 16px;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  background: #f0fdf4;
+  color: var(--success);
+  font-size: 13.5px;
+  font-weight: 800;
+}
+
+.jobs-create-view .dashboard-briefing {
+  margin-bottom: 24px;
+}
+
+.job-form-card {
+  display: grid;
+  gap: 0;
+}
+
+.form-section {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.form-section:first-child {
+  padding-top: 0;
+}
+
+.publishing-section {
+  border-bottom: 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.form-group {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.form-group.full {
+  grid-column: 1 / -1;
+}
+
+.job-form-card label {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.job-form-card input,
+.job-form-card select,
+.job-form-card textarea {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+  outline: none;
+  padding: 14px 15px;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.job-form-card textarea {
+  min-height: 132px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.job-form-card input:focus,
+.job-form-card select:focus,
+.job-form-card textarea:focus {
+  border-color: #bfdbfe;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.field-hint,
+.field-error {
+  min-height: 17px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.field-hint {
+  color: var(--muted);
+}
+
+.field-error,
+.form-message {
+  color: #b91c1c;
+}
+
+.form-message {
+  min-height: 22px;
+  padding-top: 16px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.form-message.success {
+  color: var(--success);
+}
+
+.submit-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  margin: 8px calc(var(--pro-panel-padding) * -1) calc(var(--pro-panel-padding) * -1);
+  padding: 18px var(--pro-panel-padding);
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 var(--pro-panel-radius) var(--pro-panel-radius);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.submit-btn:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+
+.danger-btn {
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.submit-bar button:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
 }
 
 .hidden {
@@ -1870,6 +2211,10 @@ body[data-plan="pro"] .manage-shell {
     align-items: start;
   }
 
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
   .job-detail-grid {
     grid-template-columns: 1fr;
   }
@@ -1890,12 +2235,37 @@ body[data-plan="pro"] .manage-shell {
     padding: 24px;
   }
 
+  .job-form-card {
+    padding: 22px;
+  }
+
   .job-card {
     padding: 20px;
   }
 
-  .job-actions a {
+  .submit-bar {
+    margin: 8px -22px -22px;
+    padding: 16px 22px;
+    flex-direction: column-reverse;
+  }
+
+  .submit-bar .primary-btn,
+  .submit-bar .secondary-btn {
+    width: 100%;
+  }
+
+  .job-actions a,
+  .job-actions button {
     flex: 1 1 auto;
+  }
+
+  .boost-modal-backdrop {
+    padding: 16px;
+    align-items: flex-end;
+  }
+
+  .boost-modal-actions {
+    flex-direction: column-reverse;
   }
 }
 
