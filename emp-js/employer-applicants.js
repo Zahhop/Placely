@@ -1243,7 +1243,7 @@ function renderDetail() {
       <button type="button" class="drawer-action primary" data-message-id="${escapeHTML(app.id)}" ${canAct ? "" : "disabled"}>Message</button>
       ${
         hasResume(app)
-          ? `<button type="button" class="drawer-action" data-resume-candidate-id="${escapeHTML(app.candidate_id)}" data-resume-application-id="${escapeHTML(app.id)}">Resume</button>`
+          ? `<button type="button" class="drawer-action" data-profile-application-id="${escapeHTML(app.id)}">Request Resume</button>`
           : `<span class="drawer-action disabled">No Resume</span>`
       }
     </div>
@@ -1382,10 +1382,6 @@ function bindDrawerActions(app) {
     button.addEventListener("click", () => openApplicantProfile(button.dataset.profileApplicationId));
   });
 
-  applicantDetail.querySelectorAll("[data-resume-candidate-id]").forEach((button) => {
-    button.addEventListener("click", () => openApplicantResume(button.dataset.resumeCandidateId, button.dataset.resumeApplicationId));
-  });
-
   applicantDetail.querySelectorAll("[data-tab]").forEach((button) => {
     button.addEventListener("click", () => {
       preserveOpenNoteDraft(app.id);
@@ -1456,27 +1452,6 @@ async function messageCandidate(applicationId) {
   if (!app || app.normalized_status === "candidate_deleted") return;
 
   window.location.href = buildMessageFallbackUrl(app);
-}
-
-async function openApplicantResume(candidateId, applicationId) {
-  if (!candidateId) {
-    showToast("Resume could not be opened.", "error");
-    return;
-  }
-
-  const { data, error } = await applicantsSupabase.functions.invoke("get-candidate-resume-url", {
-    body: {
-      candidate_id: candidateId,
-      application_id: applicationId || null
-    }
-  });
-
-  if (error || !data?.url) {
-    showToast(data?.error || "Resume could not be opened.", "error");
-    return;
-  }
-
-  window.open(data.url, "_blank", "noopener");
 }
 
 function getResumePathFromLegacyUrl(value) {

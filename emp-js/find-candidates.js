@@ -562,9 +562,9 @@ function renderCandidateDetail(candidate) {
           ? `<section class="profile-section resume-section">
               <div>
                 <div class="section-kicker">Resume</div>
-                <p>Open the candidate's uploaded resume.</p>
+                <p>Request access from the candidate profile before reviewing this candidate's resume.</p>
               </div>
-              <button class="row-action" type="button" data-resume-candidate-id="${escapeAttribute(candidate.id)}">View resume</button>
+              <button class="row-action" type="button" data-profile-candidate-id="${escapeAttribute(candidate.id)}">View Candidate Profile</button>
             </section>`
           : ""
       }
@@ -579,8 +579,8 @@ function renderCandidateDetail(candidate) {
     startMessageWithCandidate(candidate);
   });
 
-  candidateDetailContent.querySelector("[data-resume-candidate-id]")?.addEventListener("click", () => {
-    openCandidateResume(candidate.id);
+  candidateDetailContent.querySelector("[data-profile-candidate-id]")?.addEventListener("click", () => {
+    openCandidateWorkspace(candidate.id);
   });
 
   candidateDetailContent.querySelectorAll("[data-chip-toggle]").forEach((button) => {
@@ -754,31 +754,6 @@ async function startMessageWithCandidate(candidate) {
   }
 
   window.location.href = `employer-messages.html?candidate_id=${encodeURIComponent(candidate.id)}`;
-}
-
-async function openCandidateResume(candidateId) {
-  if (!hasCandidateAccess) {
-    showUpgradeComingSoon();
-    return;
-  }
-
-  if (!candidateId) {
-    showToast("Resume could not be opened.");
-    return;
-  }
-
-  const { data, error } = await employerSupabase.functions.invoke("get-candidate-resume-url", {
-    body: {
-      candidate_id: candidateId
-    }
-  });
-
-  if (error || !data?.url) {
-    showToast(data?.error || "Resume could not be opened.");
-    return;
-  }
-
-  window.open(data.url, "_blank", "noopener");
 }
 
 async function getEmployerName(userId) {

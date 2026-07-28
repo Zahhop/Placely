@@ -30,6 +30,7 @@ let activeConversationId = null;
 let activeRealtimeChannel = null;
 let refreshTimer = null;
 let isSendingMessage = false;
+const resumeRequestsByConversationId = new Map();
 
 document.addEventListener("DOMContentLoaded", initMessages);
 
@@ -293,6 +294,7 @@ async function openConversation(id, options = {}) {
   renderConversationList(getFilteredConversations());
 
   const messages = await loadMessages(conversation.id);
+  await loadResumeRequestForConversation(conversation);
   activeMessages = messages;
   renderMessages(messages, conversation);
   await markConversationRead(conversation);
@@ -382,6 +384,8 @@ function renderMessages(messages, conversation) {
     appendMessageBubble(message);
   });
 
+  renderResumeRequestPanel(conversation);
+
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
@@ -406,6 +410,93 @@ function appendMessageBubble(message) {
 
   chatMessages.appendChild(bubble);
   chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+async function loadResumeRequestForConversation(conversation) {
+  if (!conversation?.id) return null;
+
+  const { data, error } = await candidateMessagesSupabase
+    .from("candidate_resume_access_requests")
+    .select("id, employer_id, candidate_id, status, requested_at, responded_at, conversation_id")
+    .eq("candidate_id", currentUser.id)
+    .eq("employer_id", conversation.employerId)
+    .order("requested_at", { ascending: false })
+    .limit(1);
+
+  if (error) {
+    console.warn("Candidate resume request lookup failed", {
+      code: error?.code,
+      message: error?.message
+    });
+    return null;
+  }
+
+  const request = data?.[0] || null;
+  if (request) resumeRequestsByConversationId.set(String(conversation.id), request);
+  else resumeRequestsByConversationId.delete(String(conversation.id));
+  return request;
+}
+
+function renderResumeRequestPanel(conversation) {
+  const request = resumeRequestsByConversationId.get(String(conversation?.id || ""));
+  if (!request) return;
+
+  const panel = document.createElement("div");
+  panel.className = "resume-request-message-card";
+  panel.innerHTML = `
+    <strong>${escapeHTML(getResumeRequestTitle(request.status))}</strong>
+    <p>${escapeHTML(getResumeRequestCopy(request.status, conversation.employerName))}</p>
+    ${request.status === "pending" ? `
+      <div class="resume-request-message-actions">
+        <button type="button" class="secondary-btn" data-resume-review="decline" data-request-id="${escapeAttribute(request.id)}">Decline</button>
+        <button type="button" class="primary-btn" data-resume-review="approve" data-request-id="${escapeAttribute(request.id)}">Approve</button>
+      </div>
+    ` : ""}
+  `;
+  chatMessages.appendChild(panel);
+  panel.querySelectorAll("[data-resume-review]").forEach((button) => {
+    button.addEventListener("click", () => reviewResumeRequest(button.dataset.requestId, button.dataset.resumeReview, conversation));
+  });
+}
+
+function getResumeRequestTitle(status) {
+  if (status === "approved") return "Resume access approved";
+  if (status === "declined") return "Resume access declined";
+  return "Resume access request";
+}
+
+function getResumeRequestCopy(status, employerName) {
+  const name = employerName || "This employer";
+  if (status === "approved") return `${name} can now review your resume from your candidate profile.`;
+  if (status === "declined") return `${name} cannot access your resume.`;
+  return `${name} requested access to review your resume. You can approve or decline this request.`;
+}
+
+async function reviewResumeRequest(requestId, action, conversation) {
+  if (!requestId || !["approve", "decline"].includes(action)) return;
+  const buttons = chatMessages.querySelectorAll(`[data-request-id="${escapeSelectorValue(requestId)}"]`);
+  buttons.forEach((button) => {
+    button.disabled = true;
+  });
+
+  const { data, error } = await candidateMessagesSupabase.functions.invoke("review-candidate-resume-access", {
+    body: { requestId, action }
+  });
+
+  if (error || !data?.request) {
+    const message = await readFunctionError(error);
+    if (composerStatus) composerStatus.textContent = message || "Could not update the resume request.";
+    buttons.forEach((button) => {
+      button.disabled = false;
+    });
+    return;
+  }
+
+  resumeRequestsByConversationId.set(String(conversation.id), data.request);
+  await loadMessages(conversation.id).then((messages) => {
+    activeMessages = messages;
+    renderMessages(messages, conversation);
+  });
 }
 
 async function markConversationRead(conversation) {
@@ -898,4 +989,15 @@ function escapeSelectorValue(value) {
   if (window.CSS?.escape) return window.CSS.escape(stringValue);
 
   return stringValue.replace(/["\\]/g, "\\$&");
+}
+
+async function readFunctionError(error) {
+  const response = error?.context;
+  if (response && typeof response.json === "function") {
+    try {
+      const body = await response.json();
+      return body?.error || body?.message || error?.message || "";
+    } catch {}
+  }
+  return error?.message || "";
 }

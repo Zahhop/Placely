@@ -15,6 +15,8 @@
     let hiddenChildren = [];
     let activeCandidateId = "";
     let activeContext = {};
+    let activeProfile = null;
+    let resumeRefreshTimer = null;
 
     function ensureWorkspace() {
       if (workspace) return workspace;
@@ -46,6 +48,8 @@
       hiddenChildren = [];
       activeCandidateId = "";
       activeContext = {};
+      activeProfile = null;
+      stopResumeRefresh();
       if (replaceHistory) updateUrl({});
       onBack();
     }
@@ -88,7 +92,7 @@
       return true;
     }
 
-    async function fetchProfile(candidateId, context = {}) {
+    async function fetchProfile(candidateId, context = {}, options = {}) {
       const cacheKey = [
         getEmployerId(),
         candidateId,
@@ -96,7 +100,7 @@
         context.jobId || ""
       ].join(":");
 
-      if (profileCache.has(cacheKey)) return profileCache.get(cacheKey);
+      if (!options.bypassCache && profileCache.has(cacheKey)) return profileCache.get(cacheKey);
 
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !sessionData?.session) {
@@ -152,6 +156,8 @@
     }
 
     function renderProfile(profile) {
+      activeProfile = profile;
+      stopResumeRefresh();
       const profileForRender = {
         ...profile,
         resume_path: profile.resume_available ? "available" : "",
@@ -172,11 +178,134 @@
       `;
 
       bindBack();
+      bindResumeActions(profile);
+      if (profile.resume_request?.status === "pending") startResumeRefresh(profile.id);
       document.getElementById("profileSaveCandidateBtn")?.addEventListener("click", async () => {
         await onSaveToggle(profile);
         renderProfile({ ...profile, saved_by_employer: isSaved(profile.id) });
       });
       document.getElementById("profileMessageCandidateBtn")?.addEventListener("click", () => onMessage(profile));
+    }
+
+    function bindResumeActions(profile) {
+      workspace.querySelectorAll("[data-resume-action]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const action = button.dataset.resumeAction || "";
+          if (action === "request") await confirmResumeRequest(profile);
+          if (action === "view") await openApprovedResume(profile, { download: false });
+          if (action === "download") await openApprovedResume(profile, { download: true });
+        });
+      });
+    }
+
+    async function confirmResumeRequest(profile) {
+      const confirmed = await showResumeRequestModal(profile);
+      if (!confirmed) return;
+      await requestResume(profile);
+    }
+
+    async function requestResume(profile) {
+      setResumeButtonsDisabled(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("request-candidate-resume-access", {
+          body: { candidateId: profile.id }
+        });
+        if (error || !data?.request) {
+          const responseError = await readFunctionError(error);
+          throw createProfileError(responseError.code || data?.code || "RESUME_REQUEST_FAILED", responseError.message || data?.error || "We could not request resume access.");
+        }
+        const updated = { ...profile, resume_request: data.request };
+        profileCache.clear();
+        renderProfile(updated);
+      } catch (error) {
+        console.error("Resume access request failed", { code: error?.code || "", message: error?.message || "" });
+        alert(error?.message || "We could not request resume access. Please try again.");
+        setResumeButtonsDisabled(false);
+      }
+    }
+
+    async function openApprovedResume(profile, { download = false } = {}) {
+      setResumeButtonsDisabled(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("get-approved-candidate-resume-url", {
+          body: { candidateId: profile.id }
+        });
+        if (error || !data?.url) {
+          const responseError = await readFunctionError(error);
+          throw createProfileError(responseError.code || data?.code || "RESUME_OPEN_FAILED", responseError.message || data?.error || "Resume could not be opened.");
+        }
+
+        if (download) {
+          const link = document.createElement("a");
+          link.href = data.url;
+          link.download = `${String(profile.full_name || "candidate").trim().replace(/\s+/g, "-").toLowerCase()}-resume`;
+          link.rel = "noopener";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+        } else {
+          window.open(data.url, "_blank", "noopener");
+        }
+      } catch (error) {
+        console.error("Approved resume open failed", { code: error?.code || "", message: error?.message || "" });
+        alert(error?.message || "Resume could not be opened. Please try again.");
+      } finally {
+        setResumeButtonsDisabled(false);
+      }
+    }
+
+    function setResumeButtonsDisabled(disabled) {
+      workspace.querySelectorAll("[data-resume-action]").forEach((button) => {
+        button.disabled = disabled;
+      });
+    }
+
+    function startResumeRefresh(candidateId) {
+      stopResumeRefresh();
+      resumeRefreshTimer = window.setInterval(async () => {
+        if (!activeCandidateId || String(activeCandidateId) !== String(candidateId)) return;
+        try {
+          const profile = await fetchProfile(candidateId, activeContext, { bypassCache: true });
+          if (profile?.resume_request?.status !== activeProfile?.resume_request?.status) {
+            renderProfile(profile);
+          }
+        } catch (error) {
+          console.warn("Resume request refresh failed", { code: error?.code || "", message: error?.message || "" });
+        }
+      }, 15000);
+    }
+
+    function stopResumeRefresh() {
+      if (resumeRefreshTimer) window.clearInterval(resumeRefreshTimer);
+      resumeRefreshTimer = null;
+    }
+
+    function showResumeRequestModal(profile) {
+      return new Promise((resolve) => {
+        const modal = document.createElement("div");
+        modal.className = "resume-request-modal-backdrop";
+        modal.innerHTML = `
+          <div class="resume-request-modal" role="dialog" aria-modal="true" aria-labelledby="resumeRequestTitle">
+            <h2 id="resumeRequestTitle">Request Resume</h2>
+            <p>Request access to review ${escapeHTML(profile.full_name || "this candidate")}'s resume. The candidate will be notified and can approve or decline your request.</p>
+            <div class="resume-request-modal-actions">
+              <button type="button" class="secondary-btn" data-modal-action="cancel">Cancel</button>
+              <button type="button" class="primary-btn" data-modal-action="confirm">Send Request</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+        const close = (value) => {
+          modal.remove();
+          resolve(value);
+        };
+        modal.querySelector('[data-modal-action="cancel"]')?.addEventListener("click", () => close(false));
+        modal.querySelector('[data-modal-action="confirm"]')?.addEventListener("click", () => close(true));
+        modal.addEventListener("click", (event) => {
+          if (event.target === modal) close(false);
+        });
+        modal.querySelector('[data-modal-action="confirm"]')?.focus();
+      });
     }
 
     function renderError(error) {

@@ -405,6 +405,52 @@
   color: rgba(255, 255, 255, 0.78);
 }
 
+.resume-request-message-card {
+  width: min(100%, 560px);
+  margin: 6px 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--ink);
+  padding: 14px;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.045);
+}
+
+.resume-request-message-card strong,
+.resume-request-message-card p {
+  margin: 0;
+}
+
+.resume-request-message-card strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.resume-request-message-card p {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 650;
+}
+
+.resume-request-message-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.resume-request-message-actions .primary-btn,
+.resume-request-message-actions .secondary-btn {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
 .composer {
   border-top: 1px solid var(--line);
   background: #fff;
