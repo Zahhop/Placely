@@ -1,4 +1,4 @@
-html.auth-booting body { visibility: hidden; }
+html.auth-booting body { visibility: visible; }
 * {
   margin: 0;
   padding: 0;

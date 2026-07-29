@@ -1,5 +1,7 @@
 (function () {
   const nav = document.querySelector("[data-employer-nav]");
+  const sidebar = document.getElementById("dashboardSidebar") || document.querySelector(".dashboard-sidebar");
+  const storageKey = window.PLACELY_EMPLOYER_SIDEBAR_KEY || "placelyEmployerSidebarCollapsed";
 
   const links = [
     { label: "Dashboard", href: "employer-dashboard.html", section: "dashboard" },
@@ -54,8 +56,11 @@
     ensureSidebarUtilitySection();
     ensureHeaderSupportLink();
     ensureTopAccountMenu();
+    setupEmployerSidebarController();
     wireLogoutButton();
-    hydrateEmployerAccountIdentity();
+    if (currentPage !== "employer-dashboard.html") {
+      hydrateEmployerAccountIdentity();
+    }
   }
 
   function renderNavbarMarkup() {
@@ -122,7 +127,7 @@
     const lock = options.gated ? '<span class="nav-lock" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h1Zm2 0h6V8a3 3 0 0 0-6 0v2Z"/></svg></span><span class="nav-pro-badge">Pro</span>' : "";
 
     return `
-      <a href="${href}"${id} class="${classes.join(" ")}"${gated}>
+      <a href="${href}"${id} class="${classes.join(" ")}"${gated} data-sidebar-tooltip="${escapeHTML(label)}">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="${iconPath}"/></svg>
         <span>${label}</span>
         ${lock}
@@ -135,6 +140,7 @@
 
     anchors.forEach((anchor) => {
       anchor.classList.add("employer-nav-link");
+      setSidebarTooltip(anchor, getNavLabel(anchor));
       const href = anchor.getAttribute("href") || "";
       const page = href.split("/").pop();
       const section = activeSectionsByPage[page] || "";
@@ -147,8 +153,110 @@
     if (!logoutButton) return;
 
     logoutButton.type = "button";
+    logoutButton.setAttribute("data-sidebar-tooltip", "Logout");
+    logoutButton.setAttribute("aria-label", "Logout");
     logoutButton.removeEventListener("click", handleLogout);
     logoutButton.addEventListener("click", handleLogout);
+  }
+
+  function setupEmployerSidebarController() {
+    if (!sidebar || sidebar.dataset.sidebarController === "ready") return;
+    sidebar.dataset.sidebarController = "ready";
+
+    document.querySelectorAll(".dashboard-sidebar a, .dashboard-sidebar button").forEach((item) => {
+      const label = item.id === "logoutBtn" ? "Logout" : getNavLabel(item);
+      if (label) setSidebarTooltip(item, label);
+    });
+
+    const button = ensureSidebarCollapseButton();
+    updateSidebarCollapseButton(button, isSidebarCollapsed());
+
+    button?.addEventListener("click", () => {
+      setSidebarCollapsed(!isSidebarCollapsed());
+    });
+
+    window.requestAnimationFrame?.(() => {
+      document.documentElement.classList.add("employer-sidebar-enhanced");
+    });
+  }
+
+  function ensureSidebarCollapseButton() {
+    const footer = document.querySelector(".sidebar-footer");
+    if (!footer) return null;
+
+    let button = document.getElementById("employerSidebarCollapseBtn");
+    if (button) return button;
+
+    button = document.createElement("button");
+    button.type = "button";
+    button.id = "employerSidebarCollapseBtn";
+    button.className = "sidebar-collapse-btn";
+    button.innerHTML = `
+      <svg class="sidebar-collapse-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M15.7 5.3 9 12l6.7 6.7-1.4 1.4L6.2 12l8.1-8.1 1.4 1.4Z"></path>
+      </svg>
+      <span class="sidebar-collapse-label">Minimize</span>
+    `;
+
+    const utilitySection = footer.querySelector(".sidebar-utility-section");
+    if (utilitySection) {
+      utilitySection.appendChild(button);
+    } else {
+      footer.appendChild(button);
+    }
+
+    return button;
+  }
+
+  function isSidebarCollapsed() {
+    return document.documentElement.classList.contains("employer-sidebar-collapsed");
+  }
+
+  function setSidebarCollapsed(collapsed) {
+    document.documentElement.classList.toggle("employer-sidebar-collapsed", collapsed);
+
+    try {
+      localStorage.setItem(storageKey, collapsed ? "true" : "false");
+    } catch {}
+
+    updateSidebarCollapseButton(document.getElementById("employerSidebarCollapseBtn"), collapsed);
+  }
+
+  function updateSidebarCollapseButton(button, collapsed) {
+    if (!button) return;
+
+    const label = collapsed ? "Expand sidebar" : "Minimize sidebar";
+    const visibleLabel = collapsed ? "Expand" : "Minimize";
+
+    button.setAttribute("aria-expanded", String(!collapsed));
+    button.setAttribute("aria-label", label);
+    button.setAttribute("data-sidebar-tooltip", label);
+
+    const labelElement = button.querySelector(".sidebar-collapse-label");
+    if (labelElement) labelElement.textContent = visibleLabel;
+  }
+
+  function setSidebarTooltip(element, label) {
+    const text = String(label || "").trim();
+    if (!text) return;
+    element.setAttribute("data-sidebar-tooltip", text);
+    if (!element.getAttribute("aria-label")) {
+      element.setAttribute("aria-label", text);
+    }
+  }
+
+  function getNavLabel(element) {
+    if (!element) return "";
+    const explicit = element.getAttribute("aria-label");
+    if (explicit && !/requires pro/i.test(explicit)) return explicit;
+
+    const text = String(element.textContent || "")
+      .replace(/\bPro\b/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (text === "Company") return "Company Profile";
+    return text;
   }
 
   async function loadCandidateAccess() {
@@ -267,6 +375,21 @@
   function ensureSidebarUtilitySection() {
     const footer = document.querySelector(".sidebar-footer");
     if (!footer) return;
+
+    const existingUtilitySection = footer.querySelector(".sidebar-utility-section");
+    const hasCurrentUtilityMarkup = existingUtilitySection
+      && document.getElementById("employerSupportSidebarLink")
+      && document.getElementById("employerSettingsSidebarLink")
+      && footer.querySelector("#logoutBtn");
+
+    if (hasCurrentUtilityMarkup) {
+      const planCard = ensureSidebarPlanCard(footer);
+      if (planCard && planCard.parentElement !== footer) {
+        footer.insertBefore(planCard, existingUtilitySection);
+      }
+      wireLogoutButton();
+      return;
+    }
 
     footer.querySelectorAll(".sidebar-account, .sidebar-support-section, .sidebar-utility-section").forEach((element) => {
       element.remove();

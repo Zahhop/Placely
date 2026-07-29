@@ -1,4 +1,4 @@
-html.auth-booting body { visibility: hidden; }
+html.auth-booting body { visibility: visible; }
 
 html:has(> body > .saved-talent-page),
 body:has(> .saved-talent-page) {

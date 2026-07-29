@@ -1,0 +1,395 @@
+:root {
+  --employer-sidebar-expanded: 196px;
+  --employer-sidebar-collapsed: 72px;
+  --employer-sidebar-bg: #111827;
+  --employer-sidebar-bg-soft: #0f172a;
+  --employer-sidebar-line: rgba(226, 232, 240, 0.09);
+  --employer-sidebar-muted: #8796aa;
+  --employer-sidebar-text: #b8c4d4;
+  --employer-sidebar-active: rgba(59, 130, 246, 0.16);
+  --employer-sidebar-active-line: #60a5fa;
+}
+
+@media (min-width: 901px) {
+  body[data-plan="pro"] .dashboard-shell,
+  body[data-plan="free"] .dashboard-shell,
+  .dashboard-shell {
+    grid-template-columns: var(--employer-sidebar-expanded) minmax(0, 1fr);
+  }
+
+  html.employer-sidebar-collapsed body[data-plan="pro"] .dashboard-shell,
+  html.employer-sidebar-collapsed body[data-plan="free"] .dashboard-shell,
+  html.employer-sidebar-collapsed .dashboard-shell {
+    grid-template-columns: var(--employer-sidebar-collapsed) minmax(0, 1fr);
+  }
+
+  html.employer-sidebar-enhanced .dashboard-shell {
+    transition: grid-template-columns 0.2s ease;
+  }
+
+  .dashboard-sidebar,
+  body[data-plan="pro"] .dashboard-sidebar,
+  body[data-plan="free"] .dashboard-sidebar,
+  .candidates-page .dashboard-sidebar {
+    width: auto;
+    padding: 20px 12px 14px;
+    overflow: visible;
+    background:
+      linear-gradient(180deg, rgba(37, 99, 235, 0.055), rgba(15, 23, 42, 0) 210px),
+      linear-gradient(180deg, var(--employer-sidebar-bg), var(--employer-sidebar-bg-soft));
+    border-right: 1px solid var(--employer-sidebar-line);
+    color: var(--employer-sidebar-text);
+    gap: 18px;
+  }
+
+  .dashboard-sidebar::-webkit-scrollbar,
+  .candidates-page .dashboard-sidebar::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  .sidebar-brand,
+  body[data-plan="pro"] .sidebar-brand,
+  body[data-plan="free"] .sidebar-brand {
+    min-height: 64px;
+    padding: 2px 8px 18px;
+    gap: 10px;
+    border-bottom-color: var(--employer-sidebar-line);
+  }
+
+  .sidebar-brand > div {
+    min-width: 0;
+  }
+
+  .dashboard-sidebar .brand-name,
+  body[data-plan="pro"] .dashboard-sidebar .brand-name,
+  body[data-plan="free"] .dashboard-sidebar .brand-name {
+    font-size: 14.5px !important;
+    line-height: 1.05 !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .dashboard-sidebar .sidebar-brand > div > span,
+  body[data-plan="pro"] .dashboard-sidebar .sidebar-brand > div > span,
+  body[data-plan="free"] .dashboard-sidebar .sidebar-brand > div > span {
+    margin-top: 4px !important;
+    font-size: 8.75px !important;
+    letter-spacing: 0.12em !important;
+    line-height: 1.15 !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sidebar-nav,
+  body[data-plan="pro"] .sidebar-nav,
+  body[data-plan="free"] .sidebar-nav,
+  .candidates-page .sidebar-nav {
+    gap: 17px;
+  }
+
+  .nav-group {
+    gap: 7px;
+  }
+
+  .nav-label,
+  body[data-plan="pro"] .nav-label,
+  body[data-plan="free"] .nav-label {
+    padding: 0 11px 2px;
+    color: #728096;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+  }
+
+  .nav-item,
+  body[data-plan="pro"] .nav-item,
+  body[data-plan="free"] .nav-item,
+  .nav-logout,
+  body[data-plan="pro"] .nav-logout,
+  body[data-plan="free"] .nav-logout,
+  .candidates-page .nav-logout,
+  .sidebar-collapse-btn {
+    min-height: 40px;
+    width: 100%;
+    padding: 0 12px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--employer-sidebar-text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    font-size: 12.5px;
+    font-weight: 650;
+    line-height: 1;
+    text-align: left;
+    text-decoration: none;
+    box-shadow: none;
+    cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  }
+
+  .nav-logout,
+  body[data-plan="pro"] .nav-logout,
+  body[data-plan="free"] .nav-logout,
+  .candidates-page .nav-logout,
+  .sidebar-collapse-btn {
+    font-weight: 650;
+  }
+
+  .nav-item:hover,
+  .nav-item:focus-visible,
+  body[data-plan="pro"] .nav-item:hover,
+  body[data-plan="free"] .nav-item:hover,
+  .nav-logout:hover,
+  .nav-logout:focus-visible,
+  .sidebar-collapse-btn:hover,
+  .sidebar-collapse-btn:focus-visible {
+    border-color: transparent;
+    background: rgba(148, 163, 184, 0.085);
+    color: #e5edf7;
+  }
+
+  .nav-item.active,
+  body[data-plan="pro"] .nav-item.active,
+  body[data-plan="free"] .nav-item.active {
+    border-color: rgba(96, 165, 250, 0.14);
+    background: var(--employer-sidebar-active);
+    color: #f8fafc;
+  }
+
+  .nav-item.active::before {
+    content: "";
+    width: 2px;
+    height: 18px;
+    border-radius: 999px;
+    background: var(--employer-sidebar-active-line);
+    position: absolute;
+    left: -4px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .nav-item svg,
+  .sidebar-collapse-btn svg {
+    width: 17px;
+    height: 17px;
+    flex: 0 0 17px;
+    color: currentColor;
+    fill: currentColor;
+  }
+
+  .nav-item:not(.active) svg,
+  .nav-logout::before,
+  .sidebar-collapse-btn svg {
+    color: var(--employer-sidebar-muted);
+  }
+
+  .nav-item.active svg {
+    color: #dbeafe;
+  }
+
+  .nav-item span:nth-child(2) {
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nav-pro-badge,
+  body[data-plan="pro"] .nav-pro-badge,
+  body[data-plan="free"] .nav-pro-badge {
+    margin-left: auto;
+    padding: 3px 6px;
+    border-radius: 999px;
+    background: rgba(124, 58, 237, 0.18);
+    color: #c4b5fd;
+    font-size: 9.5px;
+    font-weight: 750;
+    letter-spacing: 0;
+  }
+
+  .sidebar-footer,
+  body[data-plan="pro"] .sidebar-footer,
+  body[data-plan="free"] .sidebar-footer,
+  .candidates-page .sidebar-footer,
+  .manage-jobs-page .sidebar-footer,
+    .applicants-page .sidebar-footer {
+    margin-top: auto;
+    padding-top: 11px;
+    border-top: 1px solid var(--employer-sidebar-line);
+    gap: 7px;
+  }
+
+  .sidebar-utility-section {
+    gap: 6px;
+  }
+
+  .sidebar-plan-card,
+  body[data-plan="pro"] .sidebar-plan-card,
+  body[data-plan="free"] .sidebar-plan-card {
+    border-color: rgba(148, 163, 184, 0.18);
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.62);
+  }
+
+  .sidebar-collapse-btn {
+    margin-top: 3px;
+  }
+
+  .sidebar-collapse-icon {
+    flex: 0 0 auto;
+    transition: transform 0.2s ease;
+  }
+
+  .sidebar-collapse-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html.employer-sidebar-collapsed .dashboard-sidebar,
+  html.employer-sidebar-collapsed body[data-plan="pro"] .dashboard-sidebar,
+  html.employer-sidebar-collapsed body[data-plan="free"] .dashboard-sidebar {
+    padding: 18px 10px 14px;
+    align-items: center;
+  }
+
+  html.employer-sidebar-collapsed .sidebar-brand {
+    width: 100%;
+    justify-content: center;
+    padding: 0 0 16px;
+  }
+
+  html.employer-sidebar-collapsed .sidebar-brand > div,
+  html.employer-sidebar-collapsed .nav-label,
+  html.employer-sidebar-collapsed .nav-item span:nth-child(2),
+  html.employer-sidebar-collapsed .nav-lock,
+  html.employer-sidebar-collapsed .nav-pro-badge,
+  html.employer-sidebar-collapsed .sidebar-plan-card,
+  html.employer-sidebar-collapsed .sidebar-collapse-label {
+    display: none !important;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  html.employer-sidebar-collapsed .sidebar-nav,
+  html.employer-sidebar-collapsed .sidebar-footer,
+  html.employer-sidebar-collapsed .sidebar-utility-section,
+  html.employer-sidebar-collapsed .nav-group {
+    width: 100%;
+    align-items: center;
+  }
+
+  html.employer-sidebar-collapsed .sidebar-nav {
+    gap: 12px;
+  }
+
+  html.employer-sidebar-collapsed .nav-group {
+    gap: 6px;
+  }
+
+  html.employer-sidebar-collapsed .nav-item,
+  html.employer-sidebar-collapsed .nav-logout,
+  html.employer-sidebar-collapsed .sidebar-collapse-btn,
+  html.employer-sidebar-collapsed body[data-plan="pro"] .nav-item,
+  html.employer-sidebar-collapsed body[data-plan="free"] .nav-item {
+    width: 44px;
+    height: 42px;
+    min-height: 42px;
+    padding: 0;
+    justify-content: center;
+    gap: 0;
+    font-size: 0;
+  }
+
+  html.employer-sidebar-collapsed .nav-item.active::before {
+    left: -5px;
+  }
+
+  html.employer-sidebar-collapsed .sidebar-collapse-icon {
+    transform: rotate(180deg);
+  }
+
+  html.employer-sidebar-collapsed .nav-logout::before {
+    margin: 0;
+  }
+
+  html.employer-sidebar-collapsed .brand-mark {
+    width: 42px !important;
+    height: 42px !important;
+  }
+
+  html.employer-sidebar-collapsed [data-sidebar-tooltip]::after,
+  html.employer-sidebar-collapsed [data-sidebar-tooltip]::before {
+    position: absolute;
+    left: calc(100% + 12px);
+    top: 50%;
+    z-index: 400;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.12s ease;
+  }
+
+  html.employer-sidebar-collapsed [data-sidebar-tooltip]::after {
+    content: attr(data-sidebar-tooltip);
+    min-width: max-content;
+    max-width: 220px;
+    padding: 8px 10px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 8px;
+    background: #0f172a;
+    color: #f8fafc;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.22);
+    font-size: 12px;
+    font-weight: 750;
+    line-height: 1.2;
+    transform: translateY(-50%);
+  }
+
+  html.employer-sidebar-collapsed [data-sidebar-tooltip]::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    background: #0f172a;
+    transform: translate(-4px, -50%) rotate(45deg);
+  }
+
+  html.employer-sidebar-collapsed [data-sidebar-tooltip]:hover::after,
+  html.employer-sidebar-collapsed [data-sidebar-tooltip]:hover::before,
+  html.employer-sidebar-collapsed [data-sidebar-tooltip]:focus-visible::after,
+  html.employer-sidebar-collapsed [data-sidebar-tooltip]:focus-visible::before {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+@media (max-width: 900px) {
+  html.employer-sidebar-collapsed .dashboard-shell {
+    grid-template-columns: none;
+  }
+
+  html.employer-sidebar-collapsed .dashboard-sidebar {
+    align-items: stretch;
+  }
+
+  .sidebar-collapse-btn {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.employer-sidebar-enhanced .dashboard-shell,
+  .sidebar-collapse-icon,
+  html.employer-sidebar-collapsed [data-sidebar-tooltip]::after,
+  html.employer-sidebar-collapsed [data-sidebar-tooltip]::before {
+    transition-duration: 0.01ms !important;
+  }
+}

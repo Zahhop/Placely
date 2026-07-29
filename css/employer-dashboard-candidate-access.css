@@ -1,4 +1,4 @@
-html.auth-booting body { visibility: hidden; }
+html.auth-booting body { visibility: visible; }
 .network-premium-card {
   display: grid;
   gap: 14px;

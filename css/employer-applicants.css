@@ -1,4 +1,4 @@
-html.auth-booting body { visibility: hidden; }
+html.auth-booting body { visibility: visible; }
 * {
   box-sizing: border-box;
 }
@@ -34,7 +34,7 @@ html {
 }
 
 html.dashboard-booting .dashboard-shell {
-  visibility: hidden;
+  visibility: visible;
 }
 
 html.dashboard-booting *,
@@ -350,6 +350,10 @@ body[data-plan="free"] .sidebar-footer {
   display: grid;
   gap: 12px;
   overflow: hidden;
+}
+
+.sidebar-plan-card:empty {
+  display: none;
 }
 
 .sidebar-plan-card.pro {
