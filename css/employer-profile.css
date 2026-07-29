@@ -1,5 +1,5 @@
 html.profile-booting .dashboard-shell {
-  visibility: hidden;
+  visibility: visible;
 }
 
 .profile-shell {
