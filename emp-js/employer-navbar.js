@@ -7,7 +7,7 @@
     { label: "Dashboard", href: "employer-dashboard.html", section: "dashboard" },
     { label: "Jobs", href: "manage-jobs.html", section: "jobs" },
     { label: "Applicants", href: "employer-applicants.html", section: "applicants" },
-    { label: "Interviews", href: "employer-applicants.html?stage=interview", section: "applicants" },
+    { label: "Interviews", href: "employer-interviews.html", section: "interviews" },
     {
       label: "Candidates",
       href: "find-candidates.html",
@@ -28,6 +28,7 @@
     "post-job.html": "jobs",
     "edit-jobs.html": "jobs",
     "employer-applicants.html": "applicants",
+    "employer-interviews.html": "interviews",
     "find-candidates.html": "candidates",
     "saved-talent.html": "saved",
     "employer-messages.html": "messages",
@@ -104,7 +105,7 @@
         <span class="nav-label">Hiring</span>
         ${renderSidebarLink("Jobs", "manage-jobs.html", "jobs", "M9 6V5a3 3 0 0 1 3-3h1a3 3 0 0 1 3 3v1h3a2 2 0 0 1 2 2v10.5A2.5 2.5 0 0 1 18.5 21h-13A2.5 2.5 0 0 1 3 18.5V8a2 2 0 0 1 2-2h4Zm2 0h3V5a1 1 0 0 0-1-1h-1a1 1 0 0 0-1 1v1Zm9 5H4v7.5c0 .28.22.5.5.5h15c.28 0 .5-.22.5-.5V11Z")}
         ${renderSidebarLink("Applicants", "employer-applicants.html", "applicants", "M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.33 0-8 2.03-8 4.43V20a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1.57C20 16.03 16.33 14 12 14Z")}
-        ${renderSidebarLink("Interviews", "employer-applicants.html?stage=interview", "applicants", "M7 2h10a2 2 0 0 1 2 2v18l-7-3-7 3V4a2 2 0 0 1 2-2Zm0 17 5-2.14L17 19V4H7v15Zm2-9h6v2H9v-2Zm0-4h6v2H9V6Z")}
+        ${renderSidebarLink("Interviews", "employer-interviews.html", "interviews", "M7 2h10a2 2 0 0 1 2 2v18l-7-3-7 3V4a2 2 0 0 1 2-2Zm0 17 5-2.14L17 19V4H7v15Zm2-9h6v2H9v-2Zm0-4h6v2H9V6Z")}
         ${renderSidebarLink("Messages", "employer-messages.html", "messages", "M5 4h14a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H9.8l-4.1 3.08A1.05 1.05 0 0 1 4 19.24V17a3 3 0 0 1-2-2.83V7a3 3 0 0 1 3-3Zm0 2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1v2.25L9.13 15H19a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5Z")}
       </div>
       <div class="nav-group">
@@ -141,6 +142,7 @@
     anchors.forEach((anchor) => {
       anchor.classList.add("employer-nav-link");
       setSidebarTooltip(anchor, getNavLabel(anchor));
+      if (getNavLabel(anchor) === "Interviews") anchor.href = "employer-interviews.html";
       const href = anchor.getAttribute("href") || "";
       const page = href.split("/").pop();
       const section = activeSectionsByPage[page] || "";

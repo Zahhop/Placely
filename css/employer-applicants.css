@@ -960,7 +960,7 @@ body[data-plan="free"] .top-account {
 }
 
 .applicants-shell .applicants-kpi-strip .kpi-item {
-  min-height: 158px;
+  min-height: 138px;
   padding: 24px;
   border: 1px solid var(--pro-border);
   border-radius: var(--pro-panel-radius);

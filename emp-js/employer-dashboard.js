@@ -20,10 +20,14 @@ let latestMessages = [];
 let unreadMessageCount = 0;
 let sectionErrors = {};
 let hasCandidateNetworkAccess = false;
+let dashboardShellRevealed = false;
 
 function setText(id, value) {
   const el = document.getElementById(id);
-  if (el) el.textContent = value ?? "";
+  if (el) {
+    el.textContent = value ?? "";
+    el.removeAttribute("data-dashboard-pending");
+  }
 }
 
 function showToast(message) {
@@ -464,6 +468,7 @@ function updateCompanyChrome() {
   setText("companyNameTitle", companyName);
   setText("topCompanyName", companyName);
   setText("dashboardGreeting", getTimeGreeting());
+  document.getElementById("dashboardTitle")?.removeAttribute("data-dashboard-pending");
 
   renderCompanyAvatar("topCompanyAvatar", companyName, initials);
   window.updateEmployerAccountMenu?.({
@@ -627,6 +632,56 @@ function updateCounts() {
   );
 
   updateHeroSummary();
+}
+
+function updateJobMetric() {
+  setText("activeJobsCount", activeJobs.length);
+  setText("activeJobsContext", activeJobs.length ? plural(activeJobs.length, "live role") : "No live roles");
+}
+
+function updateApplicationMetrics() {
+  setText("applicationsCount", getStageCount("submitted"));
+  setText("interviewsCount", getStageCount("interview"));
+  setText("newApplicantsCount", getStageCount("submitted"));
+  setText("reviewingCount", getStageCount("reviewing"));
+  setText("interviewCount", getStageCount("interview"));
+  setText("offerCount", getStageCount("offer"));
+  setText("hiredCount", getStageCount("hired"));
+  setText("applicationsContext", getStageCount("submitted") ? "Awaiting first review" : "No new applicants");
+  setText("interviewsContext", getStageCount("interview") ? "In progress" : "No interviews yet");
+
+  const archivedCount = applications.filter((app) => ARCHIVED_APPLICATION_STATUSES.includes(app.normalized_status)).length;
+  setText(
+    "rejectedCountText",
+    archivedCount ? `${plural(archivedCount, "archived applicant")} excluded from the active pipeline.` : ""
+  );
+
+  const notificationBadge = document.getElementById("topNotificationBadge");
+  if (notificationBadge) {
+    const attentionCount = getStageCount("submitted");
+    notificationBadge.hidden = !hasCandidateNetworkAccess || attentionCount <= 0;
+    notificationBadge.textContent = attentionCount > 9 ? "9+" : String(attentionCount);
+  }
+}
+
+function updateMessageMetric() {
+  setText("messagesCount", conversations.length);
+  setText(
+    "messagesContext",
+    unreadMessageCount
+      ? plural(unreadMessageCount, "unread message")
+      : conversations.length
+        ? "Active threads"
+        : "No active conversations"
+  );
+
+  const unreadBadge = document.getElementById("topUnreadBadge");
+  if (unreadBadge) {
+    unreadBadge.hidden = unreadMessageCount <= 0;
+    unreadBadge.textContent = hasCandidateNetworkAccess && unreadMessageCount > 9
+      ? "9+"
+      : unreadMessageCount > 99 ? "99+" : String(unreadMessageCount);
+  }
 }
 
 function renderPipeline() {
@@ -1117,7 +1172,10 @@ async function handleLogout() {
 window.handleLogout = handleLogout;
 
 function revealDashboardShell() {
-  document.documentElement.classList.remove("dashboard-booting");
+  if (dashboardShellRevealed) return;
+  dashboardShellRevealed = true;
+  document.documentElement.classList.remove("dashboard-booting", "dashboard-initializing");
+  document.documentElement.classList.add("dashboard-ready");
 }
 
 function cleanDashboardQueryParams() {
@@ -1174,31 +1232,41 @@ async function loadEmployerDashboard() {
     return;
   }
 
-  const hasCandidateAccess = window.PlacelyAuth.hasCandidateSearchAccess(employerProfile);
-  hasCandidateNetworkAccess = hasCandidateAccess;
-  window.applyCandidateAccessUI?.(hasCandidateNetworkAccess);
-  applyPlanChrome();
-  updateCompanyChrome();
-  revealDashboardShell();
+  try {
+    const hasCandidateAccess = window.PlacelyAuth.hasCandidateSearchAccess(employerProfile);
+    hasCandidateNetworkAccess = hasCandidateAccess;
+    window.applyCandidateAccessUI?.(hasCandidateNetworkAccess);
+    applyPlanChrome();
+    updateCompanyChrome();
+    revealDashboardShell();
 
-  await guardedLoad("jobs", () => loadEmployerJobs(user.id));
+    await guardedLoad("jobs", () => loadEmployerJobs(user.id));
+    updateJobMetric();
 
-  savedCandidates = [];
+    savedCandidates = [];
 
-  const sectionLoads = [
-    guardedLoad("applications", () => loadApplications(user.id)),
-    guardedLoad("messages", () => loadConversationsAndMessages(user.id))
-  ];
+    const applicationsLoad = guardedLoad("applications", () => loadApplications(user.id)).then(() => {
+      updateApplicationMetrics();
+      renderPipeline();
+      renderActiveJobs();
+    });
 
-  if (hasCandidateNetworkAccess) {
-    sectionLoads.push(
-      guardedLoad("saved", () => loadSavedCandidates(user.id))
-    );
+    const messagesLoad = guardedLoad("messages", () => loadConversationsAndMessages(user.id)).then(updateMessageMetric);
+    const sectionLoads = [applicationsLoad, messagesLoad];
+
+    if (hasCandidateNetworkAccess) sectionLoads.push(guardedLoad("saved", () => loadSavedCandidates(user.id)));
+
+    await Promise.allSettled(sectionLoads);
+    updateHeroSummary();
+    renderRecentActivity();
+    renderCandidateNetworkPanel();
+  } catch (error) {
+    console.error("Employer dashboard initialization failed", {
+      message: error?.message || String(error || "")
+    });
+  } finally {
+    revealDashboardShell();
   }
-
-  await Promise.allSettled(sectionLoads);
-
-  renderDashboard();
 }
 
 document.addEventListener("DOMContentLoaded", () => {

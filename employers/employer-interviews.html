@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en" class="auth-booting">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Interviews | Placely Talent</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="../emp-js/employer-sidebar-state.js"></script>
+  <link rel="stylesheet" href="../css/manage-jobs.css" />
+  <link rel="stylesheet" href="../css/employer-interviews.css" />
+  <link rel="stylesheet" href="../css/employer-sidebar.css" />
+</head>
+
+<body data-plan="pro">
+<div class="dashboard-shell manage-jobs-page interviews-page">
+  <aside class="dashboard-sidebar" id="dashboardSidebar" aria-label="Employer navigation">
+    <div class="sidebar-brand">
+      <a href="employer-dashboard.html" class="brand-mark" aria-label="Placely Talent dashboard">P</a>
+      <div>
+        <a href="employer-dashboard.html" class="brand-name">PLACELY TALENT</a>
+        <span>Employer Platform</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav" data-employer-nav aria-label="Employer sections">
+      <div class="nav-group">
+        <span class="nav-label">Overview</span>
+        <a href="employer-dashboard.html" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h7V4H4v9Zm9 7h7v-7h-7v7ZM4 20h7v-5H4v5Zm9-9h7V4h-7v7Z"/></svg>
+          <span>Dashboard</span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <span class="nav-label">Hiring</span>
+        <a href="manage-jobs.html" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6V5a3 3 0 0 1 3-3h1a3 3 0 0 1 3 3v1h3a2 2 0 0 1 2 2v10.5A2.5 2.5 0 0 1 18.5 21h-13A2.5 2.5 0 0 1 3 18.5V8a2 2 0 0 1 2-2h4Zm2 0h3V5a1 1 0 0 0-1-1h-1a1 1 0 0 0-1 1v1Zm9 5H4v7.5c0 .28.22.5.5.5h15c.28 0 .5-.22.5-.5V11Z"/></svg>
+          <span>Jobs</span>
+        </a>
+        <a href="employer-applicants.html" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.33 0-8 2.03-8 4.43V20a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1.57C20 16.03 16.33 14 12 14Z"/></svg>
+          <span>Applicants</span>
+        </a>
+        <a href="employer-interviews.html" class="employer-nav-link nav-item active">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h10a2 2 0 0 1 2 2v18l-7-3-7 3V4a2 2 0 0 1 2-2Zm0 17 5-2.14L17 19V4H7v15Zm2-9h6v2H9v-2Zm0-4h6v2H9V6Z"/></svg>
+          <span>Interviews</span>
+        </a>
+        <a href="employer-messages.html" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H9.8l-4.1 3.08A1.05 1.05 0 0 1 4 19.24V17a3 3 0 0 1-2-2.83V7a3 3 0 0 1 3-3Zm0 2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1v2.25L9.13 15H19a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5Z"/></svg>
+          <span>Messages</span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <span class="nav-label">Talent</span>
+        <a href="find-candidates.html" id="employerCandidatesNav" class="employer-nav-link employer-candidates-nav nav-item" data-plan-gated="candidate-network">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.97 12.04l3.25 3.24a1 1 0 0 1-1.42 1.42l-3.24-3.25A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/></svg>
+          <span>Candidates</span>
+          <span class="nav-lock" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h1Zm2 0h6V8a3 3 0 0 0-6 0v2Z"/></svg></span>
+          <span class="nav-pro-badge">Pro</span>
+        </a>
+        <a href="saved-talent.html" id="employerSavedTalentNav" class="employer-nav-link nav-item" data-plan-gated="candidate-network">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a2 2 0 0 1 2 2v16a1 1 0 0 1-1.55.83L12 17.53l-6.45 4.3A1 1 0 0 1 4 21V5a2 2 0 0 1 2-2Zm0 2v14.13l5.45-3.63a1 1 0 0 1 1.1 0L18 19.13V5H6Z"/></svg>
+          <span>Saved Talent</span>
+          <span class="nav-lock" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h1Zm2 0h6V8a3 3 0 0 0-6 0v2Z"/></svg></span>
+          <span class="nav-pro-badge">Pro</span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <span class="nav-label">Company</span>
+        <a href="employer-profile.html" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3h2a2 2 0 0 1 2 2v11h-6v-4H10v4H4Zm2-2h2v-4h8v4h2v-9h-4V5H6v14Zm2-11h2v2H8V8Zm0 4h2v2H8v-2Zm4-4h2v2h-2V8Zm0 4h2v2h-2v-2Z"/></svg>
+          <span>Company Profile</span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <section class="sidebar-plan-card" id="sidebarPlanCard" aria-live="polite"></section>
+      <section class="sidebar-utility-section">
+        <a href="employer-support.html" id="employerSupportSidebarLink" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10v5a3 3 0 0 1-3 3h-2v-8h3a8 8 0 1 0-16 0h3v8H5a3 3 0 0 1-3-3v-5A10 10 0 0 1 12 2Zm-3 8h2v10H9V10Zm4 0h2v10h-2V10Z"/></svg>
+          <span>Support</span>
+        </a>
+        <a href="employer-profile.html" id="employerSettingsSidebarLink" class="employer-nav-link nav-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.43 12.98c.04-.32.07-.65.07-.98s-.02-.66-.07-.98l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.6-.22l-2.49 1a7.28 7.28 0 0 0-1.69-.98L14.5 2.42A.5.5 0 0 0 14 2h-4a.5.5 0 0 0-.5.42L9.12 5.07c-.61.24-1.18.56-1.69.98l-2.49-1a.5.5 0 0 0-.6.22l-2 3.46a.5.5 0 0 0 .12.64l2.11 1.65c-.04.32-.07.65-.07.98s.02.66.07.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46c.13.22.39.31.62.22l2.47-1c.51.4 1.07.73 1.69.98l.38 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.38-2.65c.61-.25 1.18-.58 1.69-.98l2.47 1c.23.09.49 0 .62-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z"/></svg>
+          <span>Settings</span>
+        </a>
+        <button type="button" id="logoutBtn" class="logout-btn nav-logout">Logout</button>
+      </section>
+    </div>
+  </aside>
+
+  <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+
+  <div class="dashboard-workspace">
+    <header class="utility-bar">
+      <button type="button" class="mobile-menu-btn" id="sidebarToggle" aria-controls="dashboardSidebar" aria-expanded="false">
+        <span class="sr-only">Open navigation</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v2H4V7Zm0 4h16v2H4v-2Zm0 4h16v2H4v-2Z"/></svg>
+      </button>
+
+      <form class="utility-search" role="search">
+        <label class="sr-only" for="globalInterviewsSearch">Search candidates, jobs, or messages</label>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.97 12.04l3.25 3.24a1 1 0 0 1-1.42 1.42l-3.24-3.25A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/></svg>
+        <input id="globalInterviewsSearch" type="search" placeholder="Search candidates, jobs, or messages..." autocomplete="off" />
+        <span class="search-shortcut" aria-hidden="true">/</span>
+      </form>
+
+      <div class="utility-actions">
+        <a href="employer-messages.html" class="utility-icon-link" aria-label="Open messages">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H9.8l-4.1 3.08A1.05 1.05 0 0 1 4 19.24V17a3 3 0 0 1-2-2.83V7a3 3 0 0 1 3-3Zm0 2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1v2.25L9.13 15H19a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5Z"/></svg>
+        </a>
+        <a href="employer-applicants.html?stage=new" class="utility-icon-link pro-notification-link" aria-label="Open applicant notifications">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5-6.71V3a2 2 0 1 0-4 0v1.29A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg>
+        </a>
+        <a href="employer-profile.html" class="top-account">
+          <span class="account-avatar small">PT</span>
+          <span>Placely Talent</span>
+        </a>
+      </div>
+    </header>
+
+    <main class="employer-shell manage-shell" data-plan="pro">
+      <section class="dashboard-briefing" aria-labelledby="interviewsTitle">
+        <div class="briefing-copy">
+          <h1 id="interviewsTitle">Interviews</h1>
+          <p>Manage and schedule interviews, track feedback, and move candidates forward.</p>
+        </div>
+
+        <div class="briefing-actions">
+          <button type="button" class="primary-btn" id="scheduleInterviewBtn">Schedule Interview</button>
+        </div>
+      </section>
+
+      <section class="kpi-strip manage-kpi-strip interviews-kpi-strip" aria-label="Interview overview">
+        <div class="kpi-item interview-kpi interviews-upcoming-kpi">
+          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 2h2v2h6V2h2v2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2V2Zm12 8H5v10h14V10ZM5 8h14V6H5v2Zm4 5h6v2H9v-2Z"/></svg></span>
+          <span class="kpi-copy">
+            <span class="kpi-label">Upcoming Interviews</span>
+            <strong id="upcomingInterviewsCount" data-interview-metric="upcoming">5</strong>
+            <span class="kpi-context">In the next 7 days</span>
+          </span>
+        </div>
+
+        <div class="kpi-item review-kpi interviews-today-kpi">
+          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 2h2v2h6V2h2v2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2V2Zm12 8H5v10h14V10ZM5 8h14V6H5v2Zm4 5h6v2H9v-2Z"/></svg></span>
+          <span class="kpi-copy">
+            <span class="kpi-label">Today</span>
+            <strong id="todayInterviewsCount" data-interview-metric="today">1</strong>
+            <span class="kpi-context">Scheduled for today</span>
+          </span>
+        </div>
+
+        <div class="kpi-item conversations-kpi interviews-completed-kpi">
+          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20Zm4.7 7.3-1.4-1.4-4.55 4.55-2.05-2.05-1.4 1.4 3.45 3.45 5.95-5.95Z"/></svg></span>
+          <span class="kpi-copy">
+            <span class="kpi-label">Completed</span>
+            <strong id="completedInterviewsCount" data-interview-metric="completed">12</strong>
+            <span class="kpi-context">In the last 30 days</span>
+          </span>
+        </div>
+
+        <div class="kpi-item interview-kpi interviews-feedback-kpi">
+          <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h14a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3h-6.8L7 21v-4H5a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3Zm0 2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h4v1.85L11.55 15H19a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5Z"/></svg></span>
+          <span class="kpi-copy">
+            <span class="kpi-label">Feedback Pending</span>
+            <strong id="feedbackPendingCount" data-interview-metric="feedback-pending">3</strong>
+            <span class="kpi-context">Waiting for feedback</span>
+          </span>
+        </div>
+      </section>
+
+      <div id="interviewsContent" class="interviews-content-shell" aria-label="Interviews workspace">
+        <section class="workspace-panel interviews-filter-card" aria-label="Interview filters">
+          <div class="interviews-filter-grid">
+            <label class="manage-search interviews-search-control" for="interviewSearchInput">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 4a6.5 6.5 0 0 1 5.17 10.44l3.95 3.95-1.41 1.41-3.95-3.95A6.5 6.5 0 1 1 10.5 4Zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Z"/></svg>
+              <input id="interviewSearchInput" data-interview-filter="search" type="search" placeholder="Search interviews, candidates, or jobs..." autocomplete="off" />
+            </label>
+
+            <select class="employer-select" id="interviewDateRange" data-interview-filter="date-range" aria-label="Date range">
+              <option>Jun 18 &ndash; Jun 24, 2026</option>
+            </select>
+
+            <select class="employer-select" id="interviewJobFilter" data-interview-filter="job" aria-label="Job">
+              <option>All Jobs</option>
+            </select>
+
+            <select class="employer-select" id="interviewTypeFilter" data-interview-filter="type" aria-label="Interview type">
+              <option>All Interview Types</option>
+            </select>
+
+            <select class="employer-select" id="interviewLocationFilter" data-interview-filter="location" aria-label="Location">
+              <option>All Locations</option>
+            </select>
+
+            <button type="button" class="secondary-btn interviews-filter-button" id="interviewFiltersBtn" data-interview-filter-action="filters">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v2H3V5Zm4 6h10v2H7v-2Zm3 6h4v2h-4v-2Z"/></svg>
+              Filters
+            </button>
+          </div>
+        </section>
+
+        <section class="interviews-main-grid" aria-label="Interview schedule">
+          <section class="workspace-panel interviews-calendar-card" aria-labelledby="interviewCalendarTitle">
+            <div class="section-heading compact interviews-panel-heading">
+              <div>
+                <h2 id="interviewCalendarTitle">Interview Calendar</h2>
+              </div>
+            </div>
+
+            <div class="calendar-toolbar" aria-label="Calendar controls">
+              <div class="calendar-nav-controls">
+                <button type="button" class="secondary-btn calendar-icon-btn" aria-label="Previous week" data-calendar-action="previous">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15.4 17.6-1.4 1.4L7 12l7-7 1.4 1.4L9.8 12l5.6 5.6Z"/></svg>
+                </button>
+                <button type="button" class="secondary-btn calendar-icon-btn" aria-label="Next week" data-calendar-action="next">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.6 6.4 10 5l7 7-7 7-1.4-1.4 5.6-5.6-5.6-5.6Z"/></svg>
+                </button>
+                <button type="button" class="secondary-btn calendar-today-btn" data-calendar-action="today">Today</button>
+              </div>
+
+              <button type="button" class="calendar-date-label" data-calendar-action="date-range">Jun 18 &ndash; Jun 24, 2026</button>
+
+              <select class="employer-select calendar-view-select" id="calendarViewSelect" data-calendar-control="view" aria-label="Calendar view">
+                <option>Week</option>
+              </select>
+            </div>
+
+            <div class="interview-calendar" aria-label="Weekly interview calendar">
+              <div class="calendar-day-header calendar-time-spacer" aria-hidden="true"></div>
+              <div class="calendar-day-header">
+                <span>Sun</span>
+                <strong>18</strong>
+              </div>
+              <div class="calendar-day-header">
+                <span>Mon</span>
+                <strong>19</strong>
+              </div>
+              <div class="calendar-day-header">
+                <span>Tue</span>
+                <strong>20</strong>
+              </div>
+              <div class="calendar-day-header active">
+                <span>Wed</span>
+                <strong>21</strong>
+              </div>
+              <div class="calendar-day-header">
+                <span>Thu</span>
+                <strong>22</strong>
+              </div>
+              <div class="calendar-day-header">
+                <span>Fri</span>
+                <strong>23</strong>
+              </div>
+              <div class="calendar-day-header">
+                <span>Sat</span>
+                <strong>24</strong>
+              </div>
+
+              <div class="calendar-time-label">9 AM</div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+
+              <div class="calendar-time-label">10 AM</div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+
+              <div class="calendar-time-label">11 AM</div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+
+              <div class="calendar-time-label">12 PM</div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+
+              <div class="calendar-time-label">1 PM</div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+
+              <div class="calendar-time-label">2 PM</div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+
+              <div class="calendar-time-label">3 PM</div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+
+              <div class="calendar-time-label">4 PM</div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+              <div class="calendar-slot"></div>
+
+              <div class="calendar-events-layer" id="calendarEventsLayer" aria-label="Scheduled interviews"></div>
+            </div>
+          </section>
+
+          <aside class="workspace-panel upcoming-interviews-card" aria-labelledby="upcomingInterviewsTitle">
+            <div class="section-heading compact interviews-panel-heading">
+              <div>
+                <h2 id="upcomingInterviewsTitle">Upcoming Interviews</h2>
+              </div>
+              <a href="#" class="panel-link upcoming-view-all">View all</a>
+            </div>
+
+            <div class="upcoming-interviews-list" id="upcomingInterviewsList" data-interviews-list="upcoming"></div>
+          </aside>
+        </section>
+
+        <section class="workspace-panel recent-interviews-card" aria-labelledby="recentInterviewsTitle">
+          <div class="section-heading compact interviews-panel-heading">
+            <div>
+              <h2 id="recentInterviewsTitle">Recent Interviews</h2>
+            </div>
+          </div>
+
+          <div class="job-table-wrap recent-interviews-table-wrap">
+            <table class="job-table recent-interviews-table">
+              <thead>
+                <tr>
+                  <th scope="col">Candidate</th>
+                  <th scope="col">Job</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Interviewer(s)</th>
+                  <th scope="col">Date</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Feedback</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="recentInterviewsTableBody" data-interviews-list="recent"></tbody>
+            </table>
+          </div>
+
+          <div class="job-table-footer recent-interviews-footer">
+            <span id="recentInterviewsCount">Showing 0 interviews</span>
+            <a href="#" class="panel-link recent-interviews-view-all">View all interviews</a>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="interviews-modal-backdrop" id="scheduleInterviewModal" hidden>
+  <section class="interviews-modal" role="dialog" aria-modal="true" aria-labelledby="scheduleInterviewTitle">
+    <div class="interviews-modal-header">
+      <div>
+        <h2 id="scheduleInterviewTitle">Schedule Interview</h2>
+        <p>Local V1 scheduling for the current Interviews page.</p>
+      </div>
+      <button type="button" class="interviews-modal-close" data-modal-close aria-label="Close schedule interview modal">×</button>
+    </div>
+
+    <form class="interviews-modal-form" id="scheduleInterviewForm" novalidate>
+      <label>
+        Candidate
+        <input id="scheduleCandidate" name="candidate" type="text" autocomplete="off" required />
+      </label>
+      <label>
+        Job
+        <input id="scheduleJob" name="job" type="text" autocomplete="off" required />
+      </label>
+      <label>
+        Date
+        <input id="scheduleDate" name="date" type="date" required />
+      </label>
+      <label>
+        Start time
+        <input id="scheduleTime" name="time" type="time" required />
+      </label>
+      <label>
+        Duration
+        <select id="scheduleDuration" name="duration" required>
+          <option value="30">30 min</option>
+          <option value="45">45 min</option>
+          <option value="60">60 min</option>
+        </select>
+      </label>
+      <label>
+        Interview type
+        <select id="scheduleType" name="type" required>
+          <option value="Video Interview">Video Interview</option>
+          <option value="Phone Interview">Phone Interview</option>
+          <option value="Panel Interview">Panel Interview</option>
+          <option value="In-Person Interview">In-Person Interview</option>
+        </select>
+      </label>
+      <label>
+        Interviewer
+        <input id="scheduleInterviewer" name="interviewer" type="text" autocomplete="off" required />
+      </label>
+      <label>
+        Location or meeting link
+        <input id="scheduleLocation" name="location" type="text" autocomplete="off" required />
+      </label>
+      <label class="interviews-modal-wide">
+        Optional notes
+        <textarea id="scheduleNotes" name="notes" rows="3"></textarea>
+      </label>
+
+      <p class="interviews-modal-message" id="scheduleInterviewMessage" role="status" aria-live="polite"></p>
+
+      <div class="interviews-modal-actions">
+        <button type="button" class="secondary-btn" data-modal-close>Cancel</button>
+        <button type="submit" class="primary-btn">Schedule Interview</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<div class="interviews-modal-backdrop" id="interviewDetailsModal" hidden>
+  <section class="interviews-modal interviews-details-modal" role="dialog" aria-modal="true" aria-labelledby="interviewDetailsTitle">
+    <div class="interviews-modal-header">
+      <div>
+        <h2 id="interviewDetailsTitle">Interview Details</h2>
+        <p id="interviewDetailsSubtitle">Read-only V1 details.</p>
+      </div>
+      <button type="button" class="interviews-modal-close" data-modal-close aria-label="Close interview details modal">×</button>
+    </div>
+    <div class="interview-details-body" id="interviewDetailsBody"></div>
+    <div class="interviews-modal-actions">
+      <button type="button" class="secondary-btn" data-modal-close>Close</button>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
+<script src="../js/auth-utils.js"></script>
+<script src="../js/auth-guards.js"></script>
+<script src="../emp-js/employer-navbar.js"></script>
+<script src="../emp-js/employer-interviews.js"></script>
+</body>
+</html>
