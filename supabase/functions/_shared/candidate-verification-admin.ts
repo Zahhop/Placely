@@ -35,13 +35,17 @@ export function safeError(error: any) {
   return { code: error?.code, message: error?.message, details: error?.details, hint: error?.hint };
 }
 
+function adminError(error: string, code: string, status: number) {
+  return { error, code, status };
+}
+
 export async function requirePlacelyAdmin(req: Request) {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
   if (!supabaseUrl || !anonKey || !serviceRoleKey) {
-    return { error: "Admin verification workflow is not configured.", status: 500 };
+    return adminError("Admin verification workflow is not configured.", "ADMIN_CONFIG_MISSING", 500);
   }
 
   const authHeader = req.headers.get("Authorization") || "";
@@ -51,22 +55,39 @@ export async function requirePlacelyAdmin(req: Request) {
 
   const { data, error } = await userClient.auth.getUser();
   const user = data?.user;
-  if (error || !user) return { error: "Your session has expired. Please log in again.", status: 401 };
+  if (error || !user) {
+    console.warn("Placely admin auth required", {
+      hasAuthorizationHeader: Boolean(authHeader),
+      code: error?.code,
+      message: error?.message
+    });
+    return adminError("Your session has expired. Please log in again.", "ADMIN_AUTH_REQUIRED", 401);
+  }
 
   const allowedUserIds = splitEnv("PLACELY_ADMIN_USER_IDS");
-  const allowedEmails = splitEnv("PLACELY_ADMIN_EMAILS").map((email) => email.toLowerCase());
+  const allowedEmails = splitEnv("PLACELY_ADMIN_EMAILS").map((email) => email.trim().toLowerCase());
   const appRole = String(user.app_metadata?.role || "").toLowerCase();
   const appRoles = Array.isArray(user.app_metadata?.roles)
-    ? user.app_metadata.roles.map((role: unknown) => String(role).toLowerCase())
+    ? user.app_metadata.roles.map((role: unknown) => String(role).trim().toLowerCase())
     : [];
+  const userEmail = String(user.email || "").trim().toLowerCase();
 
   const isAdmin =
     allowedUserIds.includes(user.id) ||
-    allowedEmails.includes(String(user.email || "").toLowerCase()) ||
+    allowedEmails.includes(userEmail) ||
     ["admin", "placely_admin"].includes(appRole) ||
     appRoles.some((role) => ["admin", "placely_admin"].includes(role));
 
-  if (!isAdmin) return { error: "You are not authorized to review candidate verification requests.", status: 403 };
+  if (!isAdmin) {
+    console.warn("Placely admin access denied", {
+      userId: user.id,
+      emailAllowed: allowedEmails.includes(userEmail),
+      userIdAllowed: allowedUserIds.includes(user.id),
+      appRole,
+      appRoles
+    });
+    return adminError("You are not authorized to review candidate verification requests.", "ADMIN_ACCESS_DENIED", 403);
+  }
 
   return {
     user,

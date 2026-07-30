@@ -1,28 +1,58 @@
 const adminSupabase = window.PlacelyAuth.client();
+let adminSession = null;
 
 document.addEventListener("DOMContentLoaded", initAdminVerificationRequests);
 
 async function initAdminVerificationRequests() {
   document.getElementById("refreshRequestsBtn")?.addEventListener("click", loadVerificationRequests);
+  document.getElementById("adminLogoutBtn")?.addEventListener("click", handleAdminLogout);
+
+  adminSession = await requireAdminSession();
+  if (!adminSession) return;
+
   await loadVerificationRequests();
+}
+
+async function requireAdminSession() {
+  const { data, error } = await adminSupabase.auth.getSession();
+  const session = data?.session;
+
+  if (error) {
+    console.error("Admin verification: session lookup failed", {
+      message: error?.message
+    });
+  }
+
+  if (!session?.access_token) {
+    redirectToAdminLogin("session-expired");
+    return null;
+  }
+
+  return session;
 }
 
 async function loadVerificationRequests() {
   setStatus("Loading requests...");
 
   try {
-    const { data, error } = await adminSupabase.functions.invoke("list-candidate-verification-requests", {
+    if (!adminSession?.access_token) {
+      adminSession = await requireAdminSession();
+      if (!adminSession) return;
+    }
+
+    const { data, error } = await invokeAdminFunction("list-candidate-verification-requests", {
       body: {}
     });
 
-    if (error) throw error;
-    if (data?.error) throw new Error(data.error);
+    if (error || data?.error) {
+      await handleAdminFunctionFailure(error, data, "You are not authorized to view verification requests.");
+      return;
+    }
 
     renderRequests(data?.requests || []);
   } catch (error) {
     console.error("Admin verification requests failed to load", {
-      message: error?.message,
-      context: error?.context
+      message: error?.message
     });
     setStatus(error?.message || "You are not authorized to view verification requests.");
   } finally {
@@ -89,7 +119,12 @@ async function reviewRequest(button) {
   });
 
   try {
-    const { data, error } = await adminSupabase.functions.invoke("review-candidate-verification", {
+    if (!adminSession?.access_token) {
+      adminSession = await requireAdminSession();
+      if (!adminSession) return;
+    }
+
+    const { data, error } = await invokeAdminFunction("review-candidate-verification", {
       body: {
         request_id: requestId,
         action,
@@ -97,21 +132,86 @@ async function reviewRequest(button) {
       }
     });
 
-    if (error) throw error;
-    if (data?.error) throw new Error(data.error);
+    if (error || data?.error) {
+      await handleAdminFunctionFailure(error, data, "Could not review request.");
+      return;
+    }
 
     showToast(`Request ${action === "approve" ? "approved" : "rejected"}.`);
     await loadVerificationRequests();
   } catch (error) {
     console.error("Admin verification review failed", {
-      message: error?.message,
-      context: error?.context
+      message: error?.message
     });
     showToast(error?.message || "Could not review request.");
+  } finally {
     row?.querySelectorAll("button").forEach((item) => {
       item.disabled = false;
     });
   }
+}
+
+async function invokeAdminFunction(functionName, options = {}) {
+  return adminSupabase.functions.invoke(functionName, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      Authorization: `Bearer ${adminSession.access_token}`
+    }
+  });
+}
+
+async function handleAdminFunctionFailure(error, data, fallbackMessage) {
+  const details = await readFunctionError(error);
+  const status = details.status || 0;
+  const code = data?.code || details.code || "";
+  const message = data?.error || details.message || fallbackMessage;
+
+  console.error("Admin verification function failed", {
+    status,
+    code,
+    message
+  });
+
+  if (status === 401 || code === "ADMIN_AUTH_REQUIRED") {
+    redirectToAdminLogin("session-expired");
+    return;
+  }
+
+  if (status === 403 || code === "ADMIN_ACCESS_DENIED") {
+    await adminSupabase.auth.signOut();
+    redirectToAdminLogin("access-denied");
+    return;
+  }
+
+  setStatus(message || fallbackMessage);
+  showToast(message || fallbackMessage);
+}
+
+async function readFunctionError(error) {
+  const response = error?.context;
+  if (!response) return { status: 0, message: error?.message || "" };
+
+  try {
+    const payload = await response.clone().json();
+    return {
+      status: response.status,
+      code: payload?.code,
+      message: payload?.error || error?.message || ""
+    };
+  } catch {
+    return { status: response.status, message: error?.message || "" };
+  }
+}
+
+async function handleAdminLogout() {
+  await adminSupabase.auth.signOut();
+  window.location.replace("admin-login.html");
+}
+
+function redirectToAdminLogin(reason = "") {
+  const suffix = reason ? `?reason=${encodeURIComponent(reason)}` : "";
+  window.location.replace(`admin-login.html${suffix}`);
 }
 
 function setStatus(message) {

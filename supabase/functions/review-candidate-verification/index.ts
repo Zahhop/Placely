@@ -4,10 +4,10 @@ Deno.serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") return new Response("ok", { status: 200, headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Method not allowed." }, 405, corsHeaders);
-  if (!isAllowedRequestOrigin(req)) return json({ error: "Origin is not allowed." }, 403, corsHeaders);
+  if (!isAllowedRequestOrigin(req)) return json({ error: "Origin is not allowed.", code: "ORIGIN_NOT_ALLOWED" }, 403, corsHeaders);
 
   const auth = await requirePlacelyAdmin(req);
-  if ("error" in auth) return json({ error: auth.error }, auth.status, corsHeaders);
+  if ("error" in auth) return json({ error: auth.error, code: auth.code }, auth.status, corsHeaders);
 
   let body: Record<string, unknown> = {};
   try {

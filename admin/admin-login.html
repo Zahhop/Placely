@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Placely Admin Login</title>
+  <link rel="stylesheet" href="../css/admin-login.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <main class="admin-login-page">
+    <section class="admin-login-card" aria-labelledby="adminLoginTitle">
+      <div class="admin-login-brand" aria-label="Placely Talent Admin">
+        <span class="admin-logo">P</span>
+        <div>
+          <strong>Placely Talent</strong>
+          <span>Admin</span>
+        </div>
+      </div>
+
+      <div class="admin-login-heading">
+        <span class="admin-login-eyebrow">Secure access</span>
+        <h1 id="adminLoginTitle">Admin login</h1>
+        <p>Sign in with your Placely admin account to review candidate verification requests.</p>
+      </div>
+
+      <div id="adminLoginStatus" class="admin-login-status" role="status" aria-live="polite"></div>
+
+      <form id="adminLoginForm" class="admin-login-form" novalidate>
+        <label for="adminEmail">Email</label>
+        <input id="adminEmail" name="email" type="email" autocomplete="email" required />
+
+        <label for="adminPassword">Password</label>
+        <input id="adminPassword" name="password" type="password" autocomplete="current-password" required />
+
+        <button type="submit" id="adminLoginSubmit">Sign In</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/auth-utils.js"></script>
+  <script src="admin-login.js"></script>
+</body>
+</html>

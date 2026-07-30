@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({}));
   const requestId = sanitizeUuid(body.requestId || body.request_id);
   const action = String(body.action || "").toLowerCase().trim();
-  if (!requestId || !["approve", "decline"].includes(action)) {
+  if (!requestId || !["approve", "decline", "revoke"].includes(action)) {
     return json({ error: "A valid request and action are required.", code: "INVALID_REQUEST" }, 400, corsHeaders);
   }
 
@@ -43,8 +43,8 @@ Deno.serve(async (req) => {
   }
 
   const { data: requestRow, error: requestError } = await admin
-    .from("candidate_resume_access_requests")
-    .select("id, candidate_id, employer_id, status, conversation_id")
+    .from("candidate_resume_requests")
+    .select("id, candidate_id, employer_id, status, responded_at")
     .eq("id", requestId)
     .maybeSingle();
   if (requestError) return json({ error: "Could not load this resume request.", code: "REQUEST_LOOKUP_FAILED" }, 500, corsHeaders);
@@ -53,19 +53,30 @@ Deno.serve(async (req) => {
     return json({ error: "You cannot review this resume request.", code: "REQUEST_ACCESS_DENIED" }, 403, corsHeaders);
   }
 
-  const nextStatus = action === "approve" ? "approved" : "declined";
+  if (action === "revoke" && requestRow.status !== "approved") {
+    return json({ error: "Only approved resume access can be revoked.", code: "INVALID_REQUEST_STATUS" }, 409, corsHeaders);
+  }
+
+  if (["approve", "decline"].includes(action) && requestRow.status !== "pending") {
+    return json({ error: "This resume request has already been reviewed.", code: "INVALID_REQUEST_STATUS" }, 409, corsHeaders);
+  }
+
+  const nextStatus = action === "approve" ? "approved" : action === "revoke" ? "revoked" : "declined";
   const now = new Date().toISOString();
+  const expiresAt = action === "approve" ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : null;
   const { data: updated, error: updateError } = await admin
-    .from("candidate_resume_access_requests")
+    .from("candidate_resume_requests")
     .update({
       status: nextStatus,
-      responded_at: now,
-      response_message: nextStatus === "approved" ? "Resume access approved by candidate." : "Resume access declined by candidate.",
+      responded_at: action === "revoke" ? requestRow.responded_at || now : now,
+      revoked_at: action === "revoke" ? now : null,
+      expires_at: expiresAt,
+      response_message: getResponseMessage(nextStatus),
       updated_at: now
     })
     .eq("id", requestId)
     .eq("candidate_id", user.id)
-    .select("id, status, requested_at, responded_at, conversation_id")
+    .select("id, status, requested_at, responded_at, expires_at, revoked_at")
     .single();
 
   if (updateError) {
@@ -73,51 +84,23 @@ Deno.serve(async (req) => {
     return json({ error: "Could not update this resume request.", code: "REQUEST_UPDATE_FAILED" }, 500, corsHeaders);
   }
 
-  await insertReviewMessage(admin, {
-    conversationId: updated.conversation_id || requestRow.conversation_id,
-    employerId: requestRow.employer_id,
-    candidateId: user.id,
-    message: nextStatus === "approved"
-      ? "Resume access approved. The employer can now review the resume from the candidate profile."
-      : "Resume access declined."
-  });
-
   return json({
     success: true,
     request: {
       id: updated.id,
       status: updated.status,
       requested_at: updated.requested_at || null,
-      responded_at: updated.responded_at || null
+      responded_at: updated.responded_at || null,
+      expires_at: updated.expires_at || null,
+      revoked_at: updated.revoked_at || null
     }
   }, 200, corsHeaders);
 });
 
-async function insertReviewMessage(admin: any, details: Record<string, string>) {
-  if (!details.conversationId) return;
-  const payload = {
-    conversation_id: details.conversationId,
-    sender_type: "candidate",
-    message: details.message,
-    employer_id: details.employerId,
-    candidate_id: details.candidateId,
-    read_by_candidate: true,
-    read_by_employer: false
-  };
-  let candidatePayload = { ...payload };
-  for (let attempt = 0; attempt < 6; attempt += 1) {
-    const { error } = await admin.from("messages").insert([candidatePayload]);
-    if (!error) return;
-    const missingColumn = getMissingColumn(error);
-    if (!missingColumn || !(missingColumn in candidatePayload)) return;
-    delete candidatePayload[missingColumn];
-  }
-}
-
-function getMissingColumn(error: any) {
-  const message = [error?.message, error?.details, error?.hint].filter(Boolean).join(" ");
-  const match = message.match(/'([^']+)' column|column '([^']+)'|Could not find the '([^']+)'/i);
-  return match?.[1] || match?.[2] || match?.[3] || "";
+function getResponseMessage(status: string) {
+  if (status === "approved") return "Resume access approved by candidate.";
+  if (status === "revoked") return "Resume access revoked by candidate.";
+  return "Resume access declined by candidate.";
 }
 
 function sanitizeUuid(value: unknown) {

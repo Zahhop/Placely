@@ -259,6 +259,8 @@
     if (!hasResume) return "No resume uploaded";
     if (request.status === "approved") return "Resume Approved";
     if (request.status === "pending") return "Request Sent";
+    if (request.status === "revoked") return "Resume Access Revoked";
+    if (request.status === "expired") return "Resume Access Expired";
     return "Resume Available";
   }
 
@@ -272,6 +274,8 @@
     if (request.status === "approved") return "This candidate approved resume access. Use the secure link below to review it.";
     if (request.status === "pending") return "This candidate has been notified. You can view the resume if they approve your request.";
     if (request.status === "declined") return "This candidate declined the resume request.";
+    if (request.status === "revoked") return "This candidate revoked resume access.";
+    if (request.status === "expired") return "Resume access expired. Request access again if needed.";
     return "Request access to review this candidate's resume. The candidate will be notified and can approve or decline your request.";
   }
 
@@ -301,10 +305,14 @@
 
   function normalizeResumeRequest(value) {
     const request = value && typeof value === "object" ? value : {};
-    const status = String(request.status || "").toLowerCase().trim();
+    let status = String(request.status || "").toLowerCase().trim();
+    if (status === "approved") {
+      if (request.revoked_at) status = "revoked";
+      if (request.expires_at && new Date(request.expires_at).getTime() <= Date.now()) status = "expired";
+    }
     return {
       ...request,
-      status: ["pending", "approved", "declined"].includes(status) ? status : ""
+      status: ["pending", "approved", "declined", "revoked", "expired"].includes(status) ? status : ""
     };
   }
 

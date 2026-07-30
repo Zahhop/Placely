@@ -36,14 +36,20 @@ Deno.serve(async (req) => {
   if (!candidateId) return json({ error: "Candidate ID is required.", code: "INVALID_CANDIDATE" }, 400, corsHeaders);
 
   const { data: requestRows, error: requestError } = await admin
-    .from("candidate_resume_access_requests")
-    .select("id")
+    .from("candidate_resume_requests")
+    .select("id, expires_at, revoked_at")
     .eq("employer_id", user.id)
     .eq("candidate_id", candidateId)
     .eq("status", "approved")
+    .is("revoked_at", null)
+    .order("requested_at", { ascending: false })
     .limit(1);
   if (requestError) return json({ error: "Could not verify resume access.", code: "REQUEST_LOOKUP_FAILED" }, 500, corsHeaders);
   if (!requestRows?.length) return json({ error: "Resume access has not been approved.", code: "RESUME_ACCESS_NOT_APPROVED" }, 403, corsHeaders);
+  const requestRow = requestRows[0];
+  if (requestRow.expires_at && new Date(requestRow.expires_at).getTime() <= Date.now()) {
+    return json({ error: "Resume access has expired.", code: "RESUME_ACCESS_EXPIRED" }, 403, corsHeaders);
+  }
 
   const { data: candidate, error: candidateError } = await admin
     .from("candidate_profiles")

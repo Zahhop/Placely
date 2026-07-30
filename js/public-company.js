@@ -202,7 +202,7 @@ function renderContextualActions() {
   const context = getReturnContext();
   const cleanCompanyUrl = getCleanCurrentCompanyUrl();
   const actions = [];
-  const suppressPublicActions = context && ["employer-profile", "companies", "find-jobs", "saved-jobs", "applications", "dashboard", "candidate"].includes(context.source);
+  const suppressPublicActions = context && ["employer-profile", "companies", "resume-requests", "find-jobs", "saved-jobs", "applications", "dashboard", "candidate"].includes(context.source);
 
   if (context) {
     actions.push(`
@@ -246,6 +246,10 @@ function getExplicitReturnContext() {
 
   if (source === "companies") {
     return makeReturnContext("Back to Companies", returnTo || "candidates/companies.html", "companies");
+  }
+
+  if (source === "resume-requests") {
+    return makeReturnContext("Back to Resume Requests", returnTo || "candidates/candidate-resume-requests.html", "resume-requests");
   }
 
   if (["find-jobs", "job", "public-job", "saved-jobs", "applications", "dashboard"].includes(source)) {

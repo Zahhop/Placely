@@ -160,6 +160,7 @@
       /^employers\/manage-jobs\.html$/,
       /^employers\/edit-jobs\.html$/,
       /^candidates\/companies\.html$/,
+      /^candidates\/candidate-resume-requests\.html$/,
       /^candidates\/candidate-dashboard\.html$/,
       /^candidates\/candidate-applications\.html$/,
       /^candidates\/candidate-messages\.html$/,
