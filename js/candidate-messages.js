@@ -31,6 +31,7 @@ let activeRealtimeChannel = null;
 let refreshTimer = null;
 let isSendingMessage = false;
 const resumeRequestsByConversationId = new Map();
+const employerProfilesById = new Map();
 
 document.addEventListener("DOMContentLoaded", initMessages);
 
@@ -47,8 +48,9 @@ async function initMessages() {
     currentUser = user;
     activeConversationId = new URLSearchParams(window.location.search).get("conversation");
 
+    await loadCandidateProfile(user);
+
     await Promise.all([
-      loadCandidateProfile(user),
       loadConversations(),
       loadHeaderCounts(user.id)
     ]);
@@ -87,12 +89,14 @@ async function loadConversations() {
     return;
   }
 
+  const rows = data || [];
+  await loadEmployerProfilesForConversations(rows);
+
   conversationsData = await Promise.all(
-    (data || []).map(async (conversation) => {
-      const employerProfile = await getEmployerProfile(conversation.employer_id);
+    rows.map(async (conversation) => {
+      const employerProfile = employerProfilesById.get(String(conversation.employer_id || "")) || null;
       const employerName =
         employerProfile?.company_name ||
-        employerProfile?.contact_name ||
         conversation.employer_name ||
         conversation.company_name ||
         "Employer";
@@ -131,28 +135,54 @@ async function loadConversations() {
   }
 }
 
-async function getEmployerProfile(employerId) {
-  if (!employerId) return null;
+async function loadEmployerProfilesForConversations(conversations) {
+  const employerIds = [...new Set(
+    (conversations || [])
+      .map((conversation) => String(conversation.employer_id || "").trim())
+      .filter(Boolean)
+  )];
+  const missingEmployerIds = employerIds.filter((id) => !employerProfilesById.has(String(id)));
+
+  if (!missingEmployerIds.length) return;
 
   const { data, error } = await candidateMessagesSupabase
-    .from("public_employer_profiles")
+    .from("employer_profiles")
     .select("id, company_name, company_logo_url")
-    .eq("id", employerId)
-    .maybeSingle();
+    .in("id", missingEmployerIds);
 
   if (error) {
-    return null;
+    console.error("Candidate messages: employer identity lookup failed", {
+      employerIds: missingEmployerIds,
+      code: error?.code,
+      message: error?.message,
+      details: error?.details
+    });
+    return;
   }
 
-  return data;
+  (data || []).forEach((profile) => {
+    if (profile?.id) employerProfilesById.set(String(profile.id), profile);
+  });
 }
 
-function loadCandidateProfile(user) {
-  const identity = window.PlacelyAuth.getCachedCandidateIdentity?.() || {
+async function loadCandidateProfile(user) {
+  let identity = null;
+
+  try {
+    identity = await window.PlacelyAuth.loadCandidateIdentity?.(candidateMessagesSupabase, { user });
+  } catch (error) {
+    console.error("Candidate messages: candidate identity lookup failed", {
+      userId: user?.id || "",
+      code: error?.code,
+      message: error?.message
+    });
+  }
+
+  identity = identity || window.PlacelyAuth.getCachedCandidateIdentity?.() || {
     fullName: user?.email?.split("@")[0] || "Candidate",
     firstName: user?.email?.split("@")[0] || "Candidate",
     email: user?.email || "",
-    initials: "PT",
+    initials: getInitials(user?.email || "Candidate"),
     photoUrl: ""
   };
 
@@ -162,10 +192,11 @@ function loadCandidateProfile(user) {
     profile_photo_url: identity.photoUrl || ""
   };
   window.PlacelyAuth.updateCandidateHeader?.(identity);
+  bindCandidateHeaderPhotoFallback(identity);
 }
 
 async function loadHeaderCounts(userId) {
-  const [{ count: unreadCount }, { count: notificationCount }] = await Promise.all([
+  const [{ count: unreadCount }, { count: notificationCount }, { count: resumeRequestCount }] = await Promise.all([
     candidateMessagesSupabase
       .from("messages")
       .select("*", { count: "exact", head: true })
@@ -176,11 +207,17 @@ async function loadHeaderCounts(userId) {
       .from("applications")
       .select("*", { count: "exact", head: true })
       .eq("candidate_id", userId)
-      .in("status", ["reviewing", "interview", "offer"])
+      .in("status", ["reviewing", "interview", "offer"]),
+    candidateMessagesSupabase
+      .from("candidate_resume_requests")
+      .select("*", { count: "exact", head: true })
+      .eq("candidate_id", userId)
+      .eq("status", "pending")
   ]);
 
   updateBadge("topUnreadBadge", unreadCount || 0);
-  updateBadge("topNotificationBadge", notificationCount || 0);
+  updateBadge("topNotificationBadge", (notificationCount || 0) + (resumeRequestCount || 0));
+  window.PlacelyCandidateSidebar?.updateResumeRequestCount(resumeRequestCount || 0);
 }
 
 function setupEvents() {
@@ -416,8 +453,8 @@ async function loadResumeRequestForConversation(conversation) {
   if (!conversation?.id) return null;
 
   const { data, error } = await candidateMessagesSupabase
-    .from("candidate_resume_access_requests")
-    .select("id, employer_id, candidate_id, status, requested_at, responded_at, conversation_id")
+    .from("candidate_resume_requests")
+    .select("id, employer_id, candidate_id, status, requested_at, responded_at, expires_at, revoked_at, conversation_id")
     .eq("candidate_id", currentUser.id)
     .eq("employer_id", conversation.employerId)
     .order("requested_at", { ascending: false })
@@ -462,6 +499,8 @@ function renderResumeRequestPanel(conversation) {
 function getResumeRequestTitle(status) {
   if (status === "approved") return "Resume access approved";
   if (status === "declined") return "Resume access declined";
+  if (status === "revoked") return "Resume access revoked";
+  if (status === "expired") return "Resume access expired";
   return "Resume access request";
 }
 
@@ -469,6 +508,8 @@ function getResumeRequestCopy(status, employerName) {
   const name = employerName || "This employer";
   if (status === "approved") return `${name} can now review your resume from your candidate profile.`;
   if (status === "declined") return `${name} cannot access your resume.`;
+  if (status === "revoked") return `${name} can no longer access your resume.`;
+  if (status === "expired") return `${name}'s resume access has expired.`;
   return `${name} requested access to review your resume. You can approve or decline this request.`;
 }
 
@@ -493,6 +534,7 @@ async function reviewResumeRequest(requestId, action, conversation) {
   }
 
   resumeRequestsByConversationId.set(String(conversation.id), data.request);
+  await loadHeaderCounts(currentUser.id);
   await loadMessages(conversation.id).then((messages) => {
     activeMessages = messages;
     renderMessages(messages, conversation);
@@ -880,6 +922,19 @@ function updateBadge(id, value) {
   badge.textContent = count > 9 ? "9+" : String(count);
 }
 
+function bindCandidateHeaderPhotoFallback(identity) {
+  const avatar = document.getElementById("topCandidateAvatar");
+  const image = avatar?.querySelector("img");
+  if (!image) return;
+
+  image.addEventListener("error", () => {
+    console.warn("Candidate messages: candidate photo failed to load", {
+      hasStoredPhotoValue: Boolean(identity?.photoUrl)
+    });
+    image.hidden = true;
+  }, { once: true });
+}
+
 function setText(id, value) {
   const el = document.getElementById(id);
   if (el) el.textContent = value || "";
@@ -889,7 +944,7 @@ function resolveCandidatePhotoUrl(profile) {
   const rawUrl = profile.profile_photo_url || profile.profile_photo || profile.avatar_url || profile.photo_url || "";
   if (!rawUrl) return "";
   if (/^https?:\/\//i.test(rawUrl)) return rawUrl;
-  return window.PlacelyAuth.getPublicImageUrl(candidateMessagesSupabase, "candidate-photos", rawUrl);
+  return window.PlacelyAuth.getPublicImageUrl(candidateMessagesSupabase, "candidate_photos", rawUrl);
 }
 
 async function handleLogout() {

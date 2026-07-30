@@ -72,6 +72,12 @@
       try {
         const profile = await fetchProfile(id, context);
         if (activeCandidateId !== id) return;
+        activeCandidateId = String(profile?.id || profile?.candidate_id || id || "").trim();
+        console.debug("Employer candidate profile loaded", {
+          activeCandidateId,
+          profileId: profile?.id || null,
+          candidateId: profile?.candidate_id || null
+        });
         renderProfile(profile);
       } catch (error) {
         if (activeCandidateId !== id) return;
@@ -199,16 +205,44 @@
     }
 
     async function confirmResumeRequest(profile) {
-      const confirmed = await showResumeRequestModal(profile);
-      if (!confirmed) return;
-      await requestResume(profile);
+      const candidateId = getActiveCandidateProfileId(profile);
+      if (!candidateId) {
+        console.error("Resume request blocked: active candidate ID is missing.");
+        alert("We could not identify this candidate. Please return to Candidates and try again.");
+        return;
+      }
+      const details = await showResumeRequestModal(profile);
+      if (!details) return;
+      await requestResume(profile, details, candidateId);
     }
 
-    async function requestResume(profile) {
+    async function requestResume(profile, details = {}, candidateIdOverride = "") {
+      const candidateId = candidateIdOverride || getActiveCandidateProfileId(profile);
+      if (!candidateId) {
+        console.error("Resume request blocked: active candidate ID is missing.");
+        alert("We could not identify this candidate. Please return to Candidates and try again.");
+        return;
+      }
+
+      const jobId = String(activeContext.jobId || "").trim() || null;
+      const requestMessage = String(details.message || "").trim() || null;
+      console.debug("Resume request submission state", {
+        activeCandidateId,
+        type: typeof activeCandidateId
+      });
+      console.debug("Submitting resume request", {
+        candidateId,
+        jobId
+      });
+
       setResumeButtonsDisabled(true);
       try {
-        const { data, error } = await supabase.functions.invoke("request-candidate-resume-access", {
-          body: { candidateId: profile.id }
+        const { data, error } = await supabase.functions.invoke("request-candidate-resume", {
+          body: {
+            candidate_id: candidateId,
+            job_id: jobId,
+            request_message: requestMessage
+          }
         });
         if (error || !data?.request) {
           const responseError = await readFunctionError(error);
@@ -224,11 +258,15 @@
       }
     }
 
+    function getActiveCandidateProfileId(profile = {}) {
+      return String(profile?.id || activeProfile?.id || activeCandidateId || "").trim();
+    }
+
     async function openApprovedResume(profile, { download = false } = {}) {
       setResumeButtonsDisabled(true);
       try {
         const { data, error } = await supabase.functions.invoke("get-approved-candidate-resume-url", {
-          body: { candidateId: profile.id }
+          body: { candidate_id: getActiveCandidateProfileId(profile) }
         });
         if (error || !data?.url) {
           const responseError = await readFunctionError(error);
@@ -288,6 +326,10 @@
           <div class="resume-request-modal" role="dialog" aria-modal="true" aria-labelledby="resumeRequestTitle">
             <h2 id="resumeRequestTitle">Request Resume</h2>
             <p>Request access to review ${escapeHTML(profile.full_name || "this candidate")}'s resume. The candidate will be notified and can approve or decline your request.</p>
+            <label class="resume-request-modal-field">
+              <span>Message to candidate</span>
+              <textarea id="resumeRequestMessage" maxlength="1000" placeholder="Add a short note about why you would like to review this resume."></textarea>
+            </label>
             <div class="resume-request-modal-actions">
               <button type="button" class="secondary-btn" data-modal-action="cancel">Cancel</button>
               <button type="button" class="primary-btn" data-modal-action="confirm">Send Request</button>
@@ -300,7 +342,11 @@
           resolve(value);
         };
         modal.querySelector('[data-modal-action="cancel"]')?.addEventListener("click", () => close(false));
-        modal.querySelector('[data-modal-action="confirm"]')?.addEventListener("click", () => close(true));
+        modal.querySelector('[data-modal-action="confirm"]')?.addEventListener("click", () => {
+          close({
+            message: modal.querySelector("#resumeRequestMessage")?.value?.trim() || ""
+          });
+        });
         modal.addEventListener("click", (event) => {
           if (event.target === modal) close(false);
         });

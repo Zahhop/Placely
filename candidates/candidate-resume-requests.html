@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" class="auth-booting resume-requests-booting">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resume Requests | Placely Talent</title>
+  <link rel="stylesheet" href="../css/candidate-dashboard.css" />
+  <link rel="stylesheet" href="../css/candidate-resume-requests.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="candidate-dashboard-shell">
+  <aside class="candidate-sidebar" id="candidateSidebar" aria-label="Candidate navigation"></aside>
+  <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+
+  <div class="candidate-workspace">
+    <header class="utility-bar">
+      <button type="button" class="mobile-menu-btn" id="sidebarToggle" aria-controls="candidateSidebar" aria-expanded="false">
+        <span class="sr-only">Open navigation</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v2H4V7Zm0 4h16v2H4v-2Zm0 4h16v2H4v-2Z"/></svg>
+      </button>
+
+      <form class="utility-search" id="resumeRequestsSearchForm" role="search">
+        <label class="sr-only" for="resumeRequestsSearchInput">Search jobs, companies, or messages</label>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.97 12.04l3.25 3.24a1 1 0 0 1-1.42 1.42l-3.24-3.25A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/></svg>
+        <input id="resumeRequestsSearchInput" type="search" placeholder="Search jobs, companies, or messages..." autocomplete="off" />
+        <span class="search-shortcut" aria-hidden="true">/</span>
+      </form>
+
+      <div class="utility-actions">
+        <a href="candidate-messages.html" class="utility-icon-link" aria-label="Open messages">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H9.8l-4.1 3.08A1.05 1.05 0 0 1 4 19.24V17a3 3 0 0 1-2-2.83V7a3 3 0 0 1 3-3Zm0 2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1v2.25L9.13 15H19a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5Z"/></svg>
+          <span id="topUnreadBadge" class="utility-badge" hidden>0</span>
+        </a>
+        <a href="candidate-applications.html" class="utility-icon-link" aria-label="Open application notifications">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5-6.71V3a2 2 0 1 0-4 0v1.29A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg>
+          <span id="topNotificationBadge" class="utility-badge" hidden>0</span>
+        </a>
+        <div class="top-account-menu-wrap">
+          <button type="button" class="top-account" id="candidateAccountButton" aria-haspopup="menu" aria-expanded="false" aria-controls="candidateAccountMenu">
+            <span class="account-avatar small" id="topCandidateAvatar">PT</span>
+            <span id="topCandidateName">Candidate</span>
+          </button>
+          <div class="top-account-menu" id="candidateAccountMenu" role="menu" aria-label="Candidate account menu" hidden>
+            <div class="top-account-menu-header">
+              <strong id="accountMenuCandidateName">Candidate</strong>
+              <span id="accountMenuEmail">Account details loading</span>
+            </div>
+            <div class="top-account-menu-list">
+              <a href="candidate-profile.html" role="menuitem">Profile</a>
+              <a href="candidate-settings.html" role="menuitem">Settings</a>
+              <a href="candidate-support.html" role="menuitem">Support</a>
+              <button type="button" role="menuitem" id="accountMenuLogoutBtn">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="candidate-shell resume-requests-shell">
+      <section class="dashboard-briefing" aria-labelledby="resumeRequestsTitle">
+        <div class="briefing-copy">
+          <h1 id="resumeRequestsTitle">Resume Requests</h1>
+          <p>Review employer requests for your private resume. Uploads and replacements still happen in your Profile.</p>
+        </div>
+        <div class="briefing-actions">
+          <a href="candidate-profile.html#documents-section" class="secondary-btn">Manage Resume</a>
+        </div>
+      </section>
+
+      <section class="resume-request-tabs" aria-label="Resume request filters">
+        <button type="button" class="active" data-filter="all">All</button>
+        <button type="button" data-filter="pending">Pending</button>
+        <button type="button" data-filter="approved">Approved</button>
+        <button type="button" data-filter="history">History</button>
+      </section>
+
+      <section class="panel resume-requests-panel">
+        <div id="resumeRequestsStatus" class="resume-requests-status">Loading resume requests...</div>
+        <div id="resumeRequestsList" class="resume-requests-list"></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
+<script src="../js/auth-utils.js"></script>
+<script src="../js/auth-guards.js"></script>
+<script src="../js/job-url-utils.js"></script>
+<script src="../js/public-company-utils.js"></script>
+<script src="../js/candidate-sidebar.js"></script>
+<script src="../js/candidate-global-search.js"></script>
+<script src="../js/candidate-resume-requests.js"></script>
+</body>
+</html>

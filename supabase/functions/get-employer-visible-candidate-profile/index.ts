@@ -235,8 +235,8 @@ async function isSavedByEmployer(adminClient: any, employerId: string, candidate
 
 async function loadResumeRequest(adminClient: any, employerId: string, candidateId: string) {
   const { data, error } = await adminClient
-    .from("candidate_resume_access_requests")
-    .select("id, status, requested_at, responded_at")
+    .from("candidate_resume_requests")
+    .select("id, status, requested_at, responded_at, expires_at, revoked_at")
     .eq("employer_id", employerId)
     .eq("candidate_id", candidateId)
     .order("requested_at", { ascending: false })
@@ -285,13 +285,19 @@ function mapCandidateProfile(profile: Record<string, any>, options: { workHistor
 
 function normalizeResumeRequest(request: any) {
   if (!request) return null;
-  const status = String(request.status || "").toLowerCase().trim();
-  if (!["pending", "approved", "declined"].includes(status)) return null;
+  let status = String(request.status || "").toLowerCase().trim();
+  if (status === "approved") {
+    if (request.revoked_at) status = "revoked";
+    if (request.expires_at && new Date(request.expires_at).getTime() <= Date.now()) status = "expired";
+  }
+  if (!["pending", "approved", "declined", "revoked", "expired"].includes(status)) return null;
   return {
     id: request.id,
     status,
     requested_at: request.requested_at || null,
-    responded_at: request.responded_at || null
+    responded_at: request.responded_at || null,
+    expires_at: request.expires_at || null,
+    revoked_at: request.revoked_at || null
   };
 }
 

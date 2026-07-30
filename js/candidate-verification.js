@@ -3,6 +3,49 @@ const verificationSupabase = window.PlacelyAuth.client();
 let verificationUser = null;
 let verificationProfile = {};
 
+const VERIFICATION_STATES = {
+  unverified: {
+    title: "Get Verified",
+    subtitle: "Complete a short Placely screening to strengthen your profile and build trust with employers.",
+    badge: "PLACELY VERIFICATION",
+    heading: "Stand out as a trusted candidate",
+    description: "Placely verification gives employers more confidence that your identity, experience, and profile information have been reviewed by our team.",
+    icon: shieldIcon(),
+    tone: "unverified",
+    detailsHeading: "Profile information for review"
+  },
+  pending: {
+    title: "Verification in Progress",
+    subtitle: "Your request has been received and is being reviewed by the Placely team.",
+    badge: "VERIFICATION PENDING",
+    heading: "Your verification is being reviewed",
+    description: "We received your request. The Placely team will contact you using the information on your profile if anything else is needed.",
+    icon: clockIcon(),
+    tone: "pending",
+    detailsHeading: "Profile information under review"
+  },
+  verified: {
+    title: "You're Verified!",
+    subtitle: "You've taken an important step to stand out and build trust with employers on Placely.",
+    badge: "VERIFIED BY PLACELY",
+    heading: "You're now a verified candidate",
+    description: "Your Placely badge shows employers that your profile has been reviewed by our team and helps you stand out across the platform.",
+    icon: shieldCheckIcon(),
+    tone: "verified",
+    detailsHeading: "Your verified profile at a glance"
+  },
+  rejected: {
+    title: "Verification Update",
+    subtitle: "Your recent verification request has been reviewed.",
+    badge: "VERIFICATION NOT APPROVED",
+    heading: "Your profile was not verified at this time",
+    description: "This does not prevent you from using Placely. Review your profile information and follow any instructions sent by the Placely team before requesting another review.",
+    icon: shieldAlertIcon(),
+    tone: "rejected",
+    detailsHeading: "Profile information"
+  }
+};
+
 document.addEventListener("DOMContentLoaded", initCandidateVerification);
 
 async function initCandidateVerification() {
@@ -35,7 +78,6 @@ function bindVerificationShell() {
     window.location.replace("candidate-login.html");
   });
   bindAccountMenu();
-
   bindMobileSidebar();
 
   document.getElementById("verificationSearchForm")?.addEventListener("submit", (event) => {
@@ -45,8 +87,6 @@ function bindVerificationShell() {
     if (query) url.searchParams.set("keyword", query);
     window.location.href = url.toString();
   });
-
-  document.getElementById("verificationRequestForm")?.addEventListener("submit", submitVerificationRequest);
 }
 
 async function loadVerificationProfile() {
@@ -64,88 +104,287 @@ function renderVerificationPage() {
   const fullName = verificationProfile.full_name || "Candidate";
   const firstName = fullName.split(" ")[0] || "Candidate";
   const status = normalizeVerificationStatus(verificationProfile.verification_status);
+  const state = VERIFICATION_STATES[status] || VERIFICATION_STATES.unverified;
   const card = document.getElementById("verificationCard");
 
   setText("topCandidateName", firstName);
   setText("topCandidateAvatar", getInitials(fullName || verificationProfile.email));
   setText("accountMenuCandidateName", fullName);
   setText("accountMenuEmail", verificationProfile.email || verificationUser?.email || "No email on file");
+  setText("verificationTitle", state.title);
+  setText("verificationSubtitle", state.subtitle);
 
+  document.title = `${state.title} | Placely Talent`;
   window.PlacelyCandidateSidebar?.updateVerificationStatus(status);
 
   if (!card) return;
 
-  if (status === "verified") {
-    card.innerHTML = renderVerificationState({
-      status,
-      icon: "✓",
-      label: "Verified by Placely",
-      heading: "Your profile is verified",
-      description: "Your verified badge is visible to employers across Placely.",
-      body: `
-        ${renderVerifiedMeta()}
-        ${renderCandidateDetailsGrid()}
-      `,
-      actions: `
-        <a href="candidate-profile.html" class="primary-btn">View Profile</a>
-        <a href="../public/find-jobs.html?role=candidate" class="secondary-btn">Find Jobs</a>
-      `
-    });
-    return;
+  card.innerHTML = `
+    ${renderHeroState(status, state)}
+    ${renderStateBody(status, state)}
+  `;
+
+  bindVerificationActions(status);
+}
+
+function renderHeroState(status, state) {
+  return `
+    <section class="verification-hero ${escapeAttribute(state.tone)}" aria-labelledby="verificationStateHeading">
+      <div class="verification-hero-glow" aria-hidden="true"></div>
+      <div class="verification-state-header">
+        <div class="verification-state-icon ${escapeAttribute(state.tone)}" aria-hidden="true">${state.icon}</div>
+        <span class="verification-state-badge ${escapeAttribute(state.tone)}">${escapeHTML(state.badge)}</span>
+        <h2 id="verificationStateHeading">${escapeHTML(state.heading)}</h2>
+        <p>${escapeHTML(state.description)}</p>
+        ${renderHeroMeta(status)}
+        ${renderHeroActions(status)}
+      </div>
+    </section>
+  `;
+}
+
+function renderHeroMeta(status) {
+  if (status === "verified" && verificationProfile.verified_at) {
+    return `
+      <div class="verification-meta-row">
+        <span>${calendarIcon()} Verified on ${escapeHTML(formatDate(verificationProfile.verified_at))}</span>
+      </div>
+    `;
   }
 
   if (status === "pending") {
-    card.innerHTML = renderVerificationState({
-      status,
-      icon: "⌕",
-      label: "Verification pending",
-      heading: "Your request is being reviewed",
-      description: "We received your verification request. The Placely team will contact you using the information on your profile.",
-      body: `
-        ${renderNextSteps()}
-        ${renderCandidateDetailsGrid()}
-      `,
-      actions: `<a href="candidate-profile.html" class="secondary-btn">Edit Profile</a>`
-    });
-    return;
-  }
-
-  if (status === "rejected") {
-    card.innerHTML = renderVerificationState({
-      status,
-      icon: "!",
-      label: "Verification not approved",
-      heading: "Your verification request was not approved",
-      description: "Review your profile information and contact Placely support if you believe something needs to be updated.",
-      body: renderCandidateDetailsGrid(),
-      actions: `
-        <a href="candidate-profile.html" class="primary-btn">Edit Profile</a>
-        <a href="candidate-support.html" class="secondary-btn">Contact Support</a>
-        <button type="button" class="secondary-btn" id="requestAgainBtn">Request Again</button>
+    const requestedAt = verificationProfile.verification_requested_at || verificationProfile.requested_at;
+    return requestedAt
+      ? `
+        <div class="verification-meta-row">
+          <span>${calendarIcon()} Requested on ${escapeHTML(formatDate(requestedAt))}</span>
+        </div>
       `
-    });
-    document.getElementById("requestAgainBtn")?.addEventListener("click", () => {
-      verificationProfile.verification_status = "unverified";
-      renderVerificationPage();
-    });
-    return;
+      : "";
   }
 
-  card.innerHTML = renderVerificationState({
-    status,
-    icon: "✓",
-    label: "Placely Verification",
-    heading: "Stand out with a verified profile",
-    description: "Complete a short screening call with Placely to add a verified badge to your profile and help employers feel more confident contacting you.",
-    body: `
-      ${renderBenefits()}
-      ${renderCandidateDetailsGrid()}
-      ${renderRequestForm()}
+  return "";
+}
+
+function renderHeroActions(status) {
+  if (status === "unverified") {
+    return `
+      <div class="verification-actions hero-actions">
+        <button type="button" class="primary-btn" data-verification-action="request">Request Verification</button>
+        <a href="${escapeAttribute(routeFor("profile"))}" class="secondary-btn">Edit Profile</a>
+      </div>
+    `;
+  }
+
+  if (status === "pending") {
+    return `
+      <div class="verification-actions hero-actions">
+        <a href="${escapeAttribute(routeFor("profile"))}" class="primary-btn">View Profile</a>
+        <a href="${escapeAttribute(routeFor("jobs"))}" class="secondary-btn">Find Jobs</a>
+      </div>
+    `;
+  }
+
+  if (status === "verified") {
+    return `
+      <div class="verification-actions hero-actions">
+        <a href="${escapeAttribute(routeFor("profile"))}" class="primary-btn">View Full Profile</a>
+        <a href="${escapeAttribute(routeFor("jobs"))}" class="secondary-btn">Find Jobs</a>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="verification-actions hero-actions">
+      <a href="${escapeAttribute(routeFor("profile"))}" class="primary-btn">Edit Profile</a>
+      <a href="${escapeAttribute(routeFor("support"))}" class="secondary-btn">Contact Support</a>
+    </div>
+  `;
+}
+
+function renderStateBody(status, state) {
+  const sections = {
+    unverified: `
+      ${renderCardSection("Why get verified?", benefitCards([
+        ["Build employer trust", "Show employers that your profile has been reviewed by Placely.", checkIcon()],
+        ["Stand out in search", "Your verified badge appears across your profile and candidate listings.", searchIcon()],
+        ["Strengthen your applications", "Employers can review your profile with greater confidence.", documentIcon()],
+        ["Show you are serious", "Verification signals that you are actively preparing for new opportunities.", sparkIcon()]
+      ]))}
+      ${renderCardSection("What to expect", stepCards([
+        ["Submit your request", "Confirm the profile information Placely should review."],
+        ["Complete a short screening", "Our team will contact you to arrange a brief conversation."],
+        ["Receive your verification status", "Your profile will be updated after the review is complete."]
+      ]))}
+      ${renderCandidateSummary(state.detailsHeading)}
+      ${renderRequestPanel("Request Verification")}
+      ${renderCallout("Make sure your profile is ready", "Complete your work history, contact information, and availability before requesting verification.", "Review Profile", routeFor("profile"))}
     `,
-    actions: ""
+    pending: `
+      ${renderCardSection("What happens next", stepCards([
+        ["Placely reviews your profile", "We confirm that your profile contains enough information for the screening."],
+        ["We contact you", "The team may reach out to arrange a brief screening conversation."],
+        ["Your status is updated", "Your candidate profile will reflect the final decision once the review is complete."]
+      ]))}
+      ${renderInfoStrip([
+        "Keep your contact information current",
+        "Watch your email for a message from Placely",
+        "Continue applying while your request is reviewed"
+      ])}
+      ${renderCandidateSummary(state.detailsHeading)}
+      ${renderCallout("Your request is already in progress", "No additional action is required unless Placely contacts you.", "", "")}
+    `,
+    verified: `
+      ${renderCardSection("Why verification matters", benefitCards([
+        ["Builds trust instantly", "Employers can see that your profile has been reviewed by Placely.", checkIcon()],
+        ["Stand out from others", "Your verified badge appears across your profile and candidate listings.", badgeIcon()],
+        ["Stronger first impression", "Verification helps employers review your experience with greater confidence.", documentIcon()],
+        ["More serious opportunities", "A complete, verified profile can help you present yourself more professionally.", sparkIcon()]
+      ]))}
+      ${renderCallout("You've strengthened your Placely profile", "Keep your experience, availability, and contact information current so employers always see accurate information.", "Browse Jobs", routeFor("jobs"))}
+    `,
+    rejected: `
+      ${renderCardSection("Recommended next steps", benefitCards([
+        ["Review your profile", "Make sure your experience, contact details, and availability are accurate.", documentIcon()],
+        ["Update missing information", "Add details that help Placely and employers understand your background.", checkIcon()],
+        ["Check your email", "Look for any follow-up instructions sent by the Placely team.", mailIcon()],
+        ["Request another review when eligible", "Submit another request after your profile information is ready.", shieldIcon()]
+      ]))}
+      ${renderCandidateSummary(state.detailsHeading)}
+      ${renderRequestPanel("Request Another Review")}
+      ${renderCallout("Need help with your verification?", "Placely support can help you understand what to update before another review.", "Contact Support", routeFor("support"))}
+    `
+  };
+
+  return `<div class="verification-content">${sections[status] || sections.unverified}</div>`;
+}
+
+function renderCardSection(title, content) {
+  return `
+    <section class="verification-section" aria-labelledby="${escapeAttribute(slugify(title))}">
+      <h3 class="verification-section-title" id="${escapeAttribute(slugify(title))}">${escapeHTML(title)}</h3>
+      ${content}
+    </section>
+  `;
+}
+
+function benefitCards(items) {
+  return `
+    <div class="verification-benefit-grid">
+      ${items.map(([title, text, icon]) => `
+        <article class="verification-info-card">
+          <span class="verification-card-icon" aria-hidden="true">${icon}</span>
+          <h4>${escapeHTML(title)}</h4>
+          <p>${escapeHTML(text)}</p>
+        </article>
+      `).join("")}
+    </div>
+  `;
+}
+
+function stepCards(items) {
+  return `
+    <div class="verification-step-grid">
+      ${items.map(([title, text], index) => `
+        <article class="verification-step-card">
+          <span class="verification-step-number" aria-hidden="true">${index + 1}</span>
+          <div>
+            <h4>${escapeHTML(title)}</h4>
+            <p>${escapeHTML(text)}</p>
+          </div>
+        </article>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderInfoStrip(items) {
+  return `
+    <section class="verification-info-strip" aria-label="Helpful reminders">
+      ${items.map((item) => `
+        <span>${checkIcon()} ${escapeHTML(item)}</span>
+      `).join("")}
+    </section>
+  `;
+}
+
+function renderCandidateSummary(title) {
+  const details = [
+    ["Name", verificationProfile.full_name || "Candidate", userIcon()],
+    ["Account email", verificationProfile.email || verificationUser?.email || "Not provided", mailIcon()],
+    ["Phone", verificationProfile.phone || "Not provided", phoneIcon()],
+    ["Target role", verificationProfile.trade || "Not listed", documentIcon()],
+    ["Location", verificationProfile.location || "Not listed", locationIcon()],
+    ["Availability", verificationProfile.availability || "Not listed", calendarIcon()]
+  ];
+
+  return `
+    <section class="verification-summary-card" aria-labelledby="verificationDetailsTitle">
+      <div class="verification-summary-heading">
+        <span class="verification-card-icon small" aria-hidden="true">${userIcon()}</span>
+        <h3 id="verificationDetailsTitle">${escapeHTML(title)}</h3>
+      </div>
+      <dl class="verification-details-grid">
+        ${details.map(([label, value, iconMarkup]) => `
+          <div class="verification-detail-item">
+            <span class="verification-detail-icon" aria-hidden="true">${iconMarkup}</span>
+            <dt>${escapeHTML(label)}</dt>
+            <dd>${escapeHTML(value)}</dd>
+          </div>
+        `).join("")}
+      </dl>
+    </section>
+  `;
+}
+
+function renderRequestPanel(buttonText) {
+  return `
+    <section class="verification-request-panel" aria-labelledby="verificationRequestTitle">
+      <div>
+        <h3 id="verificationRequestTitle">${escapeHTML(buttonText)}</h3>
+        <p>We will contact you using the information on your profile.</p>
+      </div>
+      <form id="verificationRequestForm" class="verification-form">
+        <label for="verificationMessage">Anything we should know before the call?</label>
+        <textarea id="verificationMessage" maxlength="1200" placeholder="Add context about your experience, availability, or the best time to reach you."></textarea>
+
+        <label class="verification-confirmation">
+          <input type="checkbox" id="verificationConfirm" />
+          <span>I confirm the information in my Placely profile is accurate.</span>
+        </label>
+
+        <div class="verification-actions form-actions">
+          <a href="${escapeAttribute(routeFor("profile"))}" class="secondary-btn">Edit Profile</a>
+          <button type="submit" id="verificationSubmitBtn" class="primary-btn">${escapeHTML(buttonText)}</button>
+        </div>
+      </form>
+    </section>
+  `;
+}
+
+function renderCallout(title, text, buttonText, href) {
+  return `
+    <section class="verification-callout">
+      <div>
+        <h3>${escapeHTML(title)}</h3>
+        <p>${escapeHTML(text)}</p>
+      </div>
+      ${buttonText && href ? `<a href="${escapeAttribute(href)}" class="secondary-btn">${escapeHTML(buttonText)}</a>` : ""}
+    </section>
+  `;
+}
+
+function bindVerificationActions(status) {
+  document.querySelectorAll('[data-verification-action="request"]').forEach((button) => {
+    button.addEventListener("click", () => {
+      document.getElementById("verificationRequestForm")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      document.getElementById("verificationConfirm")?.focus({ preventScroll: true });
+    });
   });
 
-  document.getElementById("verificationRequestForm")?.addEventListener("submit", submitVerificationRequest);
+  if (["unverified", "rejected"].includes(status)) {
+    document.getElementById("verificationRequestForm")?.addEventListener("submit", submitVerificationRequest);
+  }
 }
 
 function bindAccountMenu() {
@@ -201,135 +440,22 @@ function bindMobileSidebar() {
   });
 }
 
-function renderVerificationState({ status, icon, label, heading, description, body, actions }) {
-  return `
-    <div class="verification-state-header">
-      <div class="verification-state-icon ${escapeAttribute(status)}" aria-hidden="true">${escapeHTML(icon)}</div>
-      <span class="verification-state-badge ${escapeAttribute(status)}">${escapeHTML(label)}</span>
-      <h2>${escapeHTML(heading)}</h2>
-      <p>${escapeHTML(description)}</p>
-    </div>
-    ${body || ""}
-    ${actions ? `<div class="verification-actions">${actions}</div>` : ""}
-  `;
-}
-
-function renderBenefits() {
-  const benefits = [
-    "Build trust with employers",
-    "Stand out in candidate search",
-    "Show that your profile was reviewed by Placely"
-  ];
-
-  return `
-    <section class="verification-section" aria-labelledby="verificationBenefitsTitle">
-      <h3 class="verification-section-title" id="verificationBenefitsTitle">Why request verification</h3>
-      <div class="verification-benefits">
-        ${benefits.map((benefit) => `
-          <div class="verification-benefit">
-            <span class="verification-benefit-icon" aria-hidden="true">✓</span>
-            <span>${escapeHTML(benefit)}</span>
-          </div>
-        `).join("")}
-      </div>
-    </section>
-  `;
-}
-
-function renderNextSteps() {
-  const steps = [
-    ["Placely reviews your request", "We check that your profile has enough information for review."],
-    ["We contact you", "The team reaches out to arrange a short screening call."],
-    ["Your profile is updated", "After review, your verification status is updated in Placely."]
-  ];
-
-  return `
-    <section class="verification-section" aria-labelledby="verificationNextStepsTitle">
-      <h3 class="verification-section-title" id="verificationNextStepsTitle">What happens next</h3>
-      <div class="verification-next-steps">
-        ${steps.map(([title, text], index) => `
-          <div class="verification-next-step">
-            <span class="verification-step-number" aria-hidden="true">${index + 1}</span>
-            <strong>${escapeHTML(title)}</strong>
-            <p>${escapeHTML(text)}</p>
-          </div>
-        `).join("")}
-      </div>
-    </section>
-  `;
-}
-
-function renderCandidateDetailsGrid() {
-  const details = [
-    ["Name", verificationProfile.full_name || "Candidate"],
-    ["Account email", verificationProfile.email || verificationUser?.email || "Not provided"],
-    ["Phone", verificationProfile.phone || "Not provided"],
-    ["Trade/current role", verificationProfile.trade || "Not listed"],
-    ["Location", verificationProfile.location || "Not listed"],
-    ["Availability", verificationProfile.availability || "Not listed"]
-  ];
-
-  return `
-    <section class="verification-section" aria-labelledby="verificationDetailsTitle">
-      <h3 class="verification-section-title" id="verificationDetailsTitle">Profile information for review</h3>
-      <dl class="verification-details-grid">
-        ${details.map(([label, value]) => `
-          <div class="verification-detail-item">
-            <dt><span>${escapeHTML(label)}</span></dt>
-            <dd><strong>${escapeHTML(value)}</strong></dd>
-          </div>
-        `).join("")}
-      </dl>
-    </section>
-  `;
-}
-
-function renderRequestForm() {
-  return `
-    <form id="verificationRequestForm" class="verification-form verification-section">
-      <label for="verificationMessage">Anything we should know before the call?</label>
-      <textarea id="verificationMessage" maxlength="1200" placeholder="Add context about your experience, availability, or the best time to reach you."></textarea>
-
-      <label class="verification-confirmation">
-        <input type="checkbox" id="verificationConfirm" />
-        <span>I confirm the information in my Placely profile is accurate.</span>
-      </label>
-
-      <p class="verification-helper-text">We will contact you using the information on your profile.</p>
-
-      <div class="verification-actions">
-        <a href="candidate-profile.html" class="secondary-btn">Edit Profile</a>
-        <button type="submit" id="verificationSubmitBtn" class="primary-btn">Request Verification</button>
-      </div>
-    </form>
-  `;
-}
-
-function renderVerifiedMeta() {
-  const verifiedDate = verificationProfile.verified_at ? formatDate(verificationProfile.verified_at) : "";
-
-  return `
-    <section class="verification-section verified-preview" aria-label="Verified profile status">
-      ${window.PlacelyVerifiedBadge?.render(verificationProfile) || ""}
-      ${verifiedDate ? `<span class="verification-helper-text">Verified on ${escapeHTML(verifiedDate)}</span>` : ""}
-    </section>
-  `;
-}
-
 function renderVerificationError() {
   const card = document.getElementById("verificationCard");
+  setText("verificationTitle", "Get Verified");
+  setText("verificationSubtitle", "Request a short Placely screening call to strengthen your profile and build trust with employers.");
   if (!card) return;
 
   card.innerHTML = `
-    <div class="verification-error">
-      <div class="verification-state-icon error" aria-hidden="true">!</div>
+    <section class="verification-error">
+      <div class="verification-state-icon error" aria-hidden="true">${alertIcon()}</div>
       <span class="verification-state-badge rejected">Status unavailable</span>
       <h2>We could not load your verification status</h2>
       <p>Please refresh the page or try again shortly.</p>
       <div class="verification-actions">
         <button type="button" class="primary-btn" id="verificationRetryBtn">Retry</button>
       </div>
-    </div>
+    </section>
   `;
 
   document.getElementById("verificationRetryBtn")?.addEventListener("click", initCandidateVerification);
@@ -345,6 +471,7 @@ async function submitVerificationRequest(event) {
   }
 
   const submit = document.getElementById("verificationSubmitBtn");
+  const originalSubmitText = submit?.textContent || "Request Verification";
   if (submit?.disabled) return;
   if (submit) {
     submit.disabled = true;
@@ -372,7 +499,7 @@ async function submitVerificationRequest(event) {
     showVerificationToast(error?.message || "We could not submit your verification request.");
     if (submit) {
       submit.disabled = false;
-      submit.textContent = "Request Verification";
+      submit.textContent = originalSubmitText;
     }
   }
 }
@@ -382,20 +509,23 @@ function normalizeVerificationStatus(status) {
   return ["pending", "verified", "rejected"].includes(value) ? value : "unverified";
 }
 
-function getVerificationStatusLabel(status) {
-  return {
-    unverified: "Unverified",
-    pending: "Verification pending",
-    verified: "Verified by Placely",
-    rejected: "Verification not approved"
-  }[status] || "Unverified";
-}
-
 function formatDate(value) {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
+  return date.toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" });
+}
+
+function routeFor(key) {
+  if (window.PlacelyCandidateSidebar?.urlFor) return window.PlacelyCandidateSidebar.urlFor(key);
+
+  const fallback = {
+    profile: "candidate-profile.html",
+    jobs: "../public/find-jobs.html?role=candidate",
+    support: "candidate-support.html"
+  };
+
+  return fallback[key] || "candidate-dashboard.html";
 }
 
 function setText(id, value) {
@@ -406,6 +536,10 @@ function setText(id, value) {
 function getInitials(value) {
   const words = String(value || "").trim().split(/\s+/).filter(Boolean);
   return words.length ? words.slice(0, 2).map((word) => word[0]).join("").toUpperCase() : "PT";
+}
+
+function slugify(value) {
+  return String(value || "section").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
 function showVerificationToast(message) {
@@ -430,4 +564,68 @@ function escapeHTML(value) {
 
 function escapeAttribute(value) {
   return escapeHTML(value).replaceAll("`", "&#096;");
+}
+
+function icon(path) {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">${path}</svg>`;
+}
+
+function shieldIcon() {
+  return icon('<path d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3Zm0 2.15 6 2.25V11c0 3.9-2.45 7.6-6 8.9-3.55-1.3-6-5-6-8.9V6.4l6-2.25Z"/>');
+}
+
+function shieldCheckIcon() {
+  return icon('<path d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3Zm0 2.15 6 2.25V11c0 3.9-2.45 7.6-6 8.9-3.55-1.3-6-5-6-8.9V6.4l6-2.25Zm3.7 5.7-4.35 4.35-2.05-2.05-1.4 1.42 3.45 3.43 5.75-5.75-1.4-1.4Z"/>');
+}
+
+function shieldAlertIcon() {
+  return icon('<path d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3Zm0 2.15 6 2.25V11c0 3.9-2.45 7.6-6 8.9-3.55-1.3-6-5-6-8.9V6.4l6-2.25Zm-1 4.85h2v5h-2V9Zm0 7h2v2h-2v-2Z"/>');
+}
+
+function clockIcon() {
+  return icon('<path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20Zm0 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16Zm1 3v4.58l3.2 3.2-1.42 1.42L11 12.42V7h2Z"/>');
+}
+
+function checkIcon() {
+  return icon('<path d="m9.2 16.6-4.1-4.1 1.4-1.42 2.7 2.68 7.3-7.28 1.4 1.42-8.7 8.7Z"/>');
+}
+
+function searchIcon() {
+  return icon('<path d="M10.5 3a7.5 7.5 0 0 1 5.97 12.04l3.25 3.24-1.42 1.42-3.24-3.25A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/>');
+}
+
+function documentIcon() {
+  return icon('<path d="M6 2h9l5 5v15H6V2Zm8 2H8v16h10V8h-4V4Zm-3 8h4v2h-4v-2Zm0 4h4v2h-4v-2Z"/>');
+}
+
+function sparkIcon() {
+  return icon('<path d="M12 2 9.9 7.9 4 10l5.9 2.1L12 18l2.1-5.9L20 10l-5.9-2.1L12 2Zm6 12-1 2.8-2.8 1 2.8 1 1 2.8 1-2.8 2.8-1-2.8-1-1-2.8ZM5 14l-.8 2.2-2.2.8 2.2.8L5 20l.8-2.2L8 17l-2.2-.8L5 14Z"/>');
+}
+
+function badgeIcon() {
+  return icon('<path d="M12 2a6 6 0 0 1 4.9 9.46L18 20l-6-2-6 2 1.1-8.54A6 6 0 0 1 12 2Zm0 2a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/>');
+}
+
+function mailIcon() {
+  return icon('<path d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm0 2v.35l8 5.34 8-5.34V7H4Zm0 2.75V17h16V9.75l-7.45 4.97a1 1 0 0 1-1.1 0L4 9.75Z"/>');
+}
+
+function userIcon() {
+  return icon('<path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.33 0-8 2.03-8 4.43V20a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1.57C20 16.03 16.33 14 12 14Z"/>');
+}
+
+function phoneIcon() {
+  return icon('<path d="M6.62 10.79a15.2 15.2 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24c1.12.37 2.32.56 3.58.56a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.61 21 3 13.39 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.26.19 2.46.56 3.58a1 1 0 0 1-.24 1.01l-2.2 2.2Z"/>');
+}
+
+function locationIcon() {
+  return icon('<path d="M12 2a7 7 0 0 1 7 7c0 5.25-7 13-7 13S5 14.25 5 9a7 7 0 0 1 7-7Zm0 2a5 5 0 0 0-5 5c0 2.55 2.85 6.95 5 9.72 2.15-2.77 5-7.17 5-9.72a5 5 0 0 0-5-5Zm0 2.5A2.5 2.5 0 1 1 12 11a2.5 2.5 0 0 1 0-5Z"/>');
+}
+
+function calendarIcon() {
+  return icon('<path d="M7 2h2v2h6V2h2v2h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3V2Zm13 8H4v10h16V10ZM4 8h16V6H4v2Z"/>');
+}
+
+function alertIcon() {
+  return icon('<path d="M11 7h2v7h-2V7Zm0 9h2v2h-2v-2ZM12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20Z"/>');
 }

@@ -11,14 +11,14 @@ const allowedOrigins = new Set([
 Deno.serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") return new Response("ok", { status: 200, headers: corsHeaders });
-  if (req.method !== "POST") return json({ error: "Method not allowed." }, 405, corsHeaders);
-  if (!isAllowedRequestOrigin(req)) return json({ error: "Origin is not allowed.", code: "ORIGIN_NOT_ALLOWED" }, 403, corsHeaders);
+  if (req.method !== "POST") return json({ code: "METHOD_NOT_ALLOWED", message: "Method not allowed." }, 405, corsHeaders);
+  if (!isAllowedRequestOrigin(req)) return json({ code: "ORIGIN_NOT_ALLOWED", message: "Origin is not allowed." }, 403, corsHeaders);
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!supabaseUrl || !anonKey || !serviceRoleKey) {
-    return json({ error: "Resume request workflow is not configured.", code: "CONFIGURATION_ERROR" }, 500, corsHeaders);
+    return json({ code: "CONFIGURATION_ERROR", message: "Resume request workflow is not configured." }, 500, corsHeaders);
   }
 
   const authHeader = req.headers.get("Authorization") || "";
@@ -27,18 +27,48 @@ Deno.serve(async (req) => {
 
   const { data: userData, error: userError } = await userClient.auth.getUser();
   const user = userData?.user;
-  if (userError || !user) return json({ error: "Your session has expired. Please log in again.", code: "AUTHENTICATION_REQUIRED" }, 401, corsHeaders);
+  if (userError || !user) {
+    return json({ code: "AUTHENTICATION_REQUIRED", message: "Your session has expired. Please log in again." }, 401, corsHeaders);
+  }
 
-  const body = await req.json().catch(() => ({}));
-  const candidateId = sanitizeUuid(body.candidate_id || body.candidateId);
-  const jobId = sanitizeUuid(body.job_id || body.jobId) || null;
-  const requestMessage = sanitizeText(body.request_message || body.message, 1000);
-  if (!candidateId) return json({ error: "Candidate ID is required.", code: "CANDIDATE_ID_REQUIRED" }, 400, corsHeaders);
+  let body: Record<string, unknown>;
+  try {
+    body = await req.json();
+  } catch {
+    return json({ code: "INVALID_JSON", message: "Invalid request body." }, 400, corsHeaders);
+  }
+
+  const candidateId = typeof body.candidate_id === "string" ? body.candidate_id.trim() : "";
+  console.log("Resume request candidate input", {
+    candidateId,
+    length: candidateId.length,
+    validUuid: isValidUuid(candidateId),
+    bodyKeys: Object.keys(body)
+  });
+
+  if (!candidateId) {
+    console.error("Resume request missing candidate_id", {
+      bodyKeys: body && typeof body === "object" ? Object.keys(body) : []
+    });
+    return json({ code: "CANDIDATE_ID_REQUIRED", message: "Candidate ID is required." }, 400, corsHeaders);
+  }
+
+  if (!isValidUuid(candidateId)) {
+    console.error("Candidate UUID validation failed", {
+      candidateId,
+      length: candidateId.length,
+      type: typeof candidateId
+    });
+    return json({ code: "CANDIDATE_ID_INVALID", message: "Candidate ID is invalid." }, 400, corsHeaders);
+  }
+
+  const jobId = typeof body?.job_id === "string" && isValidUuid(body.job_id.trim()) ? body.job_id.trim() : null;
+  const requestMessage = sanitizeText(body?.request_message, 1000);
 
   const { data: roleRow, error: roleError } = await admin.from("profiles").select("role").eq("id", user.id).maybeSingle();
-  if (roleError) return json({ error: "Could not verify your account type.", code: "ROLE_LOOKUP_FAILED" }, 500, corsHeaders);
+  if (roleError) return json({ code: "ROLE_LOOKUP_FAILED", message: "Could not verify your account type." }, 500, corsHeaders);
   if (String(roleRow?.role || "").toLowerCase() !== "employer") {
-    return json({ error: "Only employers can request candidate resumes.", code: "NOT_EMPLOYER" }, 403, corsHeaders);
+    return json({ code: "NOT_EMPLOYER", message: "Only employers can request candidate resumes." }, 403, corsHeaders);
   }
 
   const { data: employer, error: employerError } = await admin
@@ -46,19 +76,25 @@ Deno.serve(async (req) => {
     .select("id, company_name, candidate_access, subscription_status")
     .eq("id", user.id)
     .maybeSingle();
-  if (employerError) return json({ error: "We could not load your employer account.", code: "EMPLOYER_PROFILE_LOOKUP_FAILED" }, 500, corsHeaders);
-  if (!employer) return json({ error: "We could not load your employer account.", code: "EMPLOYER_PROFILE_NOT_FOUND" }, 403, corsHeaders);
-  if (!isCandidateAccessActive(employer)) return json({ error: "Candidate Access is required.", code: "CANDIDATE_ACCESS_REQUIRED" }, 403, corsHeaders);
+  if (employerError) return json({ code: "EMPLOYER_PROFILE_LOOKUP_FAILED", message: "We could not load your employer account." }, 500, corsHeaders);
+  if (!employer) return json({ code: "EMPLOYER_PROFILE_NOT_FOUND", message: "We could not load your employer account." }, 403, corsHeaders);
+  if (!isCandidateAccessActive(employer)) return json({ code: "CANDIDATE_ACCESS_REQUIRED", message: "Candidate Access is required." }, 403, corsHeaders);
 
   const { data: candidate, error: candidateError } = await admin
     .from("candidate_profiles")
     .select("id, full_name, resume_path, resume_url, profile_visible")
     .eq("id", candidateId)
     .maybeSingle();
-  if (candidateError) return json({ error: "We could not load this candidate profile.", code: "CANDIDATE_PROFILE_LOOKUP_FAILED" }, 500, corsHeaders);
-  if (!candidate) return json({ error: "Candidate profile unavailable.", code: "INVALID_CANDIDATE" }, 404, corsHeaders);
-  if (candidate.profile_visible === false) return json({ error: "This candidate is no longer visible to employers.", code: "CANDIDATE_NOT_VISIBLE" }, 403, corsHeaders);
-  if (!text(candidate.resume_path || candidate.resume_url)) return json({ error: "This candidate has not uploaded a resume.", code: "RESUME_NOT_AVAILABLE" }, 404, corsHeaders);
+  if (candidateError) {
+    console.error("Candidate lookup failed", {
+      code: candidateError.code,
+      message: candidateError.message
+    });
+    return json({ code: "CANDIDATE_LOOKUP_FAILED", message: "We could not load this candidate." }, 500, corsHeaders);
+  }
+  if (!candidate) return json({ code: "CANDIDATE_NOT_FOUND", message: "Candidate profile was not found." }, 404, corsHeaders);
+  if (candidate.profile_visible === false) return json({ code: "CANDIDATE_NOT_VISIBLE", message: "This candidate is no longer visible to employers." }, 403, corsHeaders);
+  if (!text(candidate.resume_path || candidate.resume_url)) return json({ code: "RESUME_NOT_AVAILABLE", message: "This candidate has not uploaded a resume." }, 404, corsHeaders);
 
   const existing = await loadLatestRequest(admin, user.id, candidateId);
   if (existing && isActiveResumeRequest(existing)) {
@@ -82,8 +118,8 @@ Deno.serve(async (req) => {
       const pending = await loadLatestRequest(admin, user.id, candidateId);
       if (pending) return json({ success: true, request: publicRequest(pending) }, 200, corsHeaders);
     }
-    console.error("resume access request insert failed", safeError(insertError));
-    return json({ error: "We could not request resume access.", code: "REQUEST_CREATE_FAILED" }, 500, corsHeaders);
+    console.error("resume request insert failed", safeError(insertError));
+    return json({ code: "REQUEST_CREATE_FAILED", message: "We could not request resume access." }, 500, corsHeaders);
   }
 
   return json({ success: true, request: publicRequest(requestRow) }, 200, corsHeaders);
@@ -142,9 +178,10 @@ function sanitizeText(value: unknown, maxLength: number) {
     .slice(0, maxLength);
 }
 
-function sanitizeUuid(value: unknown) {
-  const id = String(value || "").trim();
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i.test(id) ? id : "";
+function isValidUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value
+  );
 }
 
 function safeError(error: any) {
@@ -168,7 +205,11 @@ function isAllowedRequestOrigin(req: Request) {
 }
 
 function json(body: Record<string, unknown>, status = 200, headers: Record<string, string> = {}) {
-  return new Response(JSON.stringify(body), {
+  const normalizedBody = {
+    ...body,
+    error: body.error || body.message || ""
+  };
+  return new Response(JSON.stringify(normalizedBody), {
     status,
     headers: { ...headers, "Content-Type": "application/json" }
   });

@@ -87,6 +87,13 @@ button:disabled {
   opacity: 0.55;
 }
 
+.admin-page-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .admin-panel {
   margin-top: 18px;
   padding: 18px;
@@ -162,5 +169,10 @@ button:disabled {
   .admin-request-row {
     grid-template-columns: 1fr;
     flex-direction: column;
+  }
+
+  .admin-page-actions {
+    width: 100%;
+    justify-content: flex-start;
   }
 }

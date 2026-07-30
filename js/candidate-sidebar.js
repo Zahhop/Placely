@@ -21,7 +21,7 @@
     saved: "public/saved-jobs.html",
     messages: "candidates/candidate-messages.html",
     profile: "candidates/candidate-profile.html",
-    resume: "candidates/candidate-profile.html#documents-section",
+    resume: "candidates/candidate-resume-requests.html",
     verification: "candidates/candidate-verification.html",
     support: "candidates/candidate-support.html",
     settings: "candidates/candidate-settings.html"
@@ -58,7 +58,7 @@
         ])}
         ${renderGroup("Profile", [
           navItem("profile", "Profile", "profile", activePage),
-          navItem("resume", "Resume", "resume", activePage),
+          navItem("resume", "Resume Requests", "resume", activePage),
           navItem("verification", verificationLabel, "verification", activePage, verificationStatus)
         ])}
       </nav>
@@ -76,20 +76,109 @@
 
   function updateVerificationNavStatus(status) {
     const item = document.querySelector('[data-candidate-nav="verification"]');
-    if (!item) return;
 
     const verificationStatus = normalizeVerificationStatus(status);
+    updateVerificationHeaderBadge(verificationStatus);
+    if (!item) return;
+
     const label = verificationStatus === "unverified" ? "Get Verified" : "Verification";
     const labelEl = item.querySelector("span:nth-child(2)");
     if (labelEl) labelEl.textContent = label;
-
     item.querySelector(".candidate-nav-status-dot")?.remove();
-    if (!["pending", "verified"].includes(verificationStatus)) return;
+    if (!["unverified", "pending", "verified", "rejected"].includes(verificationStatus)) return;
 
     item.insertAdjacentHTML(
       "beforeend",
-      `<span class="candidate-nav-status-dot ${verificationStatus}" aria-label="${verificationStatus === "pending" ? "Verification pending" : "Verified"}"></span>`
+      `<span class="candidate-nav-status-dot ${verificationStatus}" aria-label="${escapeAttribute(getVerificationStatusCopy(verificationStatus).label)}"></span>`
     );
+  }
+
+  function updateResumeRequestCount(count) {
+    const item = document.querySelector('[data-candidate-nav="resume"]');
+    const value = Math.max(0, Number(count || 0));
+    if (item) {
+      item.querySelector(".candidate-nav-count")?.remove();
+      if (value) {
+        item.insertAdjacentHTML(
+          "beforeend",
+          `<span class="candidate-nav-count" aria-label="${value} pending resume request${value === 1 ? "" : "s"}">${value > 9 ? "9+" : value}</span>`
+        );
+      }
+    }
+
+    updateResumeNotificationLink(value);
+  }
+
+  function updateResumeNotificationLink(count) {
+    const badge = document.getElementById("topNotificationBadge");
+    const link = badge?.closest("a");
+    if (!badge || !link || count <= 0) return;
+
+    badge.hidden = false;
+    badge.textContent = count > 9 ? "9+" : String(count);
+    link.href = urlFor("resume");
+    link.setAttribute("aria-label", `${count} pending resume request${count === 1 ? "" : "s"}`);
+    link.title = "Resume request notification";
+  }
+
+  function ensureVerificationHeaderBadge() {
+    const actions = document.querySelector(".utility-actions");
+    if (!actions) return null;
+
+    let badge = document.getElementById("candidateVerificationStatusBadge");
+    if (badge) return badge;
+
+    badge = document.createElement("a");
+    badge.id = "candidateVerificationStatusBadge";
+    badge.className = "candidate-verification-status-badge";
+    badge.href = urlFor("verification");
+    badge.hidden = true;
+
+    const firstIcon = actions.querySelector(".utility-icon-link");
+    actions.insertBefore(badge, firstIcon || actions.firstChild);
+    return badge;
+  }
+
+  function updateVerificationHeaderBadge(status) {
+    const badge = ensureVerificationHeaderBadge();
+    if (!badge) return;
+
+    const verificationStatus = normalizeVerificationStatus(status);
+    if (verificationStatus === "unknown") {
+      badge.hidden = true;
+      badge.removeAttribute("aria-label");
+      badge.innerHTML = "";
+      return;
+    }
+
+    const copy = getVerificationStatusCopy(verificationStatus);
+    badge.hidden = false;
+    badge.className = `candidate-verification-status-badge ${verificationStatus}`;
+    badge.href = urlFor("verification");
+    badge.setAttribute("aria-label", `View verification status: ${copy.label}`);
+    badge.title = copy.label;
+    badge.innerHTML = `${copy.icon}<span>${copy.label}</span>`;
+  }
+
+  function getVerificationStatusCopy(status) {
+    if (status === "verified") {
+      return {
+        label: "Verified by Placely",
+        icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3Zm3.7 7.85-4.35 4.35-2.05-2.05-1.4 1.42 3.45 3.43 5.75-5.75-1.4-1.4Z"/></svg>'
+      };
+    }
+
+    if (status === "pending") {
+      return {
+        label: "Verification Pending",
+        icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20Zm1 5h-2v5.42l3.78 3.78 1.42-1.42-3.2-3.2V7Z"/></svg>'
+      };
+    }
+
+    return {
+      label: "Not Verified",
+      icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3Zm-1 7h2v5h-2V9Zm0 7h2v2h-2v-2Z"/></svg>'
+    };
   }
 
   function updateActivePage(activePage = getActivePage()) {
@@ -112,8 +201,8 @@
 
   function navItem(key, label, icon, activePage, verificationStatus = "") {
     const active = activePage === key;
-    const badge = key === "verification" && ["pending", "verified"].includes(verificationStatus)
-      ? `<span class="candidate-nav-status-dot ${verificationStatus}" aria-label="${verificationStatus === "pending" ? "Verification pending" : "Verified"}"></span>`
+    const badge = key === "verification" && ["unverified", "pending", "verified", "rejected"].includes(verificationStatus)
+      ? `<span class="candidate-nav-status-dot ${verificationStatus}" aria-label="${escapeAttribute(getVerificationStatusCopy(verificationStatus).label)}"></span>`
       : "";
 
     return `
@@ -138,6 +227,7 @@
     if (filename === "candidate-verification.html") return "verification";
     if (filename === "candidate-support.html") return "support";
     if (filename === "candidate-settings.html") return "settings";
+    if (filename === "candidate-resume-requests.html") return "resume";
     if (filename === "candidate-profile.html" && window.location.hash === "#documents-section") return "resume";
     if (filename === "candidate-profile.html") return "profile";
     if (filename === "apply-job.html") return "jobs";
@@ -165,6 +255,7 @@
   window.PlacelyCandidateSidebar = {
     render: renderCandidateSidebar,
     updateVerificationStatus: updateVerificationNavStatus,
+    updateResumeRequestCount,
     updateActivePage,
     getActivePage,
     urlFor
@@ -172,6 +263,7 @@
 
   renderCandidateSidebar();
   loadVerificationNavStatus();
+  loadPendingResumeRequestCount();
   window.addEventListener("hashchange", () => updateActivePage());
 
   async function loadVerificationNavStatus() {
@@ -188,9 +280,63 @@
         .eq("id", user.id)
         .maybeSingle();
 
-      if (!error) updateVerificationNavStatus(data?.verification_status || "unknown");
-    } catch {
+      if (error) {
+        console.warn("Candidate shell verification status failed to load", {
+          code: error?.code,
+          message: error?.message
+        });
+        updateVerificationNavStatus("unknown");
+        return;
+      }
+
+      updateVerificationNavStatus(data?.verification_status || "unknown");
+    } catch (error) {
+      console.warn("Candidate shell verification status failed to load", {
+        message: error?.message
+      });
       updateVerificationNavStatus("unknown");
     }
+  }
+
+  async function loadPendingResumeRequestCount() {
+    try {
+      if (!window.PlacelyAuth?.client) return;
+      const supabase = window.PlacelyAuth.client();
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData?.user;
+      if (!user) return;
+
+      const { count, error } = await supabase
+        .from("candidate_resume_requests")
+        .select("*", { count: "exact", head: true })
+        .eq("candidate_id", user.id)
+        .eq("status", "pending");
+
+      if (error) {
+        console.warn("Candidate shell resume request count failed to load", {
+          code: error?.code,
+          message: error?.message
+        });
+        updateResumeRequestCount(0);
+        return;
+      }
+
+      updateResumeRequestCount(count || 0);
+    } catch (error) {
+      console.warn("Candidate shell resume request count failed to load", {
+        message: error?.message
+      });
+      updateResumeRequestCount(0);
+    }
+  }
+
+  function escapeAttribute(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;")
+      .replaceAll("`", "&#096;");
   }
 })();

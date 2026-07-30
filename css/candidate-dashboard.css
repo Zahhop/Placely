@@ -314,6 +314,11 @@ body > header nav a.active,
   height: 8px;
   border-radius: 999px;
   flex: 0 0 auto;
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.16);
+}
+
+.candidate-nav-status-dot.pending {
   background: #f59e0b;
   box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.16);
 }
@@ -321,6 +326,22 @@ body > header nav a.active,
 .candidate-nav-status-dot.verified {
   background: #22c55e;
   box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.16);
+}
+
+.candidate-nav-count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .sidebar-footer {
@@ -525,6 +546,61 @@ body > header nav a.active,
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
+}
+
+.candidate-verification-status-badge {
+  min-height: 34px;
+  max-width: 210px;
+  padding: 0 12px;
+  border: 1px solid #fecaca;
+  border-radius: 999px;
+  background: #fef2f2;
+  color: #b91c1c;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 12.5px;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.candidate-verification-status-badge svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  flex: 0 0 auto;
+}
+
+.candidate-verification-status-badge.verified {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #047857;
+}
+
+.candidate-verification-status-badge.pending {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.candidate-verification-status-badge.rejected,
+.candidate-verification-status-badge.unverified {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.candidate-verification-status-badge:hover {
+  transform: translateY(-1px);
+}
+
+.candidate-verification-status-badge:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.22);
+  outline-offset: 3px;
 }
 
 .utility-badge {
@@ -1187,6 +1263,12 @@ body > header nav a.active,
     display: none;
   }
 
+  .candidate-verification-status-badge span {
+    max-width: 94px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .candidate-shell {
     padding: 28px 22px 40px;
   }
@@ -1220,6 +1302,26 @@ body > header nav a.active,
     height: 66px;
     min-height: 66px;
     padding: 0 16px;
+  }
+
+  .candidate-verification-status-badge {
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+    min-height: 38px;
+    padding: 0;
+  }
+
+  .candidate-verification-status-badge span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   .candidate-shell {

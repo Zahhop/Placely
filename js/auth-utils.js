@@ -321,6 +321,7 @@
 
   function getStorageBucketName(kindOrBucket) {
     if (imageUploadConfig[kindOrBucket]) return imageUploadConfig[kindOrBucket].bucket;
+    if (kindOrBucket === "candidate-photos") return "candidate_photos";
     if (kindOrBucket === "employer_logos") return "employer-logos";
     return String(kindOrBucket || "");
   }
@@ -434,6 +435,9 @@
     const aliases = [normalizedBucket, originalBucket].filter(Boolean);
     if (normalizedBucket === "employer-logos" || originalBucket === "employer_logos") {
       aliases.push("employer_logos", "employer-logos");
+    }
+    if (normalizedBucket === "candidate_photos" || originalBucket === "candidate-photos") {
+      aliases.push("candidate_photos", "candidate-photos");
     }
     return [...new Set(aliases)];
   }
@@ -1106,7 +1110,7 @@
     if (avatar) {
       const initials = identity?.initials || "PT";
       avatar.innerHTML = identity?.photoUrl
-        ? `<img src="${escapeHtml(identity.photoUrl)}" alt="" loading="lazy" /><span class="avatar-fallback">${escapeHtml(initials)}</span>`
+        ? `<img src="${escapeHtml(identity.photoUrl)}" alt="" loading="lazy" onerror="this.hidden=true;" /><span class="avatar-fallback">${escapeHtml(initials)}</span>`
         : escapeHtml(initials);
     }
 
