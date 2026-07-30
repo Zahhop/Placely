@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="auth-booting dashboard-booting">
+<html lang="en" class="auth-booting dashboard-booting dashboard-initializing">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -126,7 +126,7 @@
         </a>
         <a href="employer-profile.html" class="top-account">
           <span class="account-avatar small" id="topCompanyAvatar">PT</span>
-          <span id="topCompanyName">Employer</span>
+          <span id="topCompanyName" data-dashboard-pending></span>
         </a>
       </div>
     </header>
@@ -134,8 +134,8 @@
     <main class="employer-shell">
       <section class="dashboard-briefing" aria-labelledby="dashboardTitle">
         <div class="briefing-copy">
-          <h1 id="dashboardTitle"><span id="dashboardGreeting">Good day</span>, <span id="companyNameTitle">Employer</span></h1>
-          <p id="heroSummary" aria-live="polite">Loading your hiring workspace...</p>
+          <h1 id="dashboardTitle" data-dashboard-pending><span id="dashboardGreeting">Good day</span>, <span id="companyNameTitle"></span></h1>
+          <p id="heroSummary" aria-live="polite" data-dashboard-pending>Loading your hiring workspace...</p>
         </div>
 
         <div class="briefing-actions" aria-label="Primary dashboard actions">
@@ -149,8 +149,8 @@
           <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6V5a3 3 0 0 1 3-3h1a3 3 0 0 1 3 3v1h3a2 2 0 0 1 2 2v10.5A2.5 2.5 0 0 1 18.5 21h-13A2.5 2.5 0 0 1 3 18.5V8a2 2 0 0 1 2-2h4Zm2 0h3V5a1 1 0 0 0-1-1h-1a1 1 0 0 0-1 1v1Z"/></svg></span>
           <span class="kpi-copy">
             <span class="kpi-label">Active jobs</span>
-            <strong id="activeJobsCount" aria-live="polite">...</strong>
-            <span id="activeJobsContext" class="kpi-context">Loading job posts</span>
+            <strong id="activeJobsCount" aria-live="polite" data-dashboard-pending>...</strong>
+            <span id="activeJobsContext" class="kpi-context" data-dashboard-pending>Loading job posts</span>
           </span>
         </a>
 
@@ -158,8 +158,8 @@
           <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2 1.8 20h20.4L12 2Zm1 15h-2v-2h2v2Zm0-4h-2V8h2v5Z"/></svg></span>
           <span class="kpi-copy">
             <span class="kpi-label">Needs review</span>
-            <strong id="applicationsCount" aria-live="polite">...</strong>
-            <span id="applicationsContext" class="kpi-context">Loading applicants</span>
+            <strong id="applicationsCount" aria-live="polite" data-dashboard-pending>...</strong>
+            <span id="applicationsContext" class="kpi-context" data-dashboard-pending>Loading applicants</span>
           </span>
         </a>
 
@@ -167,8 +167,8 @@
           <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 2h10a2 2 0 0 1 2 2v18l-7-3-7 3V4a2 2 0 0 1 2-2Zm0 17 5-2.14L17 19V4H7v15Zm2-9h6v2H9v-2Zm0-4h6v2H9V6Z"/></svg></span>
           <span class="kpi-copy">
             <span class="kpi-label">Interviews</span>
-            <strong id="interviewsCount" aria-live="polite">...</strong>
-            <span id="interviewsContext" class="kpi-context">Loading interviews</span>
+            <strong id="interviewsCount" aria-live="polite" data-dashboard-pending>...</strong>
+            <span id="interviewsContext" class="kpi-context" data-dashboard-pending>Loading interviews</span>
           </span>
         </a>
 
@@ -176,8 +176,8 @@
           <span class="kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h14a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H9.8l-4.1 3.08A1.05 1.05 0 0 1 4 19.24V17a3 3 0 0 1-2-2.83V7a3 3 0 0 1 3-3Z"/></svg></span>
           <span class="kpi-copy">
             <span class="kpi-label">Conversations</span>
-            <strong id="messagesCount" aria-live="polite">...</strong>
-            <span id="messagesContext" class="kpi-context">Loading inbox</span>
+            <strong id="messagesCount" aria-live="polite" data-dashboard-pending>...</strong>
+            <span id="messagesContext" class="kpi-context" data-dashboard-pending>Loading inbox</span>
           </span>
         </a>
       </section>
@@ -195,29 +195,29 @@
 
           <div class="pipeline-row" id="pipelineStageOverview" aria-label="Application stages">
             <a href="employer-applicants.html?stage=new" class="stage-summary stage-new">
-              <strong id="newApplicantsCount">...</strong>
+              <strong id="newApplicantsCount" data-dashboard-pending>...</strong>
               <span>New</span>
             </a>
             <a href="employer-applicants.html?stage=reviewing" class="stage-summary stage-reviewing">
-              <strong id="reviewingCount">...</strong>
+              <strong id="reviewingCount" data-dashboard-pending>...</strong>
               <span>Reviewing</span>
             </a>
             <a href="employer-applicants.html?stage=interview" class="stage-summary stage-interview">
-              <strong id="interviewCount">...</strong>
+              <strong id="interviewCount" data-dashboard-pending>...</strong>
               <span>Interview</span>
             </a>
             <a href="employer-applicants.html?stage=offer" class="stage-summary stage-offer">
-              <strong id="offerCount">...</strong>
+              <strong id="offerCount" data-dashboard-pending>...</strong>
               <span>Offer</span>
             </a>
             <a href="employer-applicants.html?stage=hired" class="stage-summary stage-hired">
-              <strong id="hiredCount">...</strong>
+              <strong id="hiredCount" data-dashboard-pending>...</strong>
               <span>Hired</span>
             </a>
           </div>
 
-          <p class="pipeline-muted" id="rejectedCountText"></p>
-          <h3 class="list-heading" id="pipelineQueueText">Loading applicants...</h3>
+          <p class="pipeline-muted" id="rejectedCountText" data-dashboard-pending></p>
+          <h3 class="list-heading" id="pipelineQueueText" data-dashboard-pending>Loading applicants...</h3>
 
           <div id="pipelineList" class="dashboard-list pipeline-list" aria-live="polite">
             <div class="skeleton-row"></div>

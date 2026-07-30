@@ -51,6 +51,10 @@ html.dashboard-booting .dashboard-shell {
   visibility: visible;
 }
 
+[data-dashboard-pending] {
+  visibility: hidden;
+}
+
 html.dashboard-booting *,
 html.dashboard-booting *::before,
 html.dashboard-booting *::after {
